@@ -44,7 +44,6 @@
         </form>
 
         <hr class="border-gray-200 my-6">
-
         <div id="calendar" class="bg-white p-2 rounded border border-gray-200"></div>
     </div>
 
@@ -52,7 +51,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🟢 已將專案 ID 修正為 KLDrive
+        // 已修正：專案地址指引至 KLDrive
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
             authDomain: "KLDrive.firebaseapp.com",
@@ -62,11 +61,10 @@
             appId: "1:773359626716:web:bd627c9d5f464f658e0719"
         };
 
-        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // 🟢 已將資料夾（集合）對接成你剛新增的抽屜名稱：kldr
+        // 已修正：雲端資料夾指定為你的真實抽屜 kldr
         const scheduleRef = collection(db, "kldr");
 
         const deptColors = {
@@ -75,21 +73,15 @@
             "品保部": { bg: "#9b59b6", border: "#8e44ad", text: "#ffffff" }
         };
 
-        // 渲染行事曆看板
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'zh-tw',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
-            },
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             buttonText: { today: '今天', month: '月', week: '週' }
         });
         calendar.render();
 
-        // 監聽表單送出事件
         document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const date = document.getElementById('date').value;
@@ -109,16 +101,14 @@
                 alert('🎉 排程已成功同步至雲端！');
             } catch (error) {
                 console.error("儲存失敗: ", error);
-                alert('儲存失敗，請檢查 Firebase 資料庫的 Rules 安全規則設定。');
+                alert('儲存失敗，請確認 Firebase 規則。');
             }
         });
 
-        // 即時監聽雲端資料庫
         onSnapshot(scheduleRef, (snapshot) => {
             const events = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                // 排除測試欄位，確保只讀取完整的排程資料
                 if (data.date && data.time && data.department) {
                     const colorConfig = deptColors[data.department] || { bg: "#34495e", border: "#2c3e50", text: "#ffffff" };
                     events.push({
