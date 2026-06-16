@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 客製化行事曆事件的樣式 */
         .fc-event { cursor: pointer; padding: 2px 4px; font-size: 0.85em; }
     </style>
 </head>
@@ -53,7 +52,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🟢 已自動為你置換成 kldriver 專屬雲端金鑰 
+        // 你的 kldriver 專屬金鑰
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
             authDomain: "kldriver.firebaseapp.com",
@@ -63,19 +62,18 @@
             appId: "1:773359626716:web:bd627c9d5f464f658e0719"
         };
 
-        // 初始化 Firebase & Firestore
+        // 初始化
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const scheduleRef = collection(db, "crane_schedules");
 
-        // 定義部門與格子的顏色對照表 (UI/UX 自由調整)
         const deptColors = {
-            "製造部": { bg: "#2ecc71", border: "#27ae60", text: "#ffffff" }, // 綠
-            "設備部": { bg: "#3498db", border: "#2980b9", text: "#ffffff" }, // 藍
-            "品保部": { bg: "#9b59b6", border: "#8e44ad", text: "#ffffff" }  // 紫
+            "製造部": { bg: "#2ecc71", border: "#27ae60", text: "#ffffff" },
+            "設備部": { bg: "#3498db", border: "#2980b9", text: "#ffffff" },
+            "品保部": { bg: "#9b59b6", border: "#8e44ad", text: "#ffffff" }
         };
 
-        // 初始化 FullCalendar 行事曆
+        // 渲染行事曆
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -89,17 +87,15 @@
         });
         calendar.render();
 
-        // 監聽表單送出事件：將排程存入雲端 Firebase
+        // 監聽送出
         document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const date = document.getElementById('date').value;
             const time = document.getElementById('time').value;
             const dept = document.getElementById('department').value;
             const name = document.getElementById('name').value;
 
             try {
-                // 寫入雲端資料庫
                 await addDoc(scheduleRef, {
                     date: date,
                     time: time,
@@ -107,23 +103,20 @@
                     worker_name: name,
                     created_at: new Date().toISOString()
                 });
-                
-                // 表單重設
                 document.getElementById('name').value = '';
                 alert('🎉 排程已成功同步至雲端！');
             } catch (error) {
                 console.error("儲存失敗: ", error);
-                alert('儲存失敗，請確認 Firebase 資料庫的「Rules (規則)」是否已改為測試模式！');
+                alert('儲存失敗，請檢查 Firebase 資料庫的 Rules 安全規則設定。');
             }
         });
 
-        // 即時監聽雲端資料庫（24小時不連線也能自動讀取）
+        // 監聽雲端資料
         onSnapshot(scheduleRef, (snapshot) => {
             const events = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const colorConfig = deptColors[data.department] || { bg: "#34495e", border: "#2c3e50", text: "#ffffff" };
-                
                 events.push({
                     id: doc.id,
                     title: `${data.time} [${data.department}] ${data.worker_name}`,
@@ -133,8 +126,6 @@
                     textColor: colorConfig.text
                 });
             });
-            
-            // 重新渲染行事曆上的所有卡片
             calendar.setOption('events', events);
         });
     </script>
