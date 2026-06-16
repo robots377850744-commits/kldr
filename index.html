@@ -7,16 +7,27 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
+        /* 🎨 全域黑灰色底色配置 */
+        body {
+            background-color: #121214 !important;
+            color: #e4e4e7 !important;
+        }
+
         /* 🎨 強制卡片變成長條狀、填滿顏色、無邊框 */
         .fc-event { 
             cursor: pointer; 
-            padding: 6px 8px !important; 
-            font-size: 0.9em !important; 
+            padding: 6px 10px !important; 
+            font-size: 0.88em !important; 
             border-radius: 6px !important; 
-            margin-bottom: 3px !important; 
+            margin-bottom: 4px !important; 
             border: none !important;
             display: block !important; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .fc-event:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
         }
         .fc-event-title { 
             font-weight: 600 !important; 
@@ -29,40 +40,94 @@
         .fc-daygrid-event-dot { display: none !important; }
         .fc-event-time { display: none !important; }
         
-        #passwordOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a202c; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        /* 🔒 密碼遮罩深色藝術微調 */
+        #passwordOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0d0e; z-index: 9999; display: flex; justify-content: center; align-items: center; 
+        }
+
+        /* 📅 FullCalendar 核心深色藝術化重置 */
+        .fc {
+            --fc-border-color: #2d2d34 !important;
+            --fc-page-bg-color: #1e1e24 !important;
+            --fc-neutral-text-color: #a1a1aa !important;
+            --fc-list-event-hover-bg-color: #2d2d34 !important;
+        }
+        .fc .fc-col-header-cell {
+            background-color: #18181b !important;
+            padding: 10px 0 !important;
+            color: #e4e4e7 !important;
+        }
+        .fc .fc-daygrid-day-number {
+            color: #d4d4d8 !important;
+            padding: 6px 8px !important;
+            font-weight: 500;
+        }
+        /* 今天格子的藝術高亮 */
+        .fc .fc-day-today {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border: 2px solid #eab308 !important;
+        }
+        /* 修正非本月格子的微透明度 */
+        .fc-day-other {
+            opacity: 0.35;
+        }
+        /* 行事曆標題 */
+        .fc .fc-toolbar-title {
+            color: #f4f4f5 !important;
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+        }
+        /* 按鈕深色重置 */
+        .fc .fc-button-primary {
+            background-color: #27272a !important;
+            border-color: #3f3f46 !important;
+            color: #e4e4e7 !important;
+            transition: all 0.2s;
+        }
+        .fc .fc-button-primary:hover {
+            background-color: #3f3f46 !important;
+            border-color: #52525b !important;
+        }
+        .fc .fc-button-primary:disabled {
+            background-color: #18181b !important;
+            opacity: 0.5;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8">
 
     <div id="passwordOverlay">
-        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">🏗️ 內部系統限制存取</h2>
-            <p class="text-sm text-gray-500 mb-4">請輸入密碼解鎖排程管理系統</p>
-            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full border border-gray-300 rounded px-3 py-2 text-center mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button id="unlockBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition shadow">驗證並解鎖</button>
-            <p id="loginError" class="text-red-500 text-xs mt-2 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <h2 class="text-2xl font-bold text-zinc-100 mb-2">🏗️ 內部系統限制存取</h2>
+            <p class="text-sm text-zinc-400 mb-6">請輸入密碼解鎖排程管理系統</p>
+            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-center mb-4 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-transparent transition">
+            <button id="unlockBtn" class="w-full bg-zinc-200 hover:bg-white text-zinc-950 font-semibold py-2.5 rounded-lg transition shadow-lg">驗證並解鎖</button>
+            <p id="loginError" class="text-red-400 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
         </div>
     </div>
 
-    <div id="mainSystem" class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 hidden">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統</h1>
+    <div id="mainSystem" class="max-w-6xl mx-auto bg-zinc-900/50 border border-zinc-800/80 rounded-2xl shadow-2xl p-6 hidden backdrop-blur-md">
+        <h1 class="text-2xl font-bold text-zinc-100 mb-6 text-center tracking-wider flex items-center justify-center gap-2">
+            🏗️ 吊運排程管理系統
+        </h1>
 
-        <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
+        <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-zinc-900 p-5 rounded-xl mb-8 border border-zinc-800">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">日期</label>
-                <input type="date" id="date" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">日期</label>
+                <input type="date" id="date" required class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-700 transition">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">時間時段</label>
-                <select id="timePeriod" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">時間時段</label>
+                <select id="timePeriod" required class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-700 transition">
                     <option value="上午場">上午場</option>
                     <option value="下午場">下午場</option>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">部門 / 站點 (防呆下拉選單)</label>
-                <select id="department" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
-                    <option value="">-- 請選擇站點 --</option>
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">部門 / 站點</label>
+                <select id="department" required class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-700 transition">
+                    <option value="" class="text-zinc-500">-- 請選擇站點 --</option>
                     <option value="站點A">站點A</option>
                     <option value="站點B">站點B</option>
                     <option value="站點C">站點C</option>
@@ -71,27 +136,27 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">負責人姓名</label>
-                <input type="text" id="name" placeholder="請輸入負責人" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">負責人姓名</label>
+                <input type="text" id="name" placeholder="請輸入負責人" required class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg px-3 py-2 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-700 transition">
             </div>
             <div class="flex items-end">
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition shadow">
+                <button type="submit" id="submitBtn" class="w-full bg-zinc-200 hover:bg-white text-zinc-950 font-bold py-2 px-4 rounded-lg transition shadow-md tracking-wide cursor-pointer">
                     確認排程
                 </button>
             </div>
         </form>
 
-        <hr class="border-gray-200 my-6">
+        <hr class="border-zinc-800 my-6">
         
-        <div id="calendar" class="bg-white p-2 rounded border border-gray-200"></div>
+        <div id="calendar" class="p-3 rounded-xl border border-zinc-800 bg-zinc-900/30"></div>
 
-        <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-300 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-600">
-                🔑 當前身分：<span id="currentRole" class="font-bold text-gray-800">一般同仁 (僅能查看/排程)</span>
+        <div class="mt-8 p-4 bg-zinc-900 rounded-xl border border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-zinc-400">
+                🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-300">一般同仁 (僅能查看/排程)</span>
             </div>
             <div id="adminLoginArea" class="flex gap-2">
-                <input type="password" id="adminPassword" placeholder="輸入管理員特權密碼" class="border border-gray-300 rounded px-3 py-1 bg-white text-sm">
-                <button id="adminLoginBtn" class="bg-gray-800 hover:bg-black text-white text-sm px-4 py-1 rounded">解鎖管理員權限</button>
+                <input type="password" id="adminPassword" placeholder="管理員特權密碼" class="bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-lg px-3 py-1 text-sm placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-700">
+                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm px-4 py-1 rounded-lg transition cursor-pointer">解鎖權限</button>
             </div>
         </div>
     </div>
@@ -136,7 +201,7 @@
             if (input === ADMIN_PASSWORD) {
                 isAdmin = true;
                 document.getElementById('currentRole').innerText = "👑 最高管理員 (已開通前端一鍵修改刪除特權)";
-                document.getElementById('currentRole').className = "font-bold text-red-600";
+                document.getElementById('currentRole').className = "font-bold text-red-400";
                 document.getElementById('adminLoginArea').style.display = "none";
                 alert("最高管理員驗證成功！現在點選行事曆卡片，即可直接一鍵刪除排程。");
             } else {
@@ -144,17 +209,16 @@
             }
         });
 
-        // 🎨 修正：部門/站點 專屬固定顏色對照表 (未來你換了站點名稱，可以在這裡對應修改)
+        // 🎨 部門/站點 專屬固定顏色對照表（維持不變）
         function getDeptColor(deptName) {
             const fixedColors = {
-                "站點A": "#2563eb",  // 藍色
-                "站點B": "#ea580c",  // 橘色
-                "站點C": "#16a34a",  // 綠色
-                "製造部": "#9333ea", // 紫色
-                "噴漆組": "#db2777"  // 粉色
+                "站點A": "#2563eb",  // 經典深藍
+                "站點B": "#ea580c",  // 亮工業橘
+                "站點C": "#16a34a",  // 產線翠綠
+                "製造部": "#7c3aed", // 時尚深紫
+                "噴漆組": "#db2777"  // 質感深粉
             };
 
-            // 如果有設定好的顏色就直接用，沒有的話會自動根據名稱計算出一個固定不變的漂亮顏色
             if (fixedColors[deptName]) {
                 return fixedColors[deptName];
             } else {
@@ -163,7 +227,7 @@
                     hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
                 }
                 const h = Math.abs(hash % 360);
-                return `hsl(${h}, 70%, 45%)`; 
+                return `hsl(${h}, 65%, 45%)`; 
             }
         }
 
@@ -220,7 +284,6 @@
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
                         
-                        // 🚀 修正：顏色完全依據 data.department（部門名稱）來撈取
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午場" : "下午場";
                         
