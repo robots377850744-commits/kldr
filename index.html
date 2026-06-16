@@ -101,7 +101,7 @@
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD  = "ase";      
-        const ADMIN_PASSWORD = "KL";          
+        const ADMIN_PASSWORD = "K12438";          
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
         const firebaseConfig = {
@@ -118,7 +118,6 @@
         const scheduleRef = collection(db, "kldr");
 
         let localSchedules = [];
-        let deptColorMap = {}; 
         let isAdmin = false;   
 
         document.getElementById('unlockBtn').addEventListener('click', () => {
@@ -145,16 +144,27 @@
             }
         });
 
-        // 動態隨機變色演算法 (讓不同站點分配不同顏色)
+        // 🎨 修正：部門/站點 專屬固定顏色對照表 (未來你換了站點名稱，可以在這裡對應修改)
         function getDeptColor(deptName) {
-            if (deptColorMap[deptName]) return deptColorMap[deptName];
-            let hash = 0;
-            for (let i = 0; i < deptName.length; i++) {
-                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            const fixedColors = {
+                "站點A": "#2563eb",  // 藍色
+                "站點B": "#ea580c",  // 橘色
+                "站點C": "#16a34a",  // 綠色
+                "製造部": "#9333ea", // 紫色
+                "噴漆組": "#db2777"  // 粉色
+            };
+
+            // 如果有設定好的顏色就直接用，沒有的話會自動根據名稱計算出一個固定不變的漂亮顏色
+            if (fixedColors[deptName]) {
+                return fixedColors[deptName];
+            } else {
+                let hash = 0;
+                for (let i = 0; i < deptName.length; i++) {
+                    hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const h = Math.abs(hash % 360);
+                return `hsl(${h}, 70%, 45%)`; 
             }
-            const h = Math.abs(hash % 360);
-            deptColorMap[deptName] = `hsl(${h}, 75%, 45%)`; // 提高飽和度，顏色更飽滿
-            return deptColorMap[deptName];
         }
 
         function initSystem() {
@@ -162,15 +172,13 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: '' }, // 拿掉多餘按鈕
+                headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' },
                 
-                // 🚀 修正：設定行事曆可看範圍，卡在 2027年5月
                 validRange: {
-                    end: '2027-06-01' // 可以看到 2027 年 5 月底
+                    end: '2027-06-01'
                 },
                 
-                // 點擊日期的 Alert 視窗
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -183,7 +191,6 @@
                     alert(`📅 【 ${targetDate} 吊運排程總覽】\n--------------------------\n☀️ 上午\n${amString}\n--------------------------\n🌙 下午場\n${pmString}\n--------------------------`);
                 },
                 
-                // 管理員點擊卡片一鍵刪除
                 eventClick: async function(info) {
                     if (!isAdmin) {
                         alert(`📋 排程詳情\n--------------------------\n${info.event.title}\n日期：${info.event.startStr}`);
@@ -213,14 +220,13 @@
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
                         
+                        // 🚀 修正：顏色完全依據 data.department（部門名稱）來撈取
                         const colorValue = getDeptColor(data.department);
-                        // 統一標準化時段字樣 (相容舊資料)
                         const showTime = data.time.includes("上午") ? "上午場" : "下午場";
                         
-                        // 🚀 修正：改為全天事件 (allDay: true)，這樣 FullCalendar 就會強制用長條色塊填滿！
                         events.push({
                             id: doc.id, 
-                            title: `${showTime}: ${data.department} 人員: ${data.worker_name}`, // 🚀 修正：極簡乾淨字樣
+                            title: `${showTime}: ${data.department} 人員: ${data.worker_name}`,
                             start: data.date,
                             allDay: true, 
                             backgroundColor: colorValue,
