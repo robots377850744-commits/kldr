@@ -2,48 +2,136 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>測試連線排程</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吊運排程管理系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .fc-event { cursor: pointer; padding: 2px 4px; font-size: 0.85em; }
+    </style>
 </head>
-<body style="padding: 20px; font-family: sans-serif;">
-    <h1>🏗️ 吊運排程連線測試</h1>
-    <p>如果此畫面有成功顯示，代表 GitHub 的網頁已經正常復活了！</p>
-    
-    <div style="background: #f0f0f0; padding: 15px; margin-bottom: 20px;">
-        <h3>快速輸入測試欄：</h3>
-        負責人姓名：<input type="text" id="testName" value="工程師測試">
-        <button id="testBtn">點我送出測試</button>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統</h1>
+
+        <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">日期</label>
+                <input type="date" id="date" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">時間</label>
+                <input type="time" id="time" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">部門</label>
+                <select id="department" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                    <option value="製造部">製造部 (綠色)</option>
+                    <option value="設備部">設備部 (藍色)</option>
+                    <option value="品保部">品保部 (紫色)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                <input type="text" id="name" placeholder="請輸入負責人" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition shadow">
+                    確認排程
+                </button>
+            </div>
+        </form>
+
+        <hr class="border-gray-200 my-6">
+
+        <div id="calendar" class="bg-white p-2 rounded border border-gray-200"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // 🟢 已將專案 ID 修正為 KLDrive
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
-            authDomain: "kldriver.firebaseapp.com",
-            projectId: "kldriver",
-            storageBucket: "kldriver.firebasestorage.app",
+            authDomain: "KLDrive.firebaseapp.com",
+            projectId: "KLDrive",
+            storageBucket: "KLDrive.firebasestorage.app",
             messagingSenderId: "773359626716",
             appId: "1:773359626716:web:bd627c9d5f464f658e0719"
         };
 
+        // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // 🟢 已將資料夾（集合）對接成你剛新增的抽屜名稱：kldr
+        const scheduleRef = collection(db, "kldr");
 
-        document.getElementById('testBtn').addEventListener('click', async () => {
-            const name = document.getElementById('testName').value;
+        const deptColors = {
+            "製造部": { bg: "#2ecc71", border: "#27ae60", text: "#ffffff" },
+            "設備部": { bg: "#3498db", border: "#2980b9", text: "#ffffff" },
+            "品保部": { bg: "#9b59b6", border: "#8e44ad", text: "#ffffff" }
+        };
+
+        // 渲染行事曆看板
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'zh-tw',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            buttonText: { today: '今天', month: '月', week: '週' }
+        });
+        calendar.render();
+
+        // 監聽表單送出事件
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const dept = document.getElementById('department').value;
+            const name = document.getElementById('name').value;
+
             try {
-                await addDoc(collection(db, "crane_schedules"), {
+                await addDoc(scheduleRef, {
+                    date: date,
+                    time: time,
+                    department: dept,
                     worker_name: name,
-                    date: "2026-06-16",
-                    time: "12:00",
-                    department: "製造部",
                     created_at: new Date().toISOString()
                 });
-                alert("🎉 恭喜！資料成功寫入 Firebase 雲端資料庫了！");
+                document.getElementById('name').value = '';
+                alert('🎉 排程已成功同步至雲端！');
             } catch (error) {
-                alert("錯誤原因: " + error.message);
+                console.error("儲存失敗: ", error);
+                alert('儲存失敗，請檢查 Firebase 資料庫的 Rules 安全規則設定。');
             }
+        });
+
+        // 即時監聽雲端資料庫
+        onSnapshot(scheduleRef, (snapshot) => {
+            const events = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                // 排除測試欄位，確保只讀取完整的排程資料
+                if (data.date && data.time && data.department) {
+                    const colorConfig = deptColors[data.department] || { bg: "#34495e", border: "#2c3e50", text: "#ffffff" };
+                    events.push({
+                        id: doc.id,
+                        title: `${data.time} [${data.department}] ${data.worker_name}`,
+                        start: `${data.date}T${data.time}:00`,
+                        backgroundColor: colorConfig.bg,
+                        borderColor: colorConfig.border,
+                        textColor: colorConfig.text
+                    });
+                }
+            });
+            calendar.setOption('events', events);
         });
     </script>
 </body>
