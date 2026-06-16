@@ -54,13 +54,7 @@
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ⚠️【請將此處替換為您在 Firebase 複製的專案金鑰】⚠️
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
   authDomain: "kldriver.firebaseapp.com",
   projectId: "kldriver",
@@ -69,8 +63,6 @@ const firebaseConfig = {
   appId: "1:773359626716:web:bd627c9d5f464f658e0719"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
         // 初始化 Firebase & Firestore
         const app = initializeApp(firebaseConfig);
