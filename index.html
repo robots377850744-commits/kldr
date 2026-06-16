@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 🎨 全域大師配色配置 - 核心萊姆底色 */
+        /* 🎨 全域藝術配色配置 - 核心萊姆底色 */
         body {
             background-color: #F5FFCD !important;
             color: #27272a !important;
@@ -27,7 +27,7 @@
             transition: transform 0.1s ease;
         }
         .fc-event:hover {
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         .fc-event-title { 
             font-weight: 600 !important; 
@@ -77,7 +77,6 @@
             color: #27272a !important;
             font-size: 1.6rem !important;
             font-weight: 800 !important;
-            tracking: -0.02em;
         }
         /* 按鈕藝術重置（優雅象牙灰） */
         .fc .fc-button-primary {
@@ -125,7 +124,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
+                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點 (防呆下拉選單)</label>
                 <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
                     <option value="">-- 請選擇站點 --</option>
                     <option value="站點A">站點A</option>
@@ -154,9 +153,11 @@
             <div class="text-sm text-zinc-500">
                 🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
             </div>
-            <div id="adminLoginArea" class="flex gap-2">
+            <div id="adminLoginArea" class="flex gap-2 items-center">
+                <button type="button" id="exportExcelBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold hidden cursor-pointer mr-2">📊 匯出 Excel 月報表</button>
+                
                 <input type="password" id="adminPassword" placeholder="管理員特權密碼" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
-                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition cursor-pointer">解鎖權限</button>
+                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition window cursor-pointer">解鎖權限</button>
             </div>
         </div>
     </div>
@@ -165,7 +166,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 保持您原本更新好的密碼結構
+        // 維持您原本更新好的密碼結構
         const GATE_PASSWORD  = "ase";      
         const ADMIN_PASSWORD = "K12438";          
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
@@ -203,14 +204,17 @@
                 isAdmin = true;
                 document.getElementById('currentRole').innerText = "👑 最高管理員 (已開通前端一鍵修改刪除特權)";
                 document.getElementById('currentRole').className = "font-bold text-red-600";
-                document.getElementById('adminLoginArea').style.display = "none";
-                alert("最高管理員驗證成功！現在點選行事曆卡片，即可直接一鍵刪除排程。");
+                document.getElementById('adminLoginArea').querySelector('input').style.display = "none";
+                document.getElementById('adminLoginBtn').style.display = "none";
+                // 亮出匯出報表按鈕
+                document.getElementById('exportExcelBtn').classList.remove('hidden');
+                alert("最高管理員驗證成功！現已解鎖一鍵刪除與 Excel 月報表匯出特權。");
             } else {
                 alert("管理員密碼錯誤！拒絕存取特權。");
             }
         });
 
-        // 🎨 大師高對比調色盤：為不同部門/站點客製化亮麗、不衝突的識別色
+        // 🎨 大師固定配色
         function getDeptColor(deptName) {
             const fixedColors = {
                 "站點A": "#1d4ed8",  // 深邃皇家藍
@@ -244,7 +248,7 @@
                     end: '2027-06-01'
                 },
                 
-                // 🚀 核心優化：點選日期跳出的 Alert，強制注入 16px 與微軟正黑體排版
+                // 🚀 核心優化：點選日期跳出的 Alert，強制注入 16px 與微軟正黑體外觀排版
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -252,9 +256,8 @@
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.department}]  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.department}]  人員: ${e.worker_name}`).join('\n') : "   (currently empty)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.department}]  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
-                    // 巧妙運用隱形特殊字元，強迫系統內建的 Alert 彈窗使用您指定的微軟正黑體外觀與等寬比例
                     const alertText = 
                         `📅 【 ${targetDate} 吊運排程總覽 】\n` +
                         `------------------------------------------\n` +
@@ -276,11 +279,13 @@
                     const confirmDelete = confirm(`👑 管理員特權確認：\n是否要將「${info.event.title}」這筆排程直接從雲端刪除清空？`);
                     if (confirmDelete) {
                         try {
+                            // 🚀 升級：向雲端發送刪除命令時，將管理員密碼（ADMIN_PASSWORD）作為標頭的一部分附帶過去
                             const docRef = doc(db, "kldr", info.event.id);
+                            await setDoc(docRef, { request_delete_pass: ADMIN_PASSWORD }, { merge: true });
                             await deleteDoc(docRef);
-                            alert("🎉 該排程已成功從前端一鍵移除，雲端已即時清空！");
+                            alert("🎉 該排程已成功由前端一鍵移除，雲端已安全清空！");
                         } catch (error) {
-                            alert("刪除失敗！原因：" + error.message);
+                            alert("刪除失敗！原因：密碼不符或雲端 Rules 阻擋。");
                         }
                     }
                 }
@@ -310,6 +315,36 @@
                     }
                 });
                 calendar.setOption('events', events);
+            });
+
+            // 🚀 升級：管理員特權「一鍵匯出 Excel 報表」核心邏輯
+            document.getElementById('exportExcelBtn').addEventListener('click', () => {
+                if(localSchedules.length === 0) {
+                    alert("目前雲端沒有任何排程數據可以導出！");
+                    return;
+                }
+                
+                // 建立 CSV 檔案格式內容（加上 BOM 確保 Excel 開啟不亂碼）
+                let csvContent = "\uFEFF日期,時段,部門/站點,負責人姓名,建立時間\n";
+                
+                // 按日期和時段對資料進行排序
+                const sortedSchedules = [...localSchedules].sort((a, b) => {
+                    return a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
+                });
+
+                sortedSchedules.forEach(item => {
+                    csvContent += `"${item.date}","${item.time}","${item.department}","${item.worker_name}","${item.created_at || ''}"\n`;
+                });
+
+                // 自動生成網頁下載水管
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `吊運排程月報表_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
         }
 
