@@ -51,7 +51,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 已修正：專案地址指引至 KLDrive
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
             authDomain: "KLDrive.firebaseapp.com",
@@ -63,8 +62,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // 已修正：雲端資料夾指定為你的真實抽屜 kldr
         const scheduleRef = collection(db, "kldr");
 
         const deptColors = {
@@ -82,6 +79,7 @@
         });
         calendar.render();
 
+        // 🟢 優化送出機制，強迫開啟彈出視窗提示
         document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const date = document.getElementById('date').value;
@@ -90,18 +88,21 @@
             const name = document.getElementById('name').value;
 
             try {
-                await addDoc(scheduleRef, {
+                // 強制非同步寫入
+                const docRef = await addDoc(scheduleRef, {
                     date: date,
                     time: time,
                     department: dept,
                     worker_name: name,
                     created_at: new Date().toISOString()
                 });
+                
+                console.log("資料成功寫入，ID為: ", docRef.id);
                 document.getElementById('name').value = '';
-                alert('🎉 排程已成功同步至雲端！');
+                alert('🎉 排程已成功同步至雲端資料庫！');
             } catch (error) {
-                console.error("儲存失敗: ", error);
-                alert('儲存失敗，請確認 Firebase 規則。');
+                console.error("儲存失敗錯誤訊息: ", error);
+                alert('🚨 儲存失敗！錯誤原因：' + error.message);
             }
         });
 
