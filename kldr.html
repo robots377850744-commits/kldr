@@ -53,16 +53,15 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️【請將此處替換為您在 Firebase 複製的專案金鑰】⚠️
+        // 🟢 已自動為你置換成 kldriver 專屬雲端金鑰 
         const firebaseConfig = {
-  apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
-  authDomain: "kldriver.firebaseapp.com",
-  projectId: "kldriver",
-  storageBucket: "kldriver.firebasestorage.app",
-  messagingSenderId: "773359626716",
-  appId: "1:773359626716:web:bd627c9d5f464f658e0719"
-};
-
+            apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
+            authDomain: "kldriver.firebaseapp.com",
+            projectId: "kldriver",
+            storageBucket: "kldriver.firebasestorage.app",
+            messagingSenderId: "773359626716",
+            appId: "1:773359626716:web:bd627c9d5f464f658e0719"
+        };
 
         // 初始化 Firebase & Firestore
         const app = initializeApp(firebaseConfig);
@@ -114,7 +113,7 @@
                 alert('🎉 排程已成功同步至雲端！');
             } catch (error) {
                 console.error("儲存失敗: ", error);
-                alert('儲存失敗，請檢查資料庫安全規則設定。');
+                alert('儲存失敗，請確認 Firebase 資料庫的「Rules (規則)」是否已改為測試模式！');
             }
         });
 
