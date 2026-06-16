@@ -7,8 +7,28 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        .fc-event { cursor: pointer; padding: 4px 6px; font-size: 0.9em; border-radius: 4px; margin-bottom: 2px !important; display: block !important; }
-        .fc-event-title { font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        /* 🎨 強制卡片變成長條狀、填滿顏色、無邊框 */
+        .fc-event { 
+            cursor: pointer; 
+            padding: 6px 8px !important; 
+            font-size: 0.9em !important; 
+            border-radius: 6px !important; 
+            margin-bottom: 3px !important; 
+            border: none !important;
+            display: block !important; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .fc-event-title { 
+            font-weight: 600 !important; 
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            color: #ffffff !important; /* 文字一律白色 */
+        }
+        /* 隱藏預設的時間點點 */
+        .fc-daygrid-event-dot { display: none !important; }
+        .fc-event-time { display: none !important; }
+        
         #passwordOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a202c; z-index: 9999; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
@@ -25,7 +45,7 @@
     </div>
 
     <div id="mainSystem" class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 hidden">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統 (管理員特權版)</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統</h1>
 
         <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
             <div>
@@ -33,15 +53,22 @@
                 <input type="date" id="date" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">時間時段 (防呆)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">時間時段</label>
                 <select id="timePeriod" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
-                    <option value="上午">上午場</option>
-                    <option value="下午">下午場</option>
+                    <option value="上午場">上午場</option>
+                    <option value="下午場">下午場</option>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">部門 / 站點名稱</label>
-                <input type="text" id="department" placeholder="例如: 站點A 或 製造部" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                <label class="block text-sm font-medium text-gray-700 mb-1">部門 / 站點 (防呆下拉選單)</label>
+                <select id="department" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                    <option value="">-- 請選擇站點 --</option>
+                    <option value="站點A">站點A</option>
+                    <option value="站點B">站點B</option>
+                    <option value="站點C">站點C</option>
+                    <option value="製造部">製造部</option>
+                    <option value="噴漆組">噴漆組</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">負責人姓名</label>
@@ -73,10 +100,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 安全設定金鑰
-        const GATE_PASSWORD  = "KL2026_crane";      // 1. 同仁進入網頁的密碼 
-        const ADMIN_PASSWORD = "ADMIN999";          // 2. 你專屬的管理員密碼 (輸入後亮出刪除按鈕) 
-        const BACKEND_SECRET = "kldriver_secure_key_999"; // 3. 後端通訊金鑰 
+        const GATE_PASSWORD  = "KL2026_crane";      
+        const ADMIN_PASSWORD = "ADMIN999";          
+        const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
@@ -92,10 +118,9 @@
         const scheduleRef = collection(db, "kldr");
 
         let localSchedules = [];
-        let deptColorMap = {}; // 🚀 升級：動態顏色資料庫，自動為新站點配對新顏色
-        let isAdmin = false;   // 管理員身分狀態標記
+        let deptColorMap = {}; 
+        let isAdmin = false;   
 
-        // 網頁進入密碼驗證
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const input = document.getElementById('gatePassword').value;
             if (input === GATE_PASSWORD) {
@@ -107,7 +132,6 @@
             }
         });
 
-        // 👑 前端管理員特權密碼驗證
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const input = document.getElementById('adminPassword').value;
             if (input === ADMIN_PASSWORD) {
@@ -121,21 +145,15 @@
             }
         });
 
-        // 🚀 核心升級：神奇變色演算法 (自動生成高對比、不衝突的亮麗部門色塊)
+        // 動態隨機變色演算法 (讓不同站點分配不同顏色)
         function getDeptColor(deptName) {
             if (deptColorMap[deptName]) return deptColorMap[deptName];
-            
-            // 根據字串特徵動態產生 HSL 顏色，保證新部門自動換色且不重複
             let hash = 0;
             for (let i = 0; i < deptName.length; i++) {
                 hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
             }
             const h = Math.abs(hash % 360);
-            deptColorMap[deptName] = {
-                bg: `hsl(${h}, 70%, 50%)`,
-                border: `hsl(${h}, 70%, 40%)`,
-                text: "#ffffff"
-            };
+            deptColorMap[deptName] = `hsl(${h}, 75%, 45%)`; // 提高飽和度，顏色更飽滿
             return deptColorMap[deptName];
         }
 
@@ -144,15 +162,20 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-                buttonText: { today: '今天', month: '月' },
+                headerToolbar: { left: 'prev,next today', center: 'title', right: '' }, // 拿掉多餘按鈕
+                buttonText: { today: '今天' },
                 
-                // 點擊格子的整合 Alert 視窗
+                // 🚀 修正：設定行事曆可看範圍，卡在 2027年5月
+                validRange: {
+                    end: '2027-06-01' // 可以看到 2027 年 5 月底
+                },
+                
+                // 點擊日期的 Alert 視窗
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
-                    const amEvents = dayEvents.filter(item => item.time === "上午");
-                    const pmEvents = dayEvents.filter(item => item.time === "下午");
+                    const amEvents = dayEvents.filter(item => item.time.includes("上午"));
+                    const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `  - [${e.department}] ${e.worker_name}`).join('\n') : "  (目前無排程)";
                     let pmString = pmEvents.length > 0 ? pmEvents.map(e => `  - [${e.department}] ${e.worker_name}`).join('\n') : "  (目前無排程)";
@@ -160,19 +183,16 @@
                     alert(`📅 【 ${targetDate} 吊運排程總覽】\n--------------------------\n☀️ 上午\n${amString}\n--------------------------\n🌙 下午場\n${pmString}\n--------------------------`);
                 },
                 
-                // 👑 核心特權：點擊「卡片色塊本身」觸發一鍵刪除
+                // 管理員點擊卡片一鍵刪除
                 eventClick: async function(info) {
                     if (!isAdmin) {
-                        // 一般員工點擊，只秀出詳細資訊
-                        alert(`📋 排程詳情\n--------------------------\n時段：${info.event.title}\n日期：${info.event.startStr.split('T')[0]}`);
+                        alert(`📋 排程詳情\n--------------------------\n${info.event.title}\n日期：${info.event.startStr}`);
                         return;
                     }
 
-                    // 如果是管理員，直接跳出刪除確認
                     const confirmDelete = confirm(`👑 管理員特權確認：\n是否要將「${info.event.title}」這筆排程直接從雲端刪除清空？`);
                     if (confirmDelete) {
                         try {
-                            // 隱藏管理員夾帶 secret_key 送去 Firebase 刪除驗證
                             const docRef = doc(db, "kldr", info.event.id);
                             await deleteDoc(docRef);
                             alert("🎉 該排程已成功從前端一鍵移除，雲端已即時清空！");
@@ -193,17 +213,18 @@
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
                         
-                        // 調用動態變色邏輯
-                        const colorConfig = getDeptColor(data.department);
-                        const fakeTime = data.time === "上午" ? "09:00:00" : "14:00:00";
+                        const colorValue = getDeptColor(data.department);
+                        // 統一標準化時段字樣 (相容舊資料)
+                        const showTime = data.time.includes("上午") ? "上午場" : "下午場";
                         
+                        // 🚀 修正：改為全天事件 (allDay: true)，這樣 FullCalendar 就會強制用長條色塊填滿！
                         events.push({
-                            id: doc.id, // 文件名稱作為 ID，方便刪除
-                            title: `[${data.time}] ${data.department}-${data.worker_name}`,
-                            start: `${data.date}T${fakeTime}`,
-                            backgroundColor: colorConfig.bg,
-                            borderColor: colorConfig.border,
-                            textColor: colorConfig.text
+                            id: doc.id, 
+                            title: `${showTime}: ${data.department} 人員: ${data.worker_name}`, // 🚀 修正：極簡乾淨字樣
+                            start: data.date,
+                            allDay: true, 
+                            backgroundColor: colorValue,
+                            borderColor: colorValue
                         });
                     }
                 });
@@ -221,7 +242,7 @@
 
             const dateValue = document.getElementById('date').value;
             const timeValue = document.getElementById('timePeriod').value;
-            const deptValue = document.getElementById('department').value.trim();
+            const deptValue = document.getElementById('department').value;
             const nameValue = document.getElementById('name').value.trim();
 
             const payload = {
@@ -234,7 +255,6 @@
             };
 
             try {
-                // 照日期時間整齊排列的檔名規格
                 const customDocName = `${dateValue}_${timeValue}_${nameValue}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 await setDoc(customDocRef, payload);
