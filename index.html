@@ -7,13 +7,17 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        .fc-event { cursor: pointer; padding: 2px 4px; font-size: 0.85em; }
+        /* 強制將事件改為長條形色塊、防文字溢出 */
+        .fc-event { cursor: pointer; padding: 4px 6px; font-size: 0.9em; border-radius: 4px; margin-bottom: 2px !important; display: block !important; }
+        .fc-event-title { font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        /* 增加滑動檢視相容性 */
+        #calendar { max-width: 100%; margin: 0 auto; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ 吊運排程管理系統 (終極防呆條列版)</h1>
 
         <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg mb-8 border border-gray-200">
             <div>
@@ -21,11 +25,14 @@
                 <input type="date" id="date" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">時間</label>
-                <input type="time" id="time" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                <label class="block text-sm font-medium text-gray-700 mb-1">時間時段 (防呆)</label>
+                <select id="timePeriod" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+                    <option value="上午">上午場</option>
+                    <option value="下午">下午場</option>
+                </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">部門</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">部門 (待後續站點更新)</label>
                 <select id="department" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
                     <option value="製造部">製造部 (綠色)</option>
                     <option value="設備部">設備部 (藍色)</option>
@@ -33,7 +40,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">負責人姓名</label>
                 <input type="text" id="name" placeholder="請輸入負責人" required class="w-full border border-gray-300 rounded px-3 py-2 bg-white">
             </div>
             <div class="flex items-end">
@@ -44,14 +51,14 @@
         </form>
 
         <hr class="border-gray-200 my-6">
+        
         <div id="calendar" class="bg-white p-2 rounded border border-gray-200"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🟢 已完全對準你的真實專案金鑰：kldriver
         const firebaseConfig = {
             apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
             authDomain: "kldriver.firebaseapp.com",
@@ -63,8 +70,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // 🟢 精準對準你在 Firebase 內新增的實體抽屜：kldr
         const scheduleRef = collection(db, "kldr");
 
         const deptColors = {
@@ -73,29 +78,63 @@
             "品保部": { bg: "#9b59b6", border: "#8e44ad", text: "#ffffff" }
         };
 
+        // 全域變數，用來暫存當前的即時資料，以便點擊日期時做條列統計
+        let localSchedules = [];
+
         const calendarEl = document.getElementById('calendar');
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'zh-tw',
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-            buttonText: { today: '今天', month: '月', week: '週' }
+            editable: false,
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
+            buttonText: { today: '今天', month: '月' },
+            
+            // 核心功能：點擊「任何一天格子」跳出整合條列式 Alert 視窗
+            dateClick: function(info) {
+                const targetDate = info.dateStr; // 格式 YYYY-MM-DD
+                
+                // 篩選出點擊當天的所有排程
+                const dayEvents = localSchedules.filter(item => item.date === targetDate);
+                
+                const amEvents = dayEvents.filter(item => item.time === "上午");
+                const pmEvents = dayEvents.filter(item => item.time === "下午");
+
+                let amString = amEvents.length > 0 
+                    ? amEvents.map(e => `  - ${e.department} 的 ${e.worker_name}`).join('\n') 
+                    : "  (目前無排程)";
+                    
+                let pmString = pmEvents.length > 0 
+                    ? pmEvents.map(e => `  - ${e.department} 的 ${e.worker_name}`).join('\n') 
+                    : "  (目前無排程)";
+
+                alert(
+                    `📅 【 ${targetDate} 吊運排程總覽】\n` +
+                    `--------------------------\n` +
+                    `☀️ 上午\n` +
+                    `${amString}\n` +
+                    `--------------------------\n` +
+                    `🌙 下午場\n` +
+                    `${pmString}\n` +
+                    `--------------------------`
+                );
+            }
         });
         calendar.render();
 
+        // 表單送出處理
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
             
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerText = "正在同步至雲端...";
+            btn.innerText = "正在即時同步...";
 
             const dateValue = document.getElementById('date').value;
-            const timeValue = document.getElementById('time').value;
+            const timeValue = document.getElementById('timePeriod').value; // 上午或下午
             const deptValue = document.getElementById('department').value;
             const nameValue = document.getElementById('name').value;
 
-            // 完美的 4 大完善紀錄欄位打包 [cite: 149]
             const payload = {
                 date: dateValue,
                 time: timeValue,
@@ -105,7 +144,13 @@
             };
 
             try {
-                await addDoc(scheduleRef, payload);
+                // 🚀 核心升級：將 Document 檔名改為「日期_時間_隨機碼」，確保按時間順序排列且不相衝
+                const customDocName = `${dateValue}_${timeValue}_${nameValue}`;
+                const customDocRef = doc(db, "kldr", customDocName);
+                
+                // 使用 setDoc 指定檔案名稱寫入
+                await setDoc(customDocRef, payload);
+                
                 alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = '';
             } catch (error) {
@@ -117,16 +162,26 @@
             }
         };
 
+        // 監聽雲端資料並渲染成條列式色塊
         onSnapshot(scheduleRef, (snapshot) => {
             const events = [];
+            localSchedules = []; // 清空暫存
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 if (data.date && data.time && data.department) {
+                    // 存入暫存提供給點擊 Alert 使用
+                    localSchedules.push(data);
+
                     const colorConfig = deptColors[data.department] || { bg: "#34495e", border: "#2c3e50", text: "#ffffff" };
+                    
+                    // 為了讓行事曆排序正常，上午設在 09:00，下午設在 14:00
+                    const fakeTime = data.time === "上午" ? "09:00:00" : "14:00:00";
+
                     events.push({
                         id: doc.id,
-                        title: `${data.time} [${data.department}] ${data.worker_name}`,
-                        start: `${data.date}T${data.time}:00`,
+                        title: `[${data.time}] ${data.department}-${data.worker_name}`,
+                        start: `${data.date}T${fakeTime}`,
                         backgroundColor: colorConfig.bg,
                         borderColor: colorConfig.border,
                         textColor: colorConfig.text
