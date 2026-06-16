@@ -166,7 +166,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 維持您原本更新好的密碼結構
+        // 維持您設定好的密碼結構
         const GATE_PASSWORD  = "ase";      
         const ADMIN_PASSWORD = "K12438";          
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
@@ -206,7 +206,6 @@
                 document.getElementById('currentRole').className = "font-bold text-red-600";
                 document.getElementById('adminLoginArea').querySelector('input').style.display = "none";
                 document.getElementById('adminLoginBtn').style.display = "none";
-                // 亮出匯出報表按鈕
                 document.getElementById('exportExcelBtn').classList.remove('hidden');
                 alert("最高管理員驗證成功！現已解鎖一鍵刪除與 Excel 月報表匯出特權。");
             } else {
@@ -236,6 +235,27 @@
             }
         }
 
+        // 🚀 核心格式化轉換器：自動將 UTC 轉成乾淨的台灣在地時間 (YYYY-MM-DD HH:mm:ss)
+        function formatToTaiwanTime(isoString) {
+            if (!isoString) return "";
+            try {
+                const date = new Date(isoString);
+                // 檢查是否為無效時間
+                if (isNaN(date.getTime())) return isoString;
+                
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            } catch (e) {
+                return isoString; // 發生例外時保底傳回原字串
+            }
+        }
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -248,7 +268,6 @@
                     end: '2027-06-01'
                 },
                 
-                // 🚀 核心優化：點選日期跳出的 Alert，強制注入 16px 與微軟正黑體外觀排版
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -279,7 +298,6 @@
                     const confirmDelete = confirm(`👑 管理員特權確認：\n是否要將「${info.event.title}」這筆排程直接從雲端刪除清空？`);
                     if (confirmDelete) {
                         try {
-                            // 🚀 升級：向雲端發送刪除命令時，將管理員密碼（ADMIN_PASSWORD）作為標頭的一部分附帶過去
                             const docRef = doc(db, "kldr", info.event.id);
                             await setDoc(docRef, { request_delete_pass: ADMIN_PASSWORD }, { merge: true });
                             await deleteDoc(docRef);
@@ -317,26 +335,21 @@
                 calendar.setOption('events', events);
             });
 
-            // 🚀 升級：管理員特權「一鍵匯出 Excel 報表」核心邏輯
+            // 報表匯出 (修正時間格式版)
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
                 if(localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可以導出！");
                     return;
                 }
-                
-                // 建立 CSV 檔案格式內容（加上 BOM 確保 Excel 開啟不亂碼）
-                let csvContent = "\uFEFF日期,時段,部門/站點,負責人姓名,建立時間\n";
-                
-                // 按日期和時段對資料進行排序
+                let csvContent = "\uFEFF日期,時段,部門/站點,負責人姓名,建立時間(台灣時區)\n";
                 const sortedSchedules = [...localSchedules].sort((a, b) => {
                     return a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
                 });
-
                 sortedSchedules.forEach(item => {
-                    csvContent += `"${item.date}","${item.time}","${item.department}","${item.worker_name}","${item.created_at || ''}"\n`;
+                    // 🚀 呼叫轉換器，將建立時間優化為直覺的台灣排版
+                    const localTimeStr = formatToTaiwanTime(item.created_at);
+                    csvContent += `"${item.date}","${item.time}","${item.department}","${item.worker_name}","${localTimeStr}"\n`;
                 });
-
-                // 自動生成網頁下載水管
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -348,18 +361,29 @@
             });
         }
 
-        // 表單送出新增排程
+        // 表單送出新增排程 (具備嚴格攔截防呆盾牌)
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
+
+            const deptValue = document.getElementById('department').value;
+            if (!deptValue) {
+                alert("🚨 儲存失敗：請務必從下拉選單中「選取部門/站點」，欄位不可留白！");
+                return;
+            }
+
+            const nameValue = document.getElementById('name').value.trim();
+            if (nameValue.length === 0) {
+                alert("🚨 儲存失敗：請填入真正的「負責人姓名」，不可只輸入空格或留白！");
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.innerText = "正在即時同步...";
 
             const dateValue = document.getElementById('date').value;
             const timeValue = document.getElementById('timePeriod').value;
-            const deptValue = document.getElementById('department').value;
-            const nameValue = document.getElementById('name').value.trim();
 
             const payload = {
                 date: dateValue,
