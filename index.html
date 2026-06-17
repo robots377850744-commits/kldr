@@ -143,7 +143,7 @@
                 <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold transition">&times;</button>
             </div>
             <div id="modalBody" class="whitespace-pre-wrap font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
-                </div>
+            </div>
             <div class="mt-5 border-t border-zinc-100 pt-3 flex justify-between items-center">
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
@@ -257,12 +257,12 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD  = "ase";      
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
-        // 🔒 🚀 升級：定義三組分權管理特權密碼與站點對照
+        // 🔒 🚀 定義三組分權管理特權密碼與站點對照
         const ADMIN_PASSWORDS = {
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
@@ -284,6 +284,7 @@
 
         let globalEventsArray = []; 
         let localSchedules = [];
+        let isAdmin = false;       // 🚀 補齊：修復漏掉的變數定義
         let currentAdminDept = null; // 儲存當前被解鎖認證的站點身分
         let activeSelectedDocId = null; // 當前正在彈窗中查看的 Document ID
         let activeSelectedDocDept = null; // 當前正在彈窗中查看的站點類別
@@ -311,7 +312,7 @@
             }
         });
 
-        // 👑 🚀 升級：分權認證暗號引擎
+        // 👑 🚀 補齊：分權認證暗號點擊事件
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const input = document.getElementById('adminPassword').value.trim();
             
@@ -369,14 +370,6 @@
             }
         }
 
-        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
-        document.getElementById('resetFilterBtn').addEventListener('click', () => {
-            document.getElementById('filterFloor').value = "ALL";
-            document.getElementById('filterDept').value = "ALL";
-            applyLiveFilters();
-        });
-
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -424,7 +417,7 @@
                     document.getElementById('modalTitle').innerText = `📋 預約吊運詳細詳情`;
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
-                    // 👑 🚀 升級：智慧權限核對。只有在「解鎖管理身分」且「當前解鎖站點完全等於該排程站點」時，才亮出特權紅色刪除按鈕！
+                    // 👑 🚀 智慧權限核對。
                     if (currentAdminDept && currentAdminDept === activeSelectedDocDept) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                     } else {
@@ -436,7 +429,7 @@
             });
             calendar.render();
 
-            // 👑 🚀 升級：特權前端一鍵擦拭刪除機制（帶有反向密碼夾帶上傳）
+            // 👑 🚀 補齊：特權前端一鍵擦拭刪除按鈕監聽事件
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -445,9 +438,9 @@
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         
-                        // 反向將密碼作為驗證字段 update 寫入文檔中，供雲端 Rules 做安全核對
+                        // 反向將密碼作為驗證字段 update 寫入文檔中
                         await setDoc(docRef, { request_delete_pass: document.getElementById('adminPassword').value.trim() }, { merge: true });
-                        // 隨即進行刪除命令
+                        // 進行刪除命令
                         await deleteDoc(docRef);
                         
                         alert("🎉 特權刪除成功！該筆錯誤資料已即時自雲端移除清空。");
@@ -571,9 +564,9 @@
             };
 
             try {
-                // 👑 🚀 修正：將 Document 檔名後綴加入「站點」與「精準毫秒亂碼」，徹底解鎖同一個人同時預約的限制！
+                // 將 Document 檔名後綴加入「站點」與「隨機碼」
                 const uniqueId = Date.now() % 100000;
-                const safeDeptName = deptValue.replace('/', '-'); // 避開路徑斜線
+                const safeDeptName = deptValue.replace('/', '-'); 
                 const customDocName = `${dateValue}_${timeValue}_${floorValue}_${safeDeptName}_${nameValue}_${uniqueId}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 
