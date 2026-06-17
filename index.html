@@ -115,7 +115,7 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-2">🏗️ 內部系統限制存取</h2>
             <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖排程管理系統</p>
             <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
-            <button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button>
+            <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button></div>
             <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
         </div>
     </div>
@@ -153,11 +153,9 @@
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
                 <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
                     <option value="">-- 請選擇站點 --</option>
-                    <option value="站點A">站點A</option>
-                    <option value="站點B">站點B</option>
-                    <option value="站點C">站點C</option>
-                    <option value="製造部">製造部</option>
-                    <option value="噴漆組">噴漆組</option>
+                    <option value="BE/Recon">BE/Recon</option>
+                    <option value="RDL">RDL</option>
+                    <option value="FC">FC</option>
                 </select>
             </div>
             <div>
@@ -196,11 +194,9 @@
                     <label class="text-xs font-bold text-zinc-500">站點</label>
                     <select id="filterDept" class="bg-white border border-zinc-300 text-zinc-800 font-semibold rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 transition min-w-[110px]">
                         <option value="ALL">全部站點</option>
-                        <option value="站點A">站點A</option>
-                        <option value="站點B">站點B</option>
-                        <option value="站點C">站點C</option>
-                        <option value="製造部">製造部</option>
-                        <option value="噴漆組">噴漆組</option>
+                        <option value="BE/Recon">BE/Recon</option>
+                        <option value="RDL">RDL</option>
+                        <option value="FC">FC</option>
                     </select>
                 </div>
                 <button id="resetFilterBtn" class="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold text-xs px-3 py-1.5 rounded-lg transition border border-zinc-300">清除篩選</button>
@@ -285,13 +281,12 @@
             }
         });
 
+        // 🎨 大師高對比固定配色：精準綁定您的新站點
         function getDeptColor(deptName) {
             const fixedColors = {
-                "站點A": "#1d4ed8",  
-                "站點B": "#c2410c",  
-                "站點C": "#047857",  
-                "製造部": "#6d28d9", 
-                "噴漆組": "#be185d"  
+                "BE/Recon": "#1d4ed8",  // 經典深藍色
+                "RDL": "#c2410c",       // 工業亮橘色
+                "FC": "#047857"         // 產線翠綠色
             };
             if (fixedColors[deptName]) return fixedColors[deptName];
             let hash = 0;
@@ -311,7 +306,7 @@
             } catch (e) { return isoString; }
         }
 
-        // 核心即時過濾渲染引擎
+        // 即時過濾引擎
         function applyLiveFilters() {
             const selectedFloor = document.getElementById('filterFloor').value;
             const selectedDept = document.getElementById('filterDept').value;
@@ -341,7 +336,7 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
-                height: 'auto', /* 自動響應式適應高度 */
+                height: 'auto', 
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
@@ -353,7 +348,7 @@
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (currently無排程)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
                     alert(
                         `📅 【 ${targetDate} 吊運排程總覽 】\n` +
@@ -402,10 +397,10 @@
                         });
                     }
                 });
-                applyLiveFilters(); // 每次資料更新時，維持目前的篩選狀態
+                applyLiveFilters(); 
             });
 
-            // 匯出功能 (包含樓層欄位)
+            // 匯出功能 
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
                 if(localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可以導出！");
@@ -485,7 +480,7 @@
             };
 
             try {
-                // 檔名升級為包含樓層，排序邏輯更乾淨
+                // 檔名規格自動跟隨樓層優化
                 const customDocName = `${dateValue}_${timeValue}_${floorValue}_${nameValue}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 await setDoc(customDocRef, payload);
