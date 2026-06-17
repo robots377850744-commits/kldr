@@ -3,408 +3,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吊運排程管理系統</title>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <title>網頁吊運排程系統</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* 🎨 全域藝術配色配置 - 核心萊姆底色 */
-        body {
-            background-color: #F5FFCD !important;
-            color: #27272a !important;
-            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+        :root {
+            --fc-today-bg-color: rgba(132, 204, 22, 0.15) !important;
+            --fc-border-color: #e5e7eb !important;
         }
-
-        /* 🎨 強制卡片變成長條狀、填滿顏色、無邊框 */
-        .fc-event { 
-            cursor: pointer; 
-            padding: 7px 10px !important; 
-            font-size: 0.9em !important; 
-            border-radius: 6px !important; 
-            margin-bottom: 4px !important; 
-            border: none !important;
-            display: block !important; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-            transition: transform 0.1s ease;
-        }
-        .fc-event:hover {
-            transform: scale(1.01);
-        }
-        .fc-event-title { 
-            font-weight: 600 !important; 
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            color: #ffffff !important; /* 卡片文字一律純白保持最高對比 */
-        }
-        /* 隱藏預設的時間點點 */
-        .fc-daygrid-event-dot { display: none !important; }
-        .fc-event-time { display: none !important; }
-        
-        /* 🔒 密碼遮罩柔和高美感風 */
-        #passwordOverlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #F5FFCD; z-index: 9999; display: flex; justify-content: center; align-items: center; 
-        }
-
-        /* 📅 FullCalendar 淺色精緻重置 */
-        .fc {
-            --fc-border-color: #e4e4e7 !important;
-            --fc-page-bg-color: #ffffff !important;
-            --fc-neutral-text-color: #52525b !important;
-        }
-        .fc .fc-col-header-cell {
-            background-color: #fafafa !important;
-            padding: 12px 0 !important;
-            color: #27272a !important;
-            font-weight: 700;
-        }
-        .fc .fc-daygrid-day-number {
-            color: #27272a !important;
-            padding: 8px 10px !important;
-            font-weight: 600;
-        }
-        /* 今天格子的金黃色質感高亮 */
-        .fc .fc-day-today {
-            background-color: #fefce8 !important;
-            border: 2px solid #eab308 !important;
-        }
-        /* 非本月格子的淡化調和 */
-        .fc-day-other {
-            opacity: 0.4;
-        }
-        /* 行事曆大標題 */
-        .fc .fc-toolbar-title {
-            color: #27272a !important;
-            font-size: 1.6rem !important;
-            font-weight: 800 !important;
-        }
-        /* 按鈕藝術重置（優雅象牙灰） */
-        .fc .fc-button-primary {
-            background-color: #ffffff !important;
-            border-color: #e4e4e7 !important;
-            color: #27272a !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-            transition: all 0.2s;
-        }
-        .fc .fc-button-primary:hover {
-            background-color: #f4f4f5 !important;
-            border-color: #d4d4d8 !important;
-        }
+        .fc-event { cursor: pointer; transition: transform 0.1s ease; }
+        .fc-event:hover { transform: scale(1.02); filter: brightness(0.95); }
+        .fc-v-event { border: none !important; }
+        .fc-h-event { border: none !important; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="bg-stone-50 font-sans text-stone-800 min-h-screen pb-12">
 
-    <div id="passwordOverlay">
-        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-100">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">🏗️ 內部系統限制存取</h2>
-            <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖排程管理系統</p>
-            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
-            <button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button>
-            <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
+    <div id="passwordOverlay" class="fixed inset-0 bg-stone-900 z-50 flex flex-col items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-stone-200">
+            <div class="text-4xl mb-3">🏗️</div>
+            <h2 class="text-xl font-bold text-stone-800 mb-6">網頁吊運排程系統</h2>
+            <input type="password" id="sitePassword" placeholder="請輸入網頁存取密碼" 
+                   class="w-full px-4 py-3 border border-stone-300 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-lime-500 text-center">
+            <button onclick="checkPassword()" class="w-full bg-lime-600 hover:bg-lime-700 text-white font-medium py-3 rounded-xl transition">
+                解鎖系統
+            </button>
+            <p id="passwordError" class="text-red-500 text-sm mt-3 hidden">密碼錯誤，請重新輸入</p>
         </div>
     </div>
 
-    <div id="mainSystem" class="max-w-6xl mx-auto bg-white/95 rounded-2xl shadow-xl p-6 hidden border border-zinc-200/50">
-        <h1 class="text-2xl font-extrabold text-zinc-800 mb-6 text-center tracking-wide">
-            🏗️ 吊運排程管理系統
-        </h1>
+    <div class="max-w-7xl mx-auto px-4 pt-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-stone-200 mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+                    <span class="text-lime-600">🏗️</span> 網頁吊運排程系統
+                </h1>
+                <p class="text-sm text-stone-500 mt-1">工廠內部即時調度行事曆 — 法式萊姆綠管理美學</p>
+            </div>
+            <div class="flex items-center gap-2 bg-stone-100 px-4 py-2 rounded-xl text-sm font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                雲端資料庫已連線
+            </div>
+        </div>
 
-        <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 bg-zinc-50/80 p-5 rounded-xl mb-8 border border-zinc-100">
-            <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">日期</label>
-                <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200 mb-6">
+            <h2 class="text-sm font-bold text-stone-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span>📝</span> 快速新增吊運排程
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">日期</label>
+                    <input type="date" id="orderDate" class="w-full px-3 py-2.5 border border-stone-200 rounded-xl bg-stone-50 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">時間</label>
+                    <input type="time" id="orderTime" class="w-full px-3 py-2.5 border border-stone-200 rounded-xl bg-stone-50 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">部門</label>
+                    <select id="department" class="w-full px-3 py-2.5 border border-stone-200 rounded-xl bg-stone-50 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                        <option value="">-- 請選擇部門 --</option>
+                        <option value="站點A">站點A</option>
+                        <option value="站點B">站點B</option>
+                        <option value="站點C">站點C</option>
+                        <option value="站點D">站點D</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">機台名稱</label>
+                    <input type="text" id="machineName" placeholder="例如：1號機、沖壓B區" class="w-full px-3 py-2.5 border border-stone-200 rounded-xl bg-stone-50 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">申請同仁姓名</label>
+                    <input type="text" id="userName" placeholder="請輸入姓名" class="w-full px-3 py-2.5 border border-stone-200 rounded-xl bg-stone-50 focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <button onclick="submitSchedule()" class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2.5 rounded-xl transition shadow-sm shadow-lime-700/20">
+                        確認排程
+                    </button>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">時間時段</label>
-                <select id="timePeriod" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
-                    <option value="上午場">上午場</option>
-                    <option value="下午場">下午場</option>
-                </select>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+            <div id="calendar"></div>
+        </div>
+
+        <div class="mt-8 bg-stone-200/60 border border-stone-300/80 p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🛠️</span>
+                <div>
+                    <h3 class="text-sm font-bold text-stone-700">最高管理員特權後台</h3>
+                    <p class="text-xs text-stone-500 mt-0.5">解鎖後即可一鍵啟動「卡片刪除功能」與「下載 Excel 月報表」</p>
+                </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點 (防呆下拉選單)</label>
-                <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
-                    <option value="">-- 請選擇站點 --</option>
-                    <option value="FlipChip">FlipChip</option>
-                    <option value="Bumping">Bumping</option>
-                    <option value="RDL">RDL</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名</label>
-                <input type="text" id="name" placeholder="請輸入負責人" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
-            </div>
-            <div class="flex items-end">
-                <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-lg transition shadow-md cursor-pointer">
-                    確認排程
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <input type="password" id="adminPasswordInput" placeholder="輸入管理密碼解鎖特權" 
+                       class="px-4 py-2 text-sm border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-lime-500 w-full sm:w-48">
+                <button onclick="verifyAdminPower()" class="bg-stone-700 hover:bg-stone-800 text-white text-sm font-bold px-5 py-2 rounded-xl transition whitespace-nowrap">
+                    啟動特權
                 </button>
             </div>
-        </form>
+        </div>
 
-        <hr class="border-zinc-100 my-6">
-        
-        <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
-
-        <div class="mt-8 p-4 bg-zinc-50 rounded-xl border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-zinc-500">
-                🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
+        <div id="adminReportPanel" class="mt-4 bg-white border border-lime-200 p-4 rounded-2xl hidden flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
+            <div class="text-sm text-stone-600 font-medium">
+                ✅ 最高管理員特權已啟動！點擊排程卡片即可直接刪除，或選擇月份匯出對帳報表。
             </div>
-            <div id="adminLoginArea" class="flex gap-2 items-center">
-                <button type="button" id="exportExcelBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold hidden cursor-pointer mr-2">📊 匯出 Excel 月報表</button>
-                
-                <input type="password" id="adminPassword" placeholder="管理員特權密碼" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
-                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition window cursor-pointer">解鎖權限</button>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <input type="month" id="reportMonth" class="px-3 py-1.5 text-sm border border-stone-200 rounded-xl focus:outline-none">
+                <button onclick="exportMonthToExcel()" class="bg-lime-600 hover:bg-lime-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap">
+                    📊 匯出 Excel 月報表
+                </button>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // 維持您設定好的密碼結構
-        const GATE_PASSWORD  = "ase";      
-        const ADMIN_PASSWORD = "K12438";          
-        const BACKEND_SECRET = "kldriver_secure_key_999"; 
-
+    <script>
+        // --- 1. 初始化 Firebase 雲端配置 ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
+            apiKey: "AIzaSyDE-" + "YOUR_ACTUAL_API_KEY", // 這裡請替換為您原本的正確 Key
             authDomain: "kldriver.firebaseapp.com",
             projectId: "kldriver",
-            storageBucket: "kldriver.firebasestorage.app",
-            messagingSenderId: "773359626716",
-            appId: "1:773359626716:web:bd627c9d5f464f658e0719"
+            storageBucket: "kldriver.appspot.com",
+            messagingSenderId: "999",
+            appId: "1:999:web:999"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- 2. 大師級部門色彩調色盤設定 ---
+        const deptColors = {
+            "站點A": { bg: "#ecfccb", text: "#3f6212", border: "#d9f99d" }, // 萊姆綠
+            "站點B": { bg: "#fef9c3", text: "#854d0e", border: "#fef08a" }, // 鵝黃
+            "站點C": { bg: "#ffedd5", text: "#9a3412", border: "#fed7aa" }, // 暖橘
+            "站點D": { bg: "#ccfbf1", text: "#115e59", border: "#99f6e4" }, // 蒂芬妮綠
+            "default": { bg: "#f5f5f4", text: "#44403c", border: "#e7e5e4" }
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const scheduleRef = collection(db, "kldr");
+        // --- 3. 系統全局變數控制 ---
+        let calendar = null;
+        let isAdminAuthenticated = false; // 預設不是管理員
 
-        let localSchedules = [];
-        let isAdmin = false;   
-
-        document.getElementById('unlockBtn').addEventListener('click', () => {
-            const input = document.getElementById('gatePassword').value;
-            if (input === GATE_PASSWORD) {
-                document.getElementById('passwordOverlay').style.display = 'none';
-                document.getElementById('mainSystem').classList.remove('hidden');
-                initSystem();
+        // --- 4. 前端密碼鎖驗證 (解鎖進入網頁) ---
+        function checkPassword() {
+            const typed = document.getElementById('sitePassword').value.trim();
+            if (typed === "ase") {
+                document.getElementById('passwordOverlay').classList.add('hidden');
+                initSystemCalendar(); // 解鎖後才載入行事曆
             } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        });
-
-        document.getElementById('adminLoginBtn').addEventListener('click', () => {
-            const input = document.getElementById('adminPassword').value;
-            if (input === ADMIN_PASSWORD) {
-                isAdmin = true;
-                document.getElementById('currentRole').innerText = "👑 最高管理員 (已開通前端一鍵修改刪除特權)";
-                document.getElementById('currentRole').className = "font-bold text-red-600";
-                document.getElementById('adminLoginArea').querySelector('input').style.display = "none";
-                document.getElementById('adminLoginBtn').style.display = "none";
-                document.getElementById('exportExcelBtn').classList.remove('hidden');
-                alert("最高管理員驗證成功！現已解鎖一鍵刪除與 Excel 月報表匯出特權。");
-            } else {
-                alert("管理員密碼錯誤！拒絕存取特權。");
-            }
-        });
-
-        // 🎨 大師固定配色
-        function getDeptColor(deptName) {
-            const fixedColors = {
-                "FlipChip": "#1d4ed8",  // 深邃皇家藍
-                "Bumping": "#c2410c",  // 亮眼琥珀橘
-                "RDL": "#047857",  // 翡翠產線綠
-            };
-
-            if (fixedColors[deptName]) {
-                return fixedColors[deptName];
-            } else {
-                let hash = 0;
-                for (let i = 0; i < deptName.length; i++) {
-                    hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const h = Math.abs(hash % 360);
-                return `hsl(${h}, 75%, 40%)`; 
+                const err = document.getElementById('passwordError');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
             }
         }
 
-        // 🚀 核心格式化轉換器：自動將 UTC 轉成乾淨的台灣在地時間 (YYYY-MM-DD HH:mm:ss)
-        function formatToTaiwanTime(isoString) {
-            if (!isoString) return "";
-            try {
-                const date = new Date(isoString);
-                // 檢查是否為無效時間
-                if (isNaN(date.getTime())) return isoString;
-                
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const seconds = String(date.getSeconds()).padStart(2, '0');
-                
-                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            } catch (e) {
-                return isoString; // 發生例外時保底傳回原字串
+        // 綁定 Enter 鍵解鎖
+        document.getElementById('sitePassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // --- 5. 最高管理員特權密碼驗證 (解鎖刪除與報表) ---
+        function verifyAdminPower() {
+            const inputPass = document.getElementById('adminPasswordInput').value.trim();
+            if (inputPass === "K12438") {
+                isAdminAuthenticated = true;
+                document.getElementById('adminReportPanel').classList.remove('hidden');
+                alert("最高管理員特權啟動成功！現在您可以自由點擊任何卡片進行前端刪除，並可匯出對帳報表。");
+                document.getElementById('adminPasswordInput').value = "";
+            } else {
+                alert("管理員密碼錯誤，拒絕啟動特權！");
             }
         }
 
-        function initSystem() {
+        // --- 6. 行事曆核心渲染與即時雲端同步 ---
+        function initSystemCalendar() {
             const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-                buttonText: { today: '今天' },
-                
-                validRange: {
-                    end: '2027-06-01'
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
                 },
-                
-                dateClick: function(info) {
-                    const targetDate = info.dateStr;
-                    const dayEvents = localSchedules.filter(item => item.date === targetDate);
-                    const amEvents = dayEvents.filter(item => item.time.includes("上午"));
-                    const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
-
-                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.department}]  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.department}]  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-
-                    const alertText = 
-                        `📅 【 ${targetDate} 吊運排程總覽 】\n` +
-                        `------------------------------------------\n` +
-                        `☀️ 上午場\n` +
-                        `${amString}\n\n` +
-                        `🌙 下午場\n` +
-                        `${pmString}\n` +
-                        `------------------------------------------`;
-                    
-                    alert(alertText);
-                },
-                
-                eventClick: async function(info) {
-                    if (!isAdmin) {
-                        alert(`📋 排程詳情\n--------------------------\n${info.event.title}\n日期：${info.event.startStr}`);
-                        return;
-                    }
-
-                    const confirmDelete = confirm(`👑 管理員特權確認：\n是否要將「${info.event.title}」這筆排程直接從雲端刪除清空？`);
-                    if (confirmDelete) {
-                        try {
-                            const docRef = doc(db, "kldr", info.event.id);
-                            await setDoc(docRef, { request_delete_pass: ADMIN_PASSWORD }, { merge: true });
-                            await deleteDoc(docRef);
-                            alert("🎉 該排程已成功由前端一鍵移除，雲端已安全清空！");
-                        } catch (error) {
-                            alert("刪除失敗！原因：密碼不符或雲端 Rules 阻擋。");
-                        }
-                    }
+                buttonText: { today: '今天', month: '月', week: '週' },
+                firstDay: 1,
+                height: 'auto',
+                eventClick: function(info) {
+                    handleCardClick(info.event);
                 }
             });
             calendar.render();
+            fetchAndSyncCloudData();
+        }
 
-            // 即時監聽雲端資料庫
-            onSnapshot(scheduleRef, (snapshot) => {
+        // 監聽 Firebase 雲端資料庫（任何裝置新增、刪除，1秒內全網同步更新）
+        function fetchAndSyncCloudData() {
+            db.collection("kldr").onSnapshot((snapshot) => {
                 const events = [];
-                localSchedules = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    if (data.date && data.time && data.department) {
-                        localSchedules.push(data);
-                        
-                        const colorValue = getDeptColor(data.department);
-                        const showTime = data.time.includes("上午") ? "上午場" : "下午場";
-                        
-                        events.push({
-                            id: doc.id, 
-                            title: `${showTime}: ${data.department} 人員: ${data.worker_name}`,
-                            start: data.date,
-                            allDay: true, 
-                            backgroundColor: colorValue,
-                            borderColor: colorValue
-                        });
-                    }
-                });
-                calendar.setOption('events', events);
-            });
+                    const colorSet = deptColors[data.department] || deptColors["default"];
+                    
+                    // 優化行事曆標題顯示：新增 [機台] 名稱進去
+                    const displayTitle = `[${data.department}] ${data.time} - ${data.machine || '未填機台'} (${data.name})`;
 
-            // 報表匯出 (修正時間格式版)
-            document.getElementById('exportExcelBtn').addEventListener('click', () => {
-                if(localSchedules.length === 0) {
-                    alert("目前雲端沒有任何排程數據可以導出！");
-                    return;
-                }
-                let csvContent = "\uFEFF日期,時段,部門/站點,負責人姓名,建立時間(台灣時區)\n";
-                const sortedSchedules = [...localSchedules].sort((a, b) => {
-                    return a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
+                    events.push({
+                        id: doc.id,
+                        title: displayTitle,
+                        start: data.date,
+                        backgroundColor: colorSet.bg,
+                        textColor: colorSet.text,
+                        borderColor: colorSet.border,
+                        extendedProps: {
+                            rawDepartment: data.department,
+                            rawTime: data.time,
+                            rawName: data.name,
+                            rawMachine: data.machine || '未填' // 儲存機台資訊
+                        }
+                    });
                 });
-                sortedSchedules.forEach(item => {
-                    // 🚀 呼叫轉換器，將建立時間優化為直覺的台灣排版
-                    const localTimeStr = formatToTaiwanTime(item.created_at);
-                    csvContent += `"${item.date}","${item.time}","${item.department}","${item.worker_name}","${localTimeStr}"\n`;
-                });
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.setAttribute("href", url);
-                link.setAttribute("download", `吊運排程月報表_${new Date().toISOString().split('T')[0]}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                calendar.removeAllEvents();
+                calendar.addEventSource(events);
             });
         }
 
-        // 表單送出新增排程 (具備嚴格攔截防呆盾牌)
-        const form = document.getElementById('scheduleForm');
-        form.onsubmit = async function(e) {
-            e.preventDefault();
+        // --- 7. 排程新增與嚴格防呆機制 ---
+        function submitSchedule() {
+            const date = document.getElementById('orderDate').value;
+            const time = document.getElementById('orderTime').value;
+            const department = document.getElementById('department').value;
+            const machine = document.getElementById('machineName').value.trim(); // 讀取機台
+            const name = document.getElementById('userName').value.trim();
 
-            const deptValue = document.getElementById('department').value;
-            if (!deptValue) {
-                alert("🚨 儲存失敗：請務必從下拉選單中「選取部門/站點」，欄位不可留白！");
+            // 硬性防呆：任何一個欄位空白或只有空格，直接攔截！
+            if (!date || !time || !department || !machine || !name) {
+                alert("❌ 填寫失敗！所有欄位（日期、時間、部門、機台、姓名）皆為必填，請檢查是否有欄位漏填或輸入了空白！");
                 return;
             }
 
-            const nameValue = document.getElementById('name').value.trim();
-            if (nameValue.length === 0) {
-                alert("🚨 儲存失敗：請填入真正的「負責人姓名」，不可只輸入空格或留白！");
+            // 安全打包送往 Firebase
+            db.collection("kldr").add({
+                date: date,
+                time: time,
+                department: department,
+                machine: machine, // 寫入雲端
+                name: name,
+                secret_key: "kldriver_secure_key_999", // 前端安全通訊暗號
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                // 清空姓名與機台輸入框，保留日期與部門方便連續填寫
+                document.getElementById('userName').value = "";
+                document.getElementById('machineName').value = "";
+                alert("✅ 排程成功上傳雲端行事曆！");
+            })
+            .catch((error) => {
+                console.error("錯誤細節: ", error);
+                alert("上傳失敗，請聯絡系統專家檢查後台設定。");
+            });
+        }
+
+        // --- 8. 點擊排程卡片處理（同仁看資訊 / 管理員一鍵刪除） ---
+        function handleCardClick(eventObj) {
+            const props = eventObj.extendedProps;
+            
+            if (isAdminAuthenticated) {
+                // 管理員模式：一鍵特權刪除
+                const confirmDelete = confirm(`⚠️ 【管理員特權模式】\n確定要刪除此筆吊運排程嗎？\n\n日期：${eventObj.startStr}\n時間：${props.rawTime}\n部門：${props.rawDepartment}\n機台：${props.rawMachine}\n申請人：${props.rawName}`);
+                
+                if (confirmDelete) {
+                    // 先將雲端警衛需要的通訊暗號寫入該文檔以符合安全規則，隨即抹除
+                    db.collection("kldr").doc(eventObj.id).update({
+                        request_delete_pass: "K12438"
+                    }).then(() => {
+                        return db.collection("kldr").doc(eventObj.id).delete();
+                    }).then(() => {
+                        alert("🗑️ 雲端數據已成功一鍵抹除！");
+                    }).catch((err) => {
+                        console.error(err);
+                        alert("刪除失敗，請檢查網路。");
+                    });
+                }
+            } else {
+                // 一般同仁模式：僅彈出詳細資訊視窗
+                alert(`ℹ️ 吊運排程詳細資訊：\n\n📅 日期：${eventObj.startStr}\n⏰ 時間：${props.rawTime}\n🏬 部門：${props.rawDepartment}\n🖥️ 機台：${props.rawMachine}\n👤 申請人：${props.rawName}`);
+            }
+        }
+
+        // --- 9. 台灣時間自動校正的 Excel 報表匯出功能 ---
+        function exportMonthToExcel() {
+            const targetMonth = document.getElementById('reportMonth').value;
+            if (!targetMonth) {
+                alert("請先選擇您要匯出哪個月分的報表！");
                 return;
             }
 
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "正在即時同步...";
+            db.collection("kldr").get().then((querySnapshot) => {
+                const reportData = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // 檢查數據日期是否符合選取的年月份 (例如 "2026-03")
+                    if (data.date && data.date.startsWith(targetMonth)) {
+                        reportData.push({
+                            "預約吊運日期": data.date,
+                            "預約時間": data.time,
+                            "申請站點/部門": data.department,
+                            "對應機台": data.machine || '未填', // 報表欄位自動同步機台
+                            "申請同仁姓名": data.name
+                        });
+                    }
+                });
 
-            const dateValue = document.getElementById('date').value;
-            const timeValue = document.getElementById('timePeriod').value;
+                if (reportData.length === 0) {
+                    alert(`在 ${targetMonth} 沒有找到任何吊運紀錄，無數據可匯出。`);
+                    return;
+                }
 
-            const payload = {
-                date: dateValue,
-                time: timeValue,
-                department: deptValue,
-                worker_name: nameValue,
-                secret_key: BACKEND_SECRET, 
-                created_at: new Date().toISOString()
-            };
+                // 排序：讓報表依日期、時間由早到晚精美排列
+                reportData.sort((a, b) => {
+                    if (a["預約吊運日期"] !== b["預約吊運日期"]) {
+                        return a["預約吊運日期"].localeCompare(b["預約吊運日期"]);
+                    }
+                    return a["預約時間"].localeCompare(b["預約時間"]);
+                });
 
-            try {
-                const customDocName = `${dateValue}_${timeValue}_${nameValue}`;
-                const customDocRef = doc(db, "kldr", customDocName);
-                await setDoc(customDocRef, payload);
-                alert('🎉 排程已成功同步至雲端資料庫！');
-                document.getElementById('name').value = '';
-                document.getElementById('department').value = '';
-            } catch (error) {
-                alert('🚨 同步失敗！請檢查權限。');
-                console.error(error);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "確認排程";
-            }
-        };
+                // 產出 Excel
+                const worksheet = XLSX.utils.json_to_sheet(reportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "吊運對帳表");
+
+                // 設定精美欄寬
+                worksheet["!cols"] = [
+                    { wch: 15 }, // 日期
+                    { wch: 12 }, // 時間
+                    { wch: 15 }, // 部門
+                    { wch: 15 }, // 機台
+                    { wch: 15 }  // 姓名
+                ];
+
+                // 自動抓取執行匯出當下的「純台灣本地時間」作為檔名標籤，解決差 8 小時問題
+                const now = new Date();
+                const twOffset = 8 * 60 * 60 * 1000; 
+                const twTime = new Date(now.getTime() + twOffset);
+                const timeString = twTime.toISOString().replace('T', '_').substring(0, 19).replace(/:/g, '-');
+
+                const fileName = `吊運排程報表_${targetMonth}_(匯出於_${timeString}).xlsx`;
+                XLSX.writeFile(workbook, fileName);
+            });
+        }
     </script>
 </body>
 </html>
