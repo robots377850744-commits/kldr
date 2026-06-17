@@ -132,11 +132,9 @@
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點 (防呆下拉選單)</label>
                 <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
                     <option value="">-- 請選擇站點 --</option>
-                    <option value="站點A">站點A</option>
-                    <option value="站點B">站點B</option>
-                    <option value="站點C">站點C</option>
-                    <option value="製造部">製造部</option>
-                    <option value="噴漆組">噴漆組</option>
+                    <option value="BE/Recon">BE/Recon</option>
+                    <option value="RDL">RDL</option>
+                    <option value="FC">FC</option>
                 </select>
             </div>
             <div>
@@ -231,11 +229,9 @@
 
         function getDeptColor(deptName) {
             const fixedColors = {
-                "站點A": "#1d4ed8",  
-                "站點B": "#c2410c",  
-                "站點C": "#047857",  
-                "製造部": "#6d28d9", 
-                "噴漆組": "#be185d"  
+                "BE/Recon": "#1d4ed8",  
+                "RDL": "#c2410c",  
+                "FC": "#047857",  
             };
 
             if (fixedColors[deptName]) {
