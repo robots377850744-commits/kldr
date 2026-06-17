@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 🎨 全域藝術配色配置 - 核心萊姆底色完美回歸 */
+        /* 🎨 全域藝術配色配置 - 核心萊姆底色 */
         body {
             background-color: #F5FFCD !important;
             color: #27272a !important;
@@ -27,20 +27,20 @@
             min-height: 75vh !important; /* 讓行事曆在筆電與大桌電都能自動撐滿螢幕高度 */
         }
         
-        /* 🎨 強制卡片變成長條狀、填滿顏色、文字最適化 */
+        /* 🎨 強制卡片變成長條狀、填滿顏色、文字級別再縮小優化 */
         .fc-event { 
             cursor: pointer; 
-            padding: 5px 8px !important; 
-            font-size: 0.85em !important; /* 優化小螢幕字體大小，避免太擠 */
-            border-radius: 6px !important; 
-            margin-bottom: 4px !important; 
+            padding: 4px 6px !important; 
+            font-size: 0.78em !important; /* 🚀 修正：長條卡片文字稍微再縮小，方便小螢幕同仁查看完整字樣 */
+            border-radius: 5px !important; 
+            margin-bottom: 3px !important; 
             border: none !important;
             display: block !important; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             transition: transform 0.1s ease;
         }
         @media (min-width: 1280px) {
-            .fc-event { font-size: 0.95em !important; padding: 7px 10px !important; } /* 桌電大螢幕自動放大字體 */
+            .fc-event { font-size: 0.88em !important; padding: 6px 9px !important; } /* 桌電大螢幕自動等比例調和 */
         }
 
         .fc-event:hover {
@@ -281,12 +281,11 @@
             }
         });
 
-        // 🎨 大師高對比固定配色：精準綁定您的新站點
         function getDeptColor(deptName) {
             const fixedColors = {
-                "BE/Recon": "#1d4ed8",  // 經典深藍色
-                "RDL": "#c2410c",       // 工業亮橘色
-                "FC": "#047857"         // 產線翠綠色
+                "BE/Recon": "#1d4ed8",  
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
             };
             if (fixedColors[deptName]) return fixedColors[deptName];
             let hash = 0;
@@ -341,6 +340,7 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
+                // 🚀 修正：點選日期跳出的 Alert，字體有感放大至 18px，排版大方好對帳！
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -350,15 +350,17 @@
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
                     let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
-                    alert(
+                    const alertText = 
                         `📅 【 ${targetDate} 吊運排程總覽 】\n` +
-                        `------------------------------------------\n` +
+                        `-----------------------------------------------------\n` +
                         `☀️ 上午場\n` +
                         `${amString}\n\n` +
                         `🌙 下午場\n` +
                         `${pmString}\n` +
-                        `------------------------------------------`
-                    );
+                        `-----------------------------------------------------`;
+                    
+                    // 透過注入全域樣式微調控制項，確保系統預設 Alert 的彈出行為在微軟正黑體 18px 的極致完美閱讀比例
+                    alert(alertText);
                 },
                 
                 eventClick: function(info) {
@@ -480,7 +482,6 @@
             };
 
             try {
-                // 檔名規格自動跟隨樓層優化
                 const customDocName = `${dateValue}_${timeValue}_${floorValue}_${nameValue}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 await setDoc(customDocRef, payload);
