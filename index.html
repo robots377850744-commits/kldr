@@ -19,11 +19,19 @@
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
         }
 
-        /* 🎨 強制卡片變成長條狀、填滿顏色、無邊框 */
+        /* 📅 FullCalendar 螢幕自適應優化與縮放調整 */
+        .fc {
+            --fc-border-color: #e4e4e7 !important;
+            --fc-page-bg-color: #ffffff !important;
+            --fc-neutral-text-color: #52525b !important;
+            min-height: 75vh !important; /* 讓行事曆在筆電與大桌電都能自動撐滿螢幕高度 */
+        }
+        
+        /* 🎨 強制卡片變成長條狀、填滿顏色、文字最適化 */
         .fc-event { 
             cursor: pointer; 
-            padding: 7px 10px !important; 
-            font-size: 0.9em !important; 
+            padding: 5px 8px !important; 
+            font-size: 0.85em !important; /* 優化小螢幕字體大小，避免太擠 */
             border-radius: 6px !important; 
             margin-bottom: 4px !important; 
             border: none !important;
@@ -31,6 +39,10 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             transition: transform 0.1s ease;
         }
+        @media (min-width: 1280px) {
+            .fc-event { font-size: 0.95em !important; padding: 7px 10px !important; } /* 桌電大螢幕自動放大字體 */
+        }
+
         .fc-event:hover {
             transform: scale(1.01);
         }
@@ -39,24 +51,18 @@
             text-overflow: ellipsis; 
             white-space: nowrap; 
             overflow: hidden; 
-            color: #ffffff !important; /* 卡片文字一律純白保持最高對比 */
+            color: #ffffff !important; 
         }
         /* 隱藏預設的時間點點 */
         .fc-daygrid-event-dot { display: none !important; }
         .fc-event-time { display: none !important; }
         
-        /* 🔒 密碼遮罩柔和高美感風 */
+        /* 🔒 密碼遮罩 */
         #passwordOverlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #F5FFCD; z-index: 9999; display: flex; justify-content: center; align-items: center; 
         }
 
-        /* 📅 FullCalendar 淺色精緻重置 */
-        .fc {
-            --fc-border-color: #e4e4e7 !important;
-            --fc-page-bg-color: #ffffff !important;
-            --fc-neutral-text-color: #52525b !important;
-        }
         .fc .fc-col-header-cell {
             background-color: #fafafa !important;
             padding: 12px 0 !important;
@@ -65,7 +71,7 @@
         }
         .fc .fc-daygrid-day-number {
             color: #27272a !important;
-            padding: 8px 10px !important;
+            padding: 6px 8px !important;
             font-weight: 600;
         }
         /* 今天格子的金黃色質感高亮 */
@@ -80,10 +86,13 @@
         /* 行事曆大標題 */
         .fc .fc-toolbar-title {
             color: #27272a !important;
-            font-size: 1.6rem !important;
+            font-size: 1.4rem !important;
             font-weight: 800 !important;
         }
-        /* 按鈕藝術重置（優雅象牙灰） */
+        @media (min-width: 768px) {
+            .fc .fc-toolbar-title { font-size: 1.7rem !important; }
+        }
+        /* 按鈕藝術重置 */
         .fc .fc-button-primary {
             background-color: #ffffff !important;
             border-color: #e4e4e7 !important;
@@ -99,7 +108,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-3 md:p-6 lg:p-8">
 
     <div id="passwordOverlay">
         <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-100">
@@ -111,12 +120,12 @@
         </div>
     </div>
 
-    <div id="mainSystem" class="max-w-6xl mx-auto bg-white/95 rounded-2xl shadow-xl p-6 hidden border border-zinc-200/50">
+    <div id="mainSystem" class="max-w-[1600px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
         <h1 class="text-2xl font-extrabold text-zinc-800 mb-6 text-center tracking-wide">
             🏗️ 吊運排程管理系統
         </h1>
 
-        <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-6 gap-4 bg-zinc-50/80 p-5 rounded-xl mb-8 border border-zinc-100">
+        <form id="scheduleForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 bg-zinc-50/80 p-5 rounded-xl mb-6 border border-zinc-100">
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">日期</label>
                 <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
@@ -129,17 +138,31 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點 (防呆下拉選單)</label>
+                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">樓層</label>
+                <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+                    <option value="">-- 請選擇樓層 --</option>
+                    <option value="1F">1F</option>
+                    <option value="2F">2F</option>
+                    <option value="3F">3F</option>
+                    <option value="4F">4F</option>
+                    <option value="5F">5F</option>
+                    <option value="6F">6F</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
                 <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
                     <option value="">-- 請選擇站點 --</option>
-                    <option value="BE/Recon">BE/Recon</option>
-                    <option value="RDL">RDL</option>
-                    <option value="FC">FC</option>
+                    <option value="站點A">站點A</option>
+                    <option value="站點B">站點B</option>
+                    <option value="站點C">站點C</option>
+                    <option value="製造部">製造部</option>
+                    <option value="噴漆組">噴漆組</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                <input type="text" id="machine" placeholder="例如：1號機、機台B" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+                <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名</label>
@@ -152,11 +175,44 @@
             </div>
         </form>
 
-        <hr class="border-zinc-100 my-6">
+        <div class="bg-zinc-100/80 border border-zinc-200 p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-4 items-center">
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-sm font-black text-zinc-700 tracking-wider">🔍 看板即時篩選：</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:flex-row items-center">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-zinc-500">樓層</label>
+                    <select id="filterFloor" class="bg-white border border-zinc-300 text-zinc-800 font-semibold rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 transition min-w-[110px]">
+                        <option value="ALL">全部樓層</option>
+                        <option value="1F">1F</option>
+                        <option value="2F">2F</option>
+                        <option value="3F">3F</option>
+                        <option value="4F">4F</option>
+                        <option value="5F">5F</option>
+                        <option value="6F">6F</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-zinc-500">站點</label>
+                    <select id="filterDept" class="bg-white border border-zinc-300 text-zinc-800 font-semibold rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 transition min-w-[110px]">
+                        <option value="ALL">全部站點</option>
+                        <option value="站點A">站點A</option>
+                        <option value="站點B">站點B</option>
+                        <option value="站點C">站點C</option>
+                        <option value="製造部">製造部</option>
+                        <option value="噴漆組">噴漆組</option>
+                    </select>
+                </div>
+                <button id="resetFilterBtn" class="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold text-xs px-3 py-1.5 rounded-lg transition border border-zinc-300">清除篩選</button>
+            </div>
+            <div class="text-xs text-zinc-400 sm:ml-auto text-center sm:text-right">
+                💡 篩選僅影響您的畫面，不影響雲端資料庫。
+            </div>
+        </div>
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <div class="mt-8 p-4 bg-zinc-50 rounded-xl border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="mt-6 p-4 bg-zinc-50 rounded-xl border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm text-zinc-500">
                 🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
             </div>
@@ -193,10 +249,12 @@
         const db = getFirestore(app);
         const scheduleRef = collection(db, "kldr");
 
+        let globalEventsArray = []; 
         let localSchedules = [];
         let isAdmin = false;   
+        let calendar; 
 
-        // 自動將月份選擇器初始化為當下年月 (YYYY-MM)
+        // 月份選擇器初始化
         const now = new Date();
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
@@ -229,21 +287,19 @@
 
         function getDeptColor(deptName) {
             const fixedColors = {
-                "BE/Recon": "#1d4ed8",  
-                "RDL": "#c2410c",  
-                "FC": "#047857",  
+                "站點A": "#1d4ed8",  
+                "站點B": "#c2410c",  
+                "站點C": "#047857",  
+                "製造部": "#6d28d9", 
+                "噴漆組": "#be185d"  
             };
-
-            if (fixedColors[deptName]) {
-                return fixedColors[deptName];
-            } else {
-                let hash = 0;
-                for (let i = 0; i < deptName.length; i++) {
-                    hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const h = Math.abs(hash % 360);
-                return `hsl(${h}, 75%, 40%)`; 
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            let hash = 0;
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
             }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
         }
 
         function formatToTaiwanTime(isoString) {
@@ -251,31 +307,44 @@
             try {
                 const date = new Date(isoString);
                 if (isNaN(date.getTime())) return isoString;
-                
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const seconds = String(date.getSeconds()).padStart(2, '0');
-                
-                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            } catch (e) {
-                return isoString;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+            } catch (e) { return isoString; }
+        }
+
+        // 核心即時過濾渲染引擎
+        function applyLiveFilters() {
+            const selectedFloor = document.getElementById('filterFloor').value;
+            const selectedDept = document.getElementById('filterDept').value;
+
+            const filteredEvents = globalEventsArray.filter(evt => {
+                const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
+                const matchDept = (selectedDept === "ALL") || (evt.extendedProps.department === selectedDept);
+                return matchFloor && matchDept;
+            });
+
+            if (calendar) {
+                calendar.setOption('events', filteredEvents);
             }
         }
 
+        // 篩選監聽器
+        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            document.getElementById('filterFloor').value = "ALL";
+            document.getElementById('filterDept').value = "ALL";
+            applyLiveFilters();
+        });
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'zh-tw',
+                height: 'auto', /* 自動響應式適應高度 */
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' },
-                
-                validRange: {
-                    end: '2027-06-01'
-                },
+                validRange: { end: '2027-06-01' },
                 
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
@@ -283,30 +352,29 @@
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
-                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (currently無排程)";
 
-                    const alertText = 
+                    alert(
                         `📅 【 ${targetDate} 吊運排程總覽 】\n` +
                         `------------------------------------------\n` +
                         `☀️ 上午場\n` +
                         `${amString}\n\n` +
                         `🌙 下午場\n` +
                         `${pmString}\n` +
-                        `------------------------------------------`;
-                    
-                    alert(alertText);
+                        `------------------------------------------`
+                    );
                 },
                 
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
-                    alert(`📋 預約吊運排程詳細詳情\n--------------------------\n時段：${info.event.title}\n日期：${info.event.startStr}\n機台：${props.machine || '未填'}`);
+                    alert(`📋 預約吊運排程詳細詳情\n--------------------------\n時段：${props.timePeriod || '未填'}\n日期：${info.event.startStr}\n樓層：${props.floor || '未填'}\n站點：${props.department || '未填'}\n機台：${props.machine || '未填'}\n人員：${props.worker_name || '未填'}`);
                 }
             });
             calendar.render();
 
             onSnapshot(scheduleRef, (snapshot) => {
-                const events = [];
+                globalEventsArray = [];
                 localSchedules = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
@@ -314,53 +382,52 @@
                         localSchedules.push(data);
                         
                         const colorValue = getDeptColor(data.department);
-                        const showTime = data.time.includes("上午") ? "上午場" : "下午場";
+                        const showTime = data.time.includes("上午") ? "上午" : "下午";
+                        const floorPrefix = data.floor ? `[${data.floor}]` : "";
                         
-                        events.push({
+                        globalEventsArray.push({
                             id: doc.id, 
-                            title: `${showTime}: ${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
+                            title: `${showTime}: ${floorPrefix}${data.department} (${data.machine || '未填'})`, 
                             start: data.date,
                             allDay: true, 
                             backgroundColor: colorValue,
                             borderColor: colorValue,
                             extendedProps: {
-                                machine: data.machine
+                                floor: data.floor || "",
+                                department: data.department,
+                                machine: data.machine,
+                                timePeriod: data.time,
+                                worker_name: data.worker_name
                             }
                         });
                     }
                 });
-                calendar.setOption('events', events);
+                applyLiveFilters(); // 每次資料更新時，維持目前的篩選狀態
             });
 
-            // 匯出功能加入「純前端月份篩選限制」，100%不傷及歷史舊數據
+            // 匯出功能 (包含樓層欄位)
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
                 if(localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可以導出！");
                     return;
                 }
-
-                const selectedMonth = document.getElementById('exportMonthFilter').value; // 格式如 "2026-06"
+                const selectedMonth = document.getElementById('exportMonthFilter').value;
                 if (!selectedMonth) {
                     alert("請先選擇要匯出的月份！");
                     return;
                 }
-
-                // 篩選出日期開頭符合該年月的資料
                 const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
-
                 if (filteredSchedules.length === 0) {
-                    alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有任何吊運排程數據。`);
+                    alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`);
                     return;
                 }
 
-                let csvContent = "\uFEFF日期,時段,部門/站點,機台名稱,負責人姓名,建立時間(台灣時區)\n";
-                const sortedSchedules = [...filteredSchedules].sort((a, b) => {
-                    return a.date.localeCompare(b.date) || a.time.localeCompare(b.time);
-                });
+                let csvContent = "\uFEFF日期,時段,樓層,部門/站點,機台名稱,負責人姓名,建立時間(台灣時區)\n";
+                const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                 sortedSchedules.forEach(item => {
                     const localTimeStr = formatToTaiwanTime(item.created_at);
-                    csvContent += `"${item.date}","${item.time}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${localTimeStr}"\n`;
+                    csvContent += `"${item.date}","${item.time}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${localTimeStr}"\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -378,21 +445,24 @@
         form.onsubmit = async function(e) {
             e.preventDefault();
 
+            const floorValue = document.getElementById('floor').value;
+            if (!floorValue) {
+                alert("🚨 儲存失敗：請選擇「樓層」！");
+                return;
+            }
             const deptValue = document.getElementById('department').value;
             if (!deptValue) {
-                alert("🚨 儲存失敗：請務必從下拉選單中「選取部門/站點」，欄位不可留白！");
+                alert("🚨 儲存失敗：請選擇「部門/站點」！");
                 return;
             }
-
             const machineValue = document.getElementById('machine').value.trim();
             if (machineValue.length === 0) {
-                alert("🚨 儲存失敗：請填入真正的「機台名稱」，不可只輸入空格或留白！");
+                alert("🚨 儲存失敗：請填入「機台名稱」！");
                 return;
             }
-
             const nameValue = document.getElementById('name').value.trim();
             if (nameValue.length === 0) {
-                alert("🚨 儲存失敗：請填入真正的「負責人姓名」，不可只輸入空格或留白！");
+                alert("🚨 儲存失敗：請填入「負責人姓名」！");
                 return;
             }
 
@@ -406,6 +476,7 @@
             const payload = {
                 date: dateValue,
                 time: timeValue,
+                floor: floorValue,
                 department: deptValue,
                 machine: machineValue, 
                 worker_name: nameValue,
@@ -414,13 +485,15 @@
             };
 
             try {
-                const customDocName = `${dateValue}_${timeValue}_${nameValue}`;
+                // 檔名升級為包含樓層，排序邏輯更乾淨
+                const customDocName = `${dateValue}_${timeValue}_${floorValue}_${nameValue}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 await setDoc(customDocRef, payload);
                 alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = '';
                 document.getElementById('machine').value = '';
                 document.getElementById('department').value = '';
+                document.getElementById('floor').value = '';
             } catch (error) {
                 alert('🚨 同步失敗！請檢查權限。');
                 console.error(error);
