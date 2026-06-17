@@ -27,20 +27,17 @@
             min-height: 75vh !important; /* 讓行事曆在筆電與大桌電都能自動撐滿螢幕高度 */
         }
         
-        /* 🎨 強制卡片變成長條狀、填滿顏色、文字級別再縮小優化 */
+        /* 🎨 強制卡片變成長條狀、填滿顏色、字體改為精確 13px */
         .fc-event { 
             cursor: pointer; 
             padding: 4px 6px !important; 
-            font-size: 0.78em !important; /* 🚀 修正：長條卡片文字稍微再縮小，方便小螢幕同仁查看完整字樣 */
+            font-size: 13px !important; /* 🚀 修正：硬性指定 13px 方便查看 */
             border-radius: 5px !important; 
             margin-bottom: 3px !important; 
             border: none !important;
             display: block !important; 
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
             transition: transform 0.1s ease;
-        }
-        @media (min-width: 1280px) {
-            .fc-event { font-size: 0.88em !important; padding: 6px 9px !important; } /* 桌電大螢幕自動等比例調和 */
         }
 
         .fc-event:hover {
@@ -106,6 +103,30 @@
             background-color: #f4f4f5 !important;
             border-color: #d4d4d8 !important;
         }
+
+        /* 🚀 內嵌特大自訂彈窗樣式 (代替內建 alert) */
+        #customAlertModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #customAlertModal .modal-content {
+            background-color: #FFFFFF;
+            border: 2px solid #27272a;
+            border-radius: 16px;
+            width: 100%;
+            max-w: 550px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            font-size: 18px !important; /* 🚀 強制指定 18px 大字體 */
+            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+            color: #27272a;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body class="min-h-screen p-3 md:p-6 lg:p-8">
@@ -117,6 +138,20 @@
             <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
             <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button></div>
             <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
+        </div>
+    </div>
+
+    <div id="customAlertModal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center border-b-2 border-zinc-200 pb-3 mb-4">
+                <h3 class="text-xl font-extrabold text-zinc-800" id="modalTitle">📅 排程總覽</h3>
+                <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold transition">&times;</button>
+            </div>
+            <div id="modalBody" class="whitespace-pre-wrap font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
+                </div>
+            <div class="mt-5 border-t border-zinc-100 pt-3 text-right">
+                <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-base px-6 py-2 rounded-xl transition shadow-md">關閉視窗</button>
+            </div>
         </div>
     </div>
 
@@ -255,6 +290,11 @@
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
 
+        // 全域關閉彈窗函數
+        window.closeCustomModal = function() {
+            document.getElementById('customAlertModal').style.display = 'none';
+        }
+
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const input = document.getElementById('gatePassword').value;
             if (input === GATE_PASSWORD) {
@@ -340,7 +380,7 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 🚀 修正：點選日期跳出的 Alert，字體有感放大至 18px，排版大方好對帳！
+                // 🚀 核心優化：點選日期跳出全新「客製化 18px 內嵌對帳彈窗」
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -348,24 +388,32 @@
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機清: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
-                    const alertText = 
-                        `📅 【 ${targetDate} 吊運排程總覽 】\n` +
-                        `-----------------------------------------------------\n` +
-                        `☀️ 上午場\n` +
-                        `${amString}\n\n` +
-                        `🌙 下午場\n` +
-                        `${pmString}\n` +
-                        `-----------------------------------------------------`;
+                    const modalContentHtml = 
+                        `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
+                        `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200"><span class="text-indigo-600 font-bold">🌙 下午場</span>\n${pmString}</div>`;
                     
-                    // 透過注入全域樣式微調控制項，確保系統預設 Alert 的彈出行為在微軟正黑體 18px 的極致完美閱讀比例
-                    alert(alertText);
+                    // 填入客製化彈窗
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 吊運排程總覽 】`;
+                    document.getElementById('modalBody').innerHTML = modalContentHtml;
+                    document.getElementById('customAlertModal').style.display = 'flex'; // 秀出彈窗
                 },
                 
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
-                    alert(`📋 預約吊運排程詳細詳情\n--------------------------\n時段：${props.timePeriod || '未填'}\n日期：${info.event.startStr}\n樓層：${props.floor || '未填'}\n站點：${props.department || '未填'}\n機台：${props.machine || '未填'}\n人員：${props.worker_name || '未填'}`);
+                    // 同步換成客製化單筆詳細彈窗，一樣享受 18px 大字體
+                    const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
+                        `• <b>預約日期：</b>${info.event.startStr}<br>` +
+                        `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
+                        `• <b>樓層站點：</b>[${props.floor || '未填'}] ${props.department || '未填'}<br>` +
+                        `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
+                        `• <b>負責人員：</b>${props.worker_name || '未填'}` +
+                        `</div>`;
+                    
+                    document.getElementById('modalTitle').innerText = `📋 預約吊運詳細詳情`;
+                    document.getElementById('modalBody').innerHTML = detailHtml;
+                    document.getElementById('customAlertModal').style.display = 'flex';
                 }
             });
             calendar.render();
