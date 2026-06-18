@@ -153,7 +153,7 @@
 
     <div id="mainSystem" class="max-w-[1600px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
         <h1 class="text-2xl font-extrabold text-zinc-800 mb-6 text-center tracking-wide">
-            🏗️ 吊運排程 management 系統
+            🏗️ 吊運排程管理系統
         </h1>
 
         <form id="scheduleForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 bg-zinc-50/80 p-5 rounded-xl mb-6 border border-zinc-100">
@@ -191,7 +191,7 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                <input type="text" id="machine" placeholder="例如：APT烤箱" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+                <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名</label>
@@ -206,7 +206,7 @@
 
         <div class="bg-zinc-100/80 border border-zinc-200 p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-4 items-center">
             <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-sm font-black text-zinc-700 tracking-wider">🔍 篩選：</span>
+                <span class="text-sm font-black text-zinc-700 tracking-wider">🔍 看板即時篩選：</span>
             </div>
             <div class="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:flex-row items-center">
                 <div class="flex items-center gap-2">
@@ -262,7 +262,6 @@
         const GATE_PASSWORD  = "ase";      
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
-        // 🔒 🚀 定義三組分權管理特權密碼與站點對照
         const ADMIN_PASSWORDS = {
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
@@ -284,13 +283,12 @@
 
         let globalEventsArray = []; 
         let localSchedules = [];
-        let isAdmin = false;       // 🚀 補齊：修復漏掉的變數定義
-        let currentAdminDept = null; // 儲存當前被解鎖認證的站點身分
-        let activeSelectedDocId = null; // 當前正在彈窗中查看的 Document ID
-        let activeSelectedDocDept = null; // 當前正在彈窗中查看的站點類別
+        let isAdmin = false;       
+        let currentAdminDept = null; 
+        let activeSelectedDocId = null; 
+        let activeSelectedDocDept = null; 
         let calendar; 
 
-        // 月份選擇器初始化
         const now = new Date();
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
@@ -300,6 +298,13 @@
             activeSelectedDocId = null;
             activeSelectedDocDept = null;
         }
+
+        // 🚀 1. 綁定最前端密碼鎖的 Enter 鍵
+        document.getElementById('gatePassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('unlockBtn').click();
+            }
+        });
 
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const input = document.getElementById('gatePassword').value;
@@ -312,13 +317,19 @@
             }
         });
 
-        // 👑 🚀 補齊：分權認證暗號點擊事件
+        // 🚀 2. 綁定底部特權密碼鎖的 Enter 鍵
+        document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('adminLoginBtn').click();
+            }
+        });
+
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const input = document.getElementById('adminPassword').value.trim();
             
             if (ADMIN_PASSWORDS[input]) {
-                currentAdminDept = ADMIN_PASSWORDS[input]; // 抓出屬於哪個站點管理員
-                isAdmin = true; // 開通管理身分
+                currentAdminDept = ADMIN_PASSWORDS[input]; 
+                isAdmin = true; 
                 
                 document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬前端擦拭功能)`;
                 document.getElementById('currentRole').className = "font-bold text-emerald-700";
@@ -327,7 +338,7 @@
                 document.getElementById('exportWrapper').classList.remove('hidden');
                 alert(`特權身分認證成功！現已開通 [${currentAdminDept}] 專屬的前端刪除錯誤資料功能與 Excel 月報表匯出功能。`);
             } else {
-                alert("特權金鑰錯誤！拒絕授權分權管理職限。");
+                alert("特權金鑰錯誤！權限驗證失敗。");
             }
         });
 
@@ -370,6 +381,14 @@
             }
         }
 
+        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            document.getElementById('filterFloor').value = "ALL";
+            document.getElementById('filterDept').value = "ALL";
+            applyLiveFilters();
+        });
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -380,7 +399,6 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 點選日期總覽彈窗
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -396,11 +414,10 @@
                     
                     document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 吊運排程總覽 】`;
                     document.getElementById('modalBody').innerHTML = modalContentHtml;
-                    document.getElementById('modalDeleteBtn').classList.add('hidden'); // 總覽不亮刪除鈕
+                    document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆事件詳細彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -417,7 +434,6 @@
                     document.getElementById('modalTitle').innerText = `📋 預約吊運詳細詳情`;
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
-                    // 👑 🚀 智慧權限核對。
                     if (currentAdminDept && currentAdminDept === activeSelectedDocDept) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                     } else {
@@ -429,7 +445,6 @@
             });
             calendar.render();
 
-            // 👑 🚀 補齊：特權前端一鍵擦拭刪除按鈕監聽事件
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -437,10 +452,7 @@
                 if (confirmDelete) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
-                        
-                        // 反向將密碼作為驗證字段 update 寫入文檔中
                         await setDoc(docRef, { request_delete_pass: document.getElementById('adminPassword').value.trim() }, { merge: true });
-                        // 進行刪除命令
                         await deleteDoc(docRef);
                         
                         alert("🎉 特權刪除成功！該筆錯誤資料已即時自雲端移除清空。");
@@ -484,7 +496,6 @@
                 applyLiveFilters(); 
             });
 
-            // 匯出功能 
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
                 if(localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可以導出！");
@@ -564,7 +575,6 @@
             };
 
             try {
-                // 將 Document 檔名後綴加入「站點」與「隨機碼」
                 const uniqueId = Date.now() % 100000;
                 const safeDeptName = deptValue.replace('/', '-'); 
                 const customDocName = `${dateValue}_${timeValue}_${floorValue}_${safeDeptName}_${nameValue}_${uniqueId}`;
