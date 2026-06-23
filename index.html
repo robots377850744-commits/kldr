@@ -24,19 +24,24 @@
             --fc-border-color: #e4e4e7 !important;
             --fc-page-bg-color: #ffffff !important;
             --fc-neutral-text-color: #52525b !important;
-            min-height: 75vh !important; 
+            min-height: 78vh !important; 
+        }
+
+        /* 🚀 修正：調整行事曆每天的格子框架，使其高度更舒展，完美融入大卡片 */
+        .fc-daygrid-day-frame {
+            min-height: 105px !important;
         }
         
-        /* 🎨 強制卡片變成長條狀、填滿顏色、字體改為精確 13px */
+        /* 🎨 強制卡片變成長條狀、填滿顏色、字體改為有感 14px 且上下加寬，大方好讀 */
         .fc-event { 
             cursor: pointer; 
-            padding: 4px 6px !important; 
-            font-size: 13px !important; /* 🚀 13px 方便查看 */
-            border-radius: 5px !important; 
-            margin-bottom: 3px !important; 
+            padding: 6px 10px !important; /* 🚀 調整：內襯加寬，讓色塊顯得厚實大方 */
+            font-size: 14px !important;   /* 🚀 調整：從 13px 放大至 14px，字體更清晰不費力 */
+            border-radius: 6px !important; 
+            margin-bottom: 5px !important; 
             border: none !important;
             display: block !important; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.07);
             transition: transform 0.1s ease;
         }
 
@@ -169,6 +174,13 @@
                 </select>
             </div>
             <div>
+                <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">作業項目</label>
+                <select id="workType" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+                    <option value="吊運">吊運</option>
+                    <option value="電梯">電梯</option>
+                </select>
+            </div>
+            <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">樓層</label>
                 <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
                     <option value="">-- 請選擇樓層 --</option>
@@ -197,8 +209,8 @@
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名</label>
                 <input type="text" id="name" placeholder="請輸入負責人" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
             </div>
-            <div class="flex items-end">
-                <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-lg transition shadow-md cursor-pointer">
+            <div class="flex items-end sm:col-span-2 md:col-span-4 lg:col-span-7 mt-2">
+                <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 px-4 rounded-lg transition shadow-md cursor-pointer text-base">
                     確認排程
                 </button>
             </div>
@@ -299,7 +311,6 @@
             activeSelectedDocDept = null;
         }
 
-        // 🚀 1. 綁定最前端密碼鎖的 Enter 鍵
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 document.getElementById('unlockBtn').click();
@@ -317,7 +328,6 @@
             }
         });
 
-        // 🚀 2. 綁定底部特權密碼鎖的 Enter 鍵
         document.getElementById('adminPassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 document.getElementById('adminLoginBtn').click();
@@ -381,14 +391,6 @@
             }
         }
 
-        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
-        document.getElementById('resetFilterBtn').addEventListener('click', () => {
-            document.getElementById('filterFloor').value = "ALL";
-            document.getElementById('filterDept').value = "ALL";
-            applyLiveFilters();
-        });
-
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -399,25 +401,27 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
+                // 點選日期總覽大彈窗 (內嵌 18px 優化)
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
-                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
                     const modalContentHtml = 
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200"><span class="text-indigo-600 font-bold">🌙 下午場</span>\n${pmString}</div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 吊運排程總覽 】`;
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程總覽 】`;
                     document.getElementById('modalBody').innerHTML = modalContentHtml;
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 點選單筆事件詳細大彈窗 (內嵌 18px 優化)
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -426,12 +430,13 @@
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
+                        `• <b>作業項目：</b><span class="text-zinc-900 font-bold">${props.workType || '吊運'}</span><br>` +
                         `• <b>樓層站點：</b>[${props.floor || '未填'}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📋 預約吊運詳細詳情`;
+                    document.getElementById('modalTitle').innerText = `📋 預約項目詳細詳情`;
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
                     if (currentAdminDept && currentAdminDept === activeSelectedDocDept) {
@@ -475,10 +480,11 @@
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午" : "下午";
                         const floorPrefix = data.floor ? `[${data.floor}]` : "";
+                        const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; // 🚀 新增：卡片前方作業項目顯示
                         
                         globalEventsArray.push({
                             id: doc.id, 
-                            title: `${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
+                            title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: data.date,
                             allDay: true, 
                             backgroundColor: colorValue,
@@ -488,7 +494,8 @@
                                 department: data.department,
                                 machine: data.machine,
                                 timePeriod: data.time,
-                                worker_name: data.worker_name
+                                worker_name: data.worker_name,
+                                workType: data.workType || "吊運"
                             }
                         });
                     }
@@ -496,6 +503,7 @@
                 applyLiveFilters(); 
             });
 
+            // 匯出功能
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
                 if(localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可以導出！");
@@ -512,19 +520,19 @@
                     return;
                 }
 
-                let csvContent = "\uFEFF日期,時段,樓層,部門/站點,機台名稱,負責人姓名,建立時間(台灣時區)\n";
+                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,建立時間(台灣時區)\n";
                 const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                 sortedSchedules.forEach(item => {
                     const localTimeStr = formatToTaiwanTime(item.created_at);
-                    csvContent += `"${item.date}","${item.time}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${localTimeStr}"\n`;
+                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${localTimeStr}"\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.setAttribute("href", url);
-                link.setAttribute("download", `吊運排程月報表_${selectedMonth}.csv`);
+                link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -555,6 +563,7 @@
                 alert("🚨 儲存失敗：請填入「負責人姓名」！");
                 return;
             }
+            const workTypeValue = document.getElementById('workType').value; // 🚀 獲取作業項目
 
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
@@ -566,6 +575,7 @@
             const payload = {
                 date: dateValue,
                 time: timeValue,
+                workType: workTypeValue, // 🚀 寫入雲端作業項目
                 floor: floorValue,
                 department: deptValue,
                 machine: machineValue, 
@@ -575,9 +585,10 @@
             };
 
             try {
+                // 將 Document 檔名後綴加入「日期_時段_項目_樓層_站點_姓名_隨機碼」以保持 100% 絕對唯一不蓋台限制
                 const uniqueId = Date.now() % 100000;
                 const safeDeptName = deptValue.replace('/', '-'); 
-                const customDocName = `${dateValue}_${timeValue}_${floorValue}_${safeDeptName}_${nameValue}_${uniqueId}`;
+                const customDocName = `${dateValue}_${timeValue}_${workTypeValue}_${floorValue}_${safeDeptName}_${nameValue}_${uniqueId}`;
                 const customDocRef = doc(db, "kldr", customDocName);
                 
                 await setDoc(customDocRef, payload);
