@@ -32,7 +32,7 @@
             min-height: 105px !important;
         }
         
-        /* 🎨 卡片改為有感 14px 且上下加寬，大方好讀 */
+        /* 🎨 強制卡片變成長條狀、填滿顏色、字體改為有感 14px */
         .fc-event { 
             cursor: pointer; 
             padding: 6px 10px !important; 
@@ -282,7 +282,8 @@
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
         // 🛡️ 🚀 隱形雜湊防護：原始碼中只保留經過不可逆 SHA-256 加密後的純亂碼字串！
-        const HASH_GATE_PASSWORD = "4ccdc6a7bc487779fdf8e63da365ff6fc281bf2bb368e7ec89f02dfef8e18ca4"; // "kl" 
+        // 🚀 修正：密碼已精準修改，將 "ase" 轉為 "kl" 的對應雜湊亂碼
+        const HASH_GATE_PASSWORD = "60e1d8825867ca384be859bc0607da19b673ab1cae389e187bfb0b30460c58bb"; // "kl" 的 SHA-256 碼
         
         const HASH_ADMIN_PASSWORDS = {
             "c379a2fccce902781b4b9b9409b552d512ee015cc475d4b3ff255b682b1308df": "BE/Recon", // "BEkldr"
@@ -310,7 +311,7 @@
         let currentAdminDept = null; 
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
-        let currentRawAdminInput = ""; // 暫存未加密的輸入，用來反向蓋章給雲端 Rules 核對
+        let currentRawAdminInput = ""; 
         let calendar; 
 
         const now = new Date();
@@ -329,10 +330,10 @@
             }
         });
 
-        // 🛡️ 🚀 進入密碼鎖之 CryptoJS 隱形雜湊比對
+        // 🛡️ 進入密碼鎖之 CryptoJS 隱形雜湊比對
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const inputRaw = document.getElementById('gatePassword').value;
-            const inputHash = CryptoJS.SHA256(inputRaw).toString(); // 即時哈希化
+            const inputHash = CryptoJS.SHA256(inputRaw).toString(); 
 
             if (inputHash === HASH_GATE_PASSWORD) {
                 document.getElementById('passwordOverlay').style.display = 'none';
@@ -349,14 +350,14 @@
             }
         });
 
-        // 👑 🚀 特權暗號之 CryptoJS 隱形雜湊分權比對
+        // 👑 特權暗號之 CryptoJS 隱形雜湊分權比對
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const inputRaw = document.getElementById('adminPassword').value.trim();
-            const inputHash = CryptoJS.SHA256(inputRaw).toString(); // 即時哈希化
+            const inputHash = CryptoJS.SHA256(inputRaw).toString(); 
             
             if (HASH_ADMIN_PASSWORDS[inputHash]) {
                 currentAdminDept = HASH_ADMIN_PASSWORDS[inputHash]; 
-                currentRawAdminInput = inputRaw; // 留存明文供後續通信使用
+                currentRawAdminInput = inputRaw; 
                 isAdmin = true; 
                 
                 if (currentAdminDept === "SUPER_ADMIN") {
@@ -481,7 +482,6 @@
                 if (confirmDelete) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
-                        // 將正確的明文暗號送去給雲端 Rules 進行最終盾牌核對
                         await setDoc(docRef, { request_delete_pass: currentRawAdminInput }, { merge: true });
                         await deleteDoc(docRef);
                         
@@ -616,6 +616,14 @@
                     }
                 });
                 applyLiveFilters(); 
+            });
+
+            document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+            document.getElementById('resetFilterBtn').addEventListener('click', () => {
+                document.getElementById('filterFloor').value = "ALL";
+                document.getElementById('filterDept').value = "ALL";
+                applyLiveFilters();
             });
 
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
