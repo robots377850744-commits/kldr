@@ -276,12 +276,12 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // 🚀 修正：精準引用 firebase-firestore.js 避免整個網頁 JavaScript 當場死機！
+        // 🚀 頂級優化：精準指向 firebase-firestore.js，一舉復活全網頁 JS 引擎！
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
-        // 🛡️ 🚀 內建原生暗號盾牌：只存放無解的 SHA-256 碼
+        // 🛡️ 🚀 內建網頁原生雜湊安全鎖：只存放完全不可逆的密碼比對值
         const HASH_GATE_PASSWORD = "60e1d8825867ca384be859bc0607da19b673ab1cae389e187bfb0b30460c58bb"; // 小寫 "kl"
         
         const HASH_ADMIN_PASSWORDS = {
@@ -323,7 +323,7 @@
             activeSelectedDocDept = null;
         }
 
-        // 🛡️ 🚀 核心：瀏覽器 100% 內建原生非同步雜湊運算函數（免連外網、防公司網路封鎖）
+        // 🛡️ 🚀 超強突破：100% 網頁瀏覽器內建原生雜湊（免去 Cloudflare 連線，完美擊碎公司防火牆封鎖問題）
         async function calculateNativeSHA256(text) {
             const msgBuffer = new TextEncoder().encode(text);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -337,7 +337,7 @@
             }
         });
 
-        // 🛡️ 改為 async 非同步原生校對
+        // 🛡️ 原生密碼安全校對機制
         document.getElementById('unlockBtn').addEventListener('click', async () => {
             const inputRaw = document.getElementById('gatePassword').value;
             const inputHash = await calculateNativeSHA256(inputRaw); 
@@ -357,7 +357,7 @@
             }
         });
 
-        // 👑 改為 async 非同步原生分權校對
+        // 👑 特權暗號原生分權校對機制
         document.getElementById('adminLoginBtn').addEventListener('click', async () => {
             const inputRaw = document.getElementById('adminPassword').value.trim();
             const inputHash = await calculateNativeSHA256(inputRaw); 
@@ -448,4 +448,165 @@
                     activeSelectedDocId = info.event.id;
                     activeSelectedDocDept = props.department;
 
-                    const detailHtml = `
+                    const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
+                        `• <b>預約日期：</b>${info.event.startStr}<br>` +
+                        `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
+                        `• <b>作業項目：</b><span class="text-zinc-900 font-bold">${props.workType || '吊運'}</span><br>` +
+                        `• <b>樓層站點：</b>[${props.floor || '未填'}] ${props.department || '未填'}<br>` +
+                        `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
+                        `• <b>負責人員：</b>${props.worker_name || '未填'}` +
+                        `</div>`;
+                    
+                    document.getElementById('modalTitle').innerText = `📋 預約項目詳細詳情`;
+                    document.getElementById('modalBody').innerHTML = detailHtml;
+                    
+                    if (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept)) {
+                        document.getElementById('modalDeleteBtn').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modalDeleteBtn').classList.add('hidden');
+                    }
+                    document.getElementById('customAlertModal').style.display = 'flex';
+                }
+            });
+            calendar.render();
+
+            document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept) return;
+                const confirmDelete = confirm(`⚠️ 【特權確認】\n您確定要將這筆排程從雲端徹底移除嗎？\n(移除後無法復原)`);
+                if (confirmDelete) {
+                    try {
+                        const docRef = doc(db, "kldr", activeSelectedDocId);
+                        await setDoc(docRef, { request_delete_pass: currentRawAdminInput }, { merge: true });
+                        await deleteDoc(docRef);
+                        alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
+                        closeCustomModal();
+                    } catch (error) { alert("🚨 刪除失敗！"); }
+                }
+            });
+
+            document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
+                const doubleCheck = confirm("🚨🚨🚨【警告：最高控制權限】\n確定要『一鍵清空整個雲端資料庫』的所有行事曆數據嗎？");
+                if (doubleCheck) {
+                    const tripleCheck = prompt("請輸入大寫密碼 『RESET_ALL』 以確認：");
+                    if (tripleCheck === "RESET_ALL") {
+                        try {
+                            const querySnapshot = await getDocs(scheduleRef);
+                            const batch = writeBatch(db);
+                            querySnapshot.forEach((documentSnapshot) => {
+                                batch.set(documentSnapshot.ref, { request_delete_pass: "SUPERkldr" }, { merge: true });
+                            });
+                            await batch.commit();
+                            const deleteBatch = writeBatch(db);
+                            querySnapshot.forEach((documentSnapshot) => { deleteBatch.delete(documentSnapshot.ref); });
+                            await deleteBatch.commit();
+                            alert("💥 資料庫已成功完成徹底淨空！");
+                        } catch (error) { alert("🚨 抹除失敗！"); }
+                    } else { alert("🔒 指令已被攔截。"); }
+                }
+            });
+
+            document.getElementById('importJsonFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async function(evt) {
+                    try {
+                        const importedSchedules = JSON.parse(evt.target.result);
+                        if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗！"); return; }
+                        const proceed = confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。是否匯入？`);
+                        if (proceed) {
+                            let successCount = 0; let batch = writeBatch(db); let count = 0;
+                            for (const item of importedSchedules) {
+                                if (item.date && item.time && item.department) {
+                                    const uniqueId = Math.floor(Math.random() * 100000);
+                                    const safeDeptName = item.department.replace('/', '-'); 
+                                    const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${item.worker_name || '備份'}_${uniqueId}`;
+                                    const customDocRef = doc(db, "kldr", customDocName);
+                                    batch.set(customDocRef, {
+                                        date: item.date, time: item.time, workType: item.workType || "吊運",
+                                        floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
+                                        worker_name: item.worker_name || "未填", secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
+                                    });
+                                    count++; successCount++;
+                                    if (count === 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
+                                }
+                            }
+                            if (count > 0) { await batch.commit(); }
+                            alert(`🎉 批次匯入大成功！已成功同步 ${successCount} 筆排程數據。`);
+                            document.getElementById('importJsonFile').value = ''; 
+                        }
+                    } catch (err) { alert("🚨 讀取 JSON 檔案發生錯誤！"); }
+                };
+                reader.readAsText(file);
+            });
+
+            onSnapshot(scheduleRef, (snapshot) => {
+                globalEventsArray = []; localSchedules = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.date && data.time && data.department) {
+                        localSchedules.push(data);
+                        const colorValue = getDeptColor(data.department);
+                        const showTime = data.time.includes("上午") ? "上午" : "下午";
+                        const floorPrefix = data.floor ? `[${data.floor}]` : "";
+                        const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
+                        globalEventsArray.push({
+                            id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
+                            start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
+                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運" }
+                        });
+                    }
+                });
+                applyLiveFilters(); 
+            });
+
+            document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+            document.getElementById('resetFilterBtn').addEventListener('click', () => {
+                document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
+            });
+
+            document.getElementById('exportExcelBtn').addEventListener('click', () => {
+                if(localSchedules.length === 0) { alert("目前雲端沒有任何數據！"); return; }
+                const selectedMonth = document.getElementById('exportMonthFilter').value;
+                if (!selectedMonth) { alert("請選擇月份！"); return; }
+                const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
+                if (filteredSchedules.length === 0) { alert(`⚠️ 該月份無數據。`); return; }
+
+                const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
+                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
+                document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
+
+                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,建立時間(台灣時區)\n";
+                const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                sortedSchedules.forEach(item => {
+                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${formatToTaiwanTime(item.created_at)}"\n`;
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            });
+        }
+
+        const form = document.getElementById('scheduleForm');
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
+            const payload = {
+                date: document.getElementById('date').value, time: document.getElementById('timePeriod').value,
+                workType: document.getElementById('workType').value, floor: document.getElementById('floor').value,
+                department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
+                worker_name: document.getElementById('name').value.trim(), secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
+            };
+            try {
+                const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
+                const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${payload.worker_name}_${uniqueId}`;
+                await setDoc(doc(db, "kldr", customDocName), payload);
+                alert('🎉 排程已成功同步至雲端資料庫！');
+                document.getElementById('name').value = ''; document.getElementById('machine').value = ''; document.getElementById('department').value = ''; document.getElementById('floor').value = '';
+            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); console.error(error); } finally { btn.disabled = false; btn.innerText = "確認排程"; }
+        };
+    </script>
+</body>
+</html>
