@@ -103,7 +103,7 @@
             border-color: #d4d4d8 !important;
         }
 
-        /* 內嵌特大自訂彈窗樣式 */
+        /* 🚀 內嵌自訂彈窗樣式 - 寬度調整至最大 650px 方便完整呈現兩段標題 */
         #customAlertModal {
             display: none;
             position: fixed;
@@ -119,7 +119,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-w: 550px;
+            max-w: 650px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 18px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -142,9 +142,12 @@
 
     <div id="customAlertModal">
         <div class="modal-content p-6">
-            <div class="flex justify-between items-center border-b-2 border-zinc-200 pb-3 mb-4">
-                <h3 class="text-xl font-extrabold text-zinc-800" id="modalTitle">📅 排程總覽</h3>
-                <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold transition">&times;</button>
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b-2 border-zinc-200 pb-3 mb-4 gap-2">
+                <div class="flex flex-col gap-1">
+                    <h3 class="text-lg font-extrabold text-zinc-800" id="modalTitle">📅 排程總覽</h3>
+                    <div class="text-sm font-bold text-emerald-800 tracking-wide" id="modalStatsTitle"></div>
+                </div>
+                <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-3xl font-bold transition self-end sm:self-center">&times;</button>
             </div>
             <div id="modalBody" class="whitespace-pre-wrap font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
             </div>
@@ -202,7 +205,7 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                <input type="text" id="machine" placeholder="例如：FOUP CLEAN" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+                <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
             </div>
             <div>
                 <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名</label>
@@ -276,10 +279,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // 🚀 頂級修復：精準指向 firebase-firestore.js，一舉復活全網頁 JavaScipt 引擎！
+        // 🚀 頂級優化：引用路徑完全對齊 firebase-firestore.js，保障網頁解鎖100%成功穩定
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 🚀 100% 穩定開門：採用標準文字明文比對，擺脫因套件死機引起的卡死漏洞！
         const GATE_PASSWORD  = "kl"; // 網頁解鎖進門密碼：小寫 kl
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
@@ -287,7 +289,7 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" // 🔥 超級管理員
+            "SUPERkldr": "SUPER_ADMIN" 
         };
 
         const firebaseConfig = {
@@ -327,7 +329,7 @@
             }
         });
 
-        // 🛡️ 極簡流暢驗證：不依賴任何外部或原生 API，通關率 100%
+        // 🛡️ 100% 穩定明文對齊驗證，絕不卡死
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const input = document.getElementById('gatePassword').value;
 
@@ -410,9 +412,16 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
+                // 🚀 核心優化：點選日期總覽大彈窗（自動加載當日各大站點的機台總量統計）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
+                    
+                    // 計算當日各官方站點的總機台筆數
+                    const countBE = dayEvents.filter(e => e.department === "BE/Recon").length;
+                    const countFC = dayEvents.filter(e => e.department === "FC").length;
+                    const countRDL = dayEvents.filter(e => e.department === "RDL").length;
+
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
@@ -423,12 +432,16 @@
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200"><span class="text-indigo-600 font-bold">🌙 下午場</span>\n${pmString}</div>`;
                     
+                    // 動態渲染智慧兩段式大標題與統計數據
                     document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程總覽 】`;
+                    document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
+                    
                     document.getElementById('modalBody').innerHTML = modalContentHtml;
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 點選單筆詳細大彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -444,6 +457,7 @@
                         `</div>`;
                     
                     document.getElementById('modalTitle').innerText = `📋 預約項目詳細詳情`;
+                    document.getElementById('modalStatsTitle').innerText = ""; // 單筆詳情不需要秀站點加總
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
                     if (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept)) {
