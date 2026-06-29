@@ -103,7 +103,7 @@
             border-color: #d4d4d8 !important;
         }
 
-        /* 🚀 內嵌自訂彈窗樣式 - 寬度調整至最大 650px 方便完整呈現兩段標題 */
+        /* 內嵌自訂彈窗樣式 */
         #customAlertModal {
             display: none;
             position: fixed;
@@ -151,7 +151,8 @@
             </div>
             <div id="modalBody" class="whitespace-pre-wrap font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
             </div>
-            <div class="mt-5 border-t border-zinc-100 pt-3 flex justify-between items-center">
+            <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
+                <button id="modalToggleWorkTypeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔄 變更作業項目</button>
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
             </div>
@@ -279,8 +280,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // 🚀 頂級優化：引用路徑完全對齊 firebase-firestore.js，保障網頁解鎖100%成功穩定
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD  = "kl"; // 網頁解鎖進門密碼：小寫 kl
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
@@ -311,6 +311,7 @@
         let currentAdminDept = null; 
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
+        let activeSelectedDocType = null; // 暫存目前被點開資料的作業項目種類
         let calendar; 
 
         const now = new Date();
@@ -321,6 +322,7 @@
             document.getElementById('customAlertModal').style.display = 'none';
             activeSelectedDocId = null;
             activeSelectedDocDept = null;
+            activeSelectedDocType = null;
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
@@ -329,10 +331,8 @@
             }
         });
 
-        // 🛡️ 100% 穩定明文對齊驗證，絕不卡死
         document.getElementById('unlockBtn').addEventListener('click', () => {
             const input = document.getElementById('gatePassword').value;
-
             if (input === GATE_PASSWORD) {
                 document.getElementById('passwordOverlay').style.display = 'none';
                 document.getElementById('mainSystem').classList.remove('hidden');
@@ -412,12 +412,11 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 🚀 核心優化：點選日期總覽大彈窗（自動加載當日各大站點的機台總量統計）
+                // 點選日期總覽大彈窗（含智慧加總顯示）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
                     
-                    // 計算當日各官方站點的總機台筆數
                     const countBE = dayEvents.filter(e => e.department === "BE/Recon").length;
                     const countFC = dayEvents.filter(e => e.department === "FC").length;
                     const countRDL = dayEvents.filter(e => e.department === "RDL").length;
@@ -432,12 +431,12 @@
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200"><span class="text-indigo-600 font-bold">🌙 下午場</span>\n${pmString}</div>`;
                     
-                    // 動態渲染智慧兩段式大標題與統計數據
                     document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程總覽 】`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = modalContentHtml;
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
+                    document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); // 總覽不顯示變更鈕
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
@@ -446,29 +445,59 @@
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
                     activeSelectedDocDept = props.department;
+                    activeSelectedDocType = props.workType || "吊運";
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
-                        `• <b>作業項目：</b><span class="text-zinc-900 font-bold">${props.workType || '吊運'}</span><br>` +
+                        `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${props.floor || '未填'}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
                     
                     document.getElementById('modalTitle').innerText = `📋 預約項目詳細詳情`;
-                    document.getElementById('modalStatsTitle').innerText = ""; // 單筆詳情不需要秀站點加總
+                    document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
+                    // 👑 智慧權限盾牌核對：只有該站點管理員或最高管理員，才允許亮出「變更按鈕」與「刪除按鈕」
                     if (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept)) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
+                        
+                        // 動態決定切換按鈕的文字提示內容
+                        const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
+                        document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
+                        document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
+                        document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
                     }
                     document.getElementById('customAlertModal').style.display = 'flex';
                 }
             });
             calendar.render();
+
+            // 🚀 新增：一鍵即時變更作業項目特權引擎（不影響檔名，直接變更內容，零摩擦同步）
+            document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept) return;
+                
+                const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
+                const confirmToggle = confirm(`🔄 【管理員特權即時變更變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
+                
+                if (confirmToggle) {
+                    try {
+                        const docRef = doc(db, "kldr", activeSelectedDocId);
+                        // 直接進行 update 輕量更新覆蓋
+                        await updateDoc(docRef, { workType: nextType });
+                        
+                        alert(`🎉 變更成功！該排程已一秒無痛變更為【${nextType}】。`);
+                        closeCustomModal();
+                    } catch (error) {
+                        alert("🚨 變更失敗：請檢查與 Firebase 的雲端連線狀態！");
+                        console.error(error);
+                    }
+                }
+            });
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
