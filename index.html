@@ -265,6 +265,7 @@
                 </div>
 
                 <div id="superAdminWrapper" class="flex gap-2 items-center hidden mr-2">
+                    <button type="button" id="exportAllJsonBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出雲端全資料庫總備份 (JSON)</button>
                     <button type="button" id="clearAllDbBtn" class="bg-red-700 hover:bg-red-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">🔥 超級特權：一鍵清空資料庫</button>
                     <label class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">
                         📥 一鍵批次匯入備份 (JSON)
@@ -436,7 +437,7 @@
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (currently no schedule)";
 
                     const modalContentHtml = 
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
@@ -451,7 +452,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗（加修：依權解鎖「作業項目變更」與「智慧樓層重選選單」）
+                // 點選單筆詳細大彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -459,12 +460,10 @@
                     activeSelectedDocType = props.workType || "吊運";
                     const activeFloor = props.floor || "1F";
 
-                    // 👑 判斷權限：確認點開的人是否具備修改或刪除此筆排程的特權
                     const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept));
 
                     let floorContentHtml = "";
                     if (hasPermission) {
-                        // 🚀 權限吻合：樓層直接升級為內嵌防呆下拉選單，並綁定全自動即時 update 事件
                         floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
                             <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
@@ -474,7 +473,6 @@
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
                         </select> <span class="text-xs text-blue-600 font-bold">(點擊即自動同步雲端)</span>`;
                     } else {
-                        // 🔒 權限不符：一般同仁維持唯讀固定大字文字，杜絕竄改
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
                     }
 
@@ -482,8 +480,7 @@
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
-                        `• <b>樓層欄位：</b>${floorContentHtml}<br>` +
-                        `• <b>所屬站點：</b>${props.department || '未填'}<br>` +
+                        `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
@@ -499,7 +496,6 @@
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
 
-                        // 🚀 綁定樓層下拉式選單即時更新監聽引擎
                         document.getElementById('modalFloorSelect').addEventListener('change', async (e) => {
                             const newFloor = e.target.value;
                             try {
@@ -521,23 +517,20 @@
             });
             calendar.render();
 
-            // 一鍵即時變更作業項目特權引擎
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
+                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(點擊確認直接生效)`);
                 
                 if (confirmToggle) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        
                         alert(`🎉 變更成功！該排程已一秒無痛變更為【${nextType}】。`);
                         closeCustomModal();
                     } catch (error) {
                         alert("🚨 變更失敗：請檢查與 Firebase 的雲端連線狀態！");
-                        console.error(error);
                     }
                 }
             });
@@ -554,6 +547,58 @@
                         alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
                         closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
+                }
+            });
+
+            // 🔥 內嵌升級：SUPERkldr 專屬一鍵拉取雲端全資料庫總備份 JSON 的特權核心引擎
+            document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
+                
+                const confirmExport = confirm("📥 【最高控制主權確認】\n您即將下載此 Firebase 資料庫內的『所有歷史總排程紀錄』JSON 還原備份檔案。\n此動作將撈取全體資料。是否確認執行？");
+                if (!confirmExport) return;
+
+                document.getElementById('exportAllJsonBtn').disabled = true;
+                document.getElementById('exportAllJsonBtn').innerText = "⚡ 正在直攻核心撈取中...";
+
+                try {
+                    const querySnapshot = await getDocs(scheduleRef);
+                    const allDataArray = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        const d = doc.data();
+                        // 排除我們自製的前端安全密碼認證章，只抽乾淨的產線內容
+                        allDataArray.push({
+                            date: d.date,
+                            time: d.time,
+                            workType: d.workType || "吊運",
+                            floor: d.floor || "1F",
+                            department: d.department,
+                            machine: d.machine || "未填",
+                            worker_name: d.worker_name || "未填",
+                            created_at: d.created_at || new Date().toISOString()
+                        });
+                    });
+
+                    // 將陣列物件轉化為大器美觀、可直接用於一鍵匯入的標準 JSON 純文字
+                    const finalJsonString = JSON.stringify(allDataArray, null, 2);
+                    const blob = new Blob([finalJsonString], { type: 'application/json;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const timeStamp = new Date().toISOString().slice(0,10);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `Firebase資料庫全紀錄總備份_${timeStamp}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert(`🎉 總資料庫備份成功！已精準導出共 [ ${allDataArray.length} ] 筆完整產線歷史數據檔。`);
+                } catch (err) {
+                    alert("🚨 導出失敗：請檢查網絡或 Firebase SDK 連線狀況！");
+                    console.error(err);
+                } finally {
+                    document.getElementById('exportAllJsonBtn').disabled = false;
+                    document.getElementById('exportAllJsonBtn').innerText = "📥 匯出雲端全資料庫總備份 (JSON)";
                 }
             });
 
