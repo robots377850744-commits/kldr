@@ -289,7 +289,7 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" 
+            "SUPERkldr": "SUPER_ADMIN" // 🔥 超級管理員
         };
 
         const firebaseConfig = {
@@ -356,10 +356,10 @@
                 isAdmin = true; 
                 
                 if (currentAdminDept === "SUPER_ADMIN") {
-                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 最高控制主權已開通`;
+                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
-                    document.getElementById('superAdminWrapper').classList.remove('hidden'); 
-                    document.getElementById('exportWrapper').classList.remove('hidden'); 
+                    document.getElementById('superAdminWrapper').classList.remove('hidden'); // 解鎖核彈按鈕
+                    document.getElementById('exportWrapper').classList.remove('hidden'); // 同時解鎖報表
                 } else {
                     document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬前端擦拭功能)`;
                     document.getElementById('currentRole').className = "font-bold text-emerald-700";
@@ -375,11 +375,18 @@
         });
 
         function getDeptColor(deptName) {
-            const fixedColors = { "BE/Recon": "#1d4ed8", "RDL": "#c2410c", "FC": "#047857" };
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
             if (fixedColors[deptName]) return fixedColors[deptName];
             let hash = 0;
-            for (let i = 0; i < deptName.length; i++) { hash = deptName.charCodeAt(i) + ((hash << 5) - hash); }
-            return `hsl(${Math.abs(hash % 360)}, 75%, 40%)`; 
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
         }
 
         function formatToTaiwanTime(isoString) {
@@ -394,12 +401,16 @@
         function applyLiveFilters() {
             const selectedFloor = document.getElementById('filterFloor').value;
             const selectedDept = document.getElementById('filterDept').value;
+
             const filteredEvents = globalEventsArray.filter(evt => {
                 const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
                 const matchDept = (selectedDept === "ALL") || (evt.extendedProps.department === selectedDept);
                 return matchFloor && matchDept;
             });
-            if (calendar) { calendar.setOption('events', filteredEvents); }
+
+            if (calendar) {
+                calendar.setOption('events', filteredEvents);
+            }
         }
 
         function initSystem() {
@@ -440,18 +451,39 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗
+                // 點選單筆詳細大彈窗（加修：依權解鎖「作業項目變更」與「智慧樓層重選選單」）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
                     activeSelectedDocDept = props.department;
                     activeSelectedDocType = props.workType || "吊運";
+                    const activeFloor = props.floor || "1F";
+
+                    // 👑 判斷權限：確認點開的人是否具備修改或刪除此筆排程的特權
+                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept));
+
+                    let floorContentHtml = "";
+                    if (hasPermission) {
+                        // 🚀 權限吻合：樓層直接升級為內嵌防呆下拉選單，並綁定全自動即時 update 事件
+                        floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">
+                            <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
+                            <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
+                            <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
+                            <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
+                            <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
+                            <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
+                        </select> <span class="text-xs text-blue-600 font-bold">(點擊即自動同步雲端)</span>`;
+                    } else {
+                        // 🔒 權限不符：一般同仁維持唯讀固定大字文字，杜絕竄改
+                        floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
+                    }
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
-                        `• <b>樓層站點：</b>[${props.floor || '未填'}] ${props.department || '未填'}<br>` +
+                        `• <b>樓層欄位：</b>${floorContentHtml}<br>` +
+                        `• <b>所屬站點：</b>${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
@@ -460,14 +492,26 @@
                     document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
-                    // 👑 智慧權限盾牌核對：只有該站點管理員或最高管理員，才允許亮出「變更按鈕」與「刪除按鈕」
-                    if (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept)) {
+                    if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         
-                        // 動態決定切換按鈕的文字提示內容
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
+
+                        // 🚀 綁定樓層下拉式選單即時更新監聽引擎
+                        document.getElementById('modalFloorSelect').addEventListener('change', async (e) => {
+                            const newFloor = e.target.value;
+                            try {
+                                const docRef = doc(db, "kldr", activeSelectedDocId);
+                                await updateDoc(docRef, { floor: newFloor });
+                                alert(`🎉 樓層更新成功！該筆排程已一秒無痛變更為【${newFloor}】。`);
+                                closeCustomModal();
+                            } catch (err) {
+                                alert("🚨 變更失敗：請確認 Firebase 後台規則已開通 floor 欄位更新權限！");
+                                console.error(err);
+                            }
+                        });
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
                         document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
@@ -477,17 +521,16 @@
             });
             calendar.render();
 
-            // 🚀 新增：一鍵即時變更作業項目特權引擎（不影響檔名，直接變更內容，零摩擦同步）
+            // 一鍵即時變更作業項目特權引擎
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                const confirmToggle = confirm(`🔄 【管理員特權即時變更變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
+                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
                 
                 if (confirmToggle) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
-                        // 直接進行 update 輕量更新覆蓋
                         await updateDoc(docRef, { workType: nextType });
                         
                         alert(`🎉 變更成功！該排程已一秒無痛變更為【${nextType}】。`);
@@ -515,23 +558,33 @@
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                const doubleCheck = confirm("🚨🚨🚨【警告：最高控制權限】\n確定要『一鍵清空整個雲端資料庫』的所有行事曆數據嗎？");
+                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線上的所有部門排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
                 if (doubleCheck) {
-                    const tripleCheck = prompt("請輸入大寫密碼 『RESET_ALL』 以確認：");
+                    const tripleCheck = prompt("為了防止誤觸，請在下方輸入大寫密碼 『RESET_ALL』 以確認抹除資料：");
                     if (tripleCheck === "RESET_ALL") {
                         try {
                             const querySnapshot = await getDocs(scheduleRef);
                             const batch = writeBatch(db);
+                            
                             querySnapshot.forEach((documentSnapshot) => {
                                 batch.set(documentSnapshot.ref, { request_delete_pass: "SUPERkldr" }, { merge: true });
                             });
                             await batch.commit();
+
                             const deleteBatch = writeBatch(db);
-                            querySnapshot.forEach((documentSnapshot) => { deleteBatch.delete(documentSnapshot.ref); });
+                            querySnapshot.forEach((documentSnapshot) => {
+                                deleteBatch.delete(documentSnapshot.ref);
+                            });
                             await deleteBatch.commit();
-                            alert("💥 資料庫已成功完成徹底淨空！");
-                        } catch (error) { alert("🚨 抹除失敗！"); }
-                    } else { alert("🔒 指令已被攔截。"); }
+                            
+                            alert("💥 資料庫已成功完成徹底淨空！目前線上排程已重置為 0 筆。");
+                        } catch (error) {
+                            alert("🚨 抹除失敗：請確保 Firebase Rules 規則已正確發布上線！");
+                            console.error(error);
+                        }
+                    } else {
+                        alert("🔒 密碼不符，全刪除指令已被安全安全攔截。");
+                    }
                 }
             });
 
@@ -542,8 +595,8 @@
                 reader.onload = async function(evt) {
                     try {
                         const importedSchedules = JSON.parse(evt.target.result);
-                        if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗！"); return; }
-                        const proceed = confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。是否匯入？`);
+                        if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗：檔案格式不符合規範，必須為一個 JSON 陣列！"); return; }
+                        const proceed = confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。\n確定要將這些資料批次寫入 Firebase 數據庫中嗎？`);
                         if (proceed) {
                             let successCount = 0; let batch = writeBatch(db); let count = 0;
                             for (const item of importedSchedules) {
@@ -565,7 +618,7 @@
                             alert(`🎉 批次匯入大成功！已成功同步 ${successCount} 筆排程數據。`);
                             document.getElementById('importJsonFile').value = ''; 
                         }
-                    } catch (err) { alert("🚨 讀取 JSON 檔案發生錯誤！"); }
+                    } catch (err) { alert("🚨 讀取 JSON 檔案發生錯誤，請確保該檔案結構完全正確！\n錯誤訊息: " + err.message); }
                 };
                 reader.readAsText(file);
             });
@@ -597,11 +650,11 @@
             });
 
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
-                if(localSchedules.length === 0) { alert("目前雲端沒有任何數據！"); return; }
+                if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
                 const selectedMonth = document.getElementById('exportMonthFilter').value;
-                if (!selectedMonth) { alert("請選擇月份！"); return; }
+                if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
                 const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
-                if (filteredSchedules.length === 0) { alert(`⚠️ 該月份無數據。`); return; }
+                if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
 
                 const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
                 const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
