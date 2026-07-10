@@ -421,6 +421,23 @@
             }
         }
 
+        // 🚀 核心優化：建立一套精密好讀的解耦器，用來把姓名、PO、件數重量拆乾淨
+        function parseWorkerInfo(workerName, weightCount) {
+            let displayName = workerName || "未填";
+            let displayPo = "";
+            let displayWeight = weightCount || "";
+            
+            if (workerName && workerName.includes(" [PO:")) {
+                const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
+                if (match) {
+                    displayName = match[1];
+                    displayPo = match[2];
+                    if (!displayWeight) displayWeight = match[3];
+                }
+            }
+            return { displayName, displayPo, displayWeight };
+        }
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -443,8 +460,24 @@
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
-                    let amString = amEvents.length > 0 ? amEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
+                    // 🚀 核心升級：依據需求，將人員姓名與件數重量完美分行、縮排，且規格用淡灰色 12px 呈現
+                    let amString = amEvents.length > 0 ? amEvents.map(e => {
+                        const parsed = parseWorkerInfo(e.worker_name, e.weight_count);
+                        let itemHtml = `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${parsed.displayName}`;
+                        if (parsed.displayWeight) {
+                            itemHtml += `\n     <span class="text-zinc-500 text-xs font-bold">件數重量: ${parsed.displayWeight}</span>`;
+                        }
+                        return itemHtml;
+                    }).join('\n') : "   (目前無排程)";
+                    
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => {
+                        const parsed = parseWorkerInfo(e.worker_name, e.weight_count);
+                        let itemHtml = `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${parsed.displayName}`;
+                        if (parsed.displayWeight) {
+                            itemHtml += `\n     <span class="text-zinc-500 text-xs font-bold">件數重量: ${parsed.displayWeight}</span>`;
+                        }
+                        return itemHtml;
+                    }).join('\n') : "   (目前無排程)";
 
                     const modalContentHtml = 
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
@@ -483,13 +516,20 @@
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
                     }
 
+                    // 🚀 單筆詳情介面同步拆開呈現
+                    const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
+                    let poRow = parsed.displayPo ? `• <b>PO單號：</b><span class="text-zinc-700 font-medium">${parsed.displayPo}</span><br>` : "";
+                    let weightRow = parsed.displayWeight ? `• <b>件數重量：</b><span class="text-zinc-700 font-medium">${parsed.displayWeight}</span><br>` : "";
+
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200">` +
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
-                        `• <b>負責人員：</b>${props.worker_name || '未填'}` +
+                        `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${parsed.displayName}</span><br>` +
+                        poRow +
+                        weightRow +
                         `</div>`;
                     
                     document.getElementById('modalTitle').innerText = `📋 預約項目詳細詳情`;
@@ -558,8 +598,6 @@
                 }
             });
 
-            // 🔥 內嵌升級：新增針對 SUPERkldr 頂級管理員的「全資料庫一鍵匯出 CSV 總報表」核心引擎
-            // 同時滿足後續在人員姓名後方多出 [PO:], [件數重量:] 的查看與比對需求，自動開拓獨立專屬欄位！
             document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
                 
@@ -571,15 +609,13 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    // 第一行：CSV 欄位標頭（特別追加 PO單號、件數重量對帳欄位）
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,PO單號(比對預留欄),件數重量(比對預留欄),雲端同步時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,PO單號,件數重量,雲端同步時間(台灣時區)\n";
                     
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => {
                         rawRecords.push(doc.data());
                     });
                     
-                    // 依照日期與時段排序，讓 CSV 像精美帳本一樣整齊乾淨
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                     sortedRecords.forEach((d) => {
@@ -587,10 +623,11 @@
                         const workTypeStr = d.workType || "吊運";
                         const floorStr = d.floor || "1F";
                         const machineStr = d.machine || "未填";
-                        const nameStr = d.worker_name || "未填";
                         
-                        // 雙引號包覆防夾逗號爆表錯誤，預留欄填寫空白方便未來對帳直接手打或拉公式
-                        csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${nameStr}","","","${localTimeStr}"\n`;
+                        // 導出時自動解開，還原為最乾淨原始的 CSV 獨立表格欄位
+                        const parsed = parseWorkerInfo(d.worker_name, d.weight_count);
+                        
+                        csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${parsed.displayName}","${parsed.displayPo}","${parsed.displayWeight}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -604,7 +641,7 @@
                     link.click();
                     document.body.removeChild(link);
                     
-                    alert(`🎉 總 CSV 報表生成成功！已精準導出共 [ ${sortedRecords.length} ] 筆全紀錄，內含 PO 與件數比對專欄。`);
+                    alert(`🎉 總 CSV 報表生成成功！已精準導出共 [ ${sortedRecords.length} ] 筆全紀錄。`);
                 } catch (err) {
                     alert("🚨 導出失敗：請檢查網絡或 Firebase SDK 連線狀況！");
                     console.error(err);
