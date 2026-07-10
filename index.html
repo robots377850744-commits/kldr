@@ -421,7 +421,7 @@
             }
         }
 
-        // 🚀 核心優化：建立一套精密好讀的解耦器，用來把姓名、PO、件數重量拆乾淨
+        // 🧠 智慧解析器：用來把姓名、PO、件數重量精準拆分
         function parseWorkerInfo(workerName, weightCount) {
             let displayName = workerName || "未填";
             let displayPo = "";
@@ -460,7 +460,7 @@
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
-                    // 🚀 核心升級：依據需求，將人員姓名與件數重量完美分行、縮排，且規格用淡灰色 12px 呈現
+                    // 🚀 依據需求，將人員姓名與件數重量完美分行、縮排，且規格用淡灰色 12px 呈現
                     let amString = amEvents.length > 0 ? amEvents.map(e => {
                         const parsed = parseWorkerInfo(e.worker_name, e.weight_count);
                         let itemHtml = `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${parsed.displayName}`;
@@ -516,7 +516,6 @@
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
                     }
 
-                    // 🚀 單筆詳情介面同步拆開呈現
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     let poRow = parsed.displayPo ? `• <b>PO單號：</b><span class="text-zinc-700 font-medium">${parsed.displayPo}</span><br>` : "";
                     let weightRow = parsed.displayWeight ? `• <b>件數重量：</b><span class="text-zinc-700 font-medium">${parsed.displayWeight}</span><br>` : "";
@@ -624,7 +623,6 @@
                         const floorStr = d.floor || "1F";
                         const machineStr = d.machine || "未填";
                         
-                        // 導出時自動解開，還原為最乾淨原始的 CSV 獨立表格欄位
                         const parsed = parseWorkerInfo(d.worker_name, d.weight_count);
                         
                         csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${parsed.displayName}","${parsed.displayPo}","${parsed.displayWeight}","${localTimeStr}"\n`;
@@ -731,13 +729,20 @@
                 }
             });
 
+            // 🚀 核心智慧升級：在讀取 JSON 備份檔時自動加上全形雙引號導正清洗，並優化除錯報告
             document.getElementById('importJsonFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = async function(evt) {
                     try {
-                        const importedSchedules = JSON.parse(evt.target.result);
+                        let rawText = evt.target.result;
+                        // 🧠 自動清洗機制：自動把被手動改壞的全形雙引號自動重置導正為半形直引號
+                        let sanitizedText = rawText
+                            .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"') 
+                            .trim();
+
+                        const importedSchedules = JSON.parse(sanitizedText);
                         if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗：檔案格式不符合規範，必須為一個 JSON 陣列！"); return; }
                         const proceed = confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。\n確定要將這些資料批次寫入 Firebase 數據庫中嗎？`);
                         if (proceed) {
@@ -761,7 +766,10 @@
                             alert(`🎉 批次匯入大成功！已成功同步 ${successCount} 筆排程數據。`);
                             document.getElementById('importJsonFile').value = ''; 
                         }
-                    } catch (err) { alert("🚨 讀取 JSON 檔案發生錯誤，請確保該檔案結構完全正確！\n錯誤訊息: " + err.message); }
+                    } catch (err) { 
+                        console.error("JSON 結構解析死機報告：", err);
+                        alert("🚨 讀取 JSON 檔案發生錯誤，請確保該檔案結構完全正確！\n\n💡 提示：若您剛剛手動修改過內容，請確保沒有遺留多餘的結尾逗號，且文字內部沒有直接按 Enter 鍵換行。\n\n錯誤訊息: " + err.message); 
+                    }
                 };
                 reader.readAsText(file);
             });
