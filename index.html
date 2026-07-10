@@ -267,7 +267,7 @@
             <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full xl:w-auto justify-start xl:justify-end">
                 <div id="exportWrapper" class="flex gap-2 items-center hidden mr-2">
                     <input type="month" id="exportMonthFilter" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 font-medium">
-                    <button type="button" id="exportExcelBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold cursor-pointer">📊 匯出選定月份報表</button>
+                    <input id="exportExcelBtn" type="button" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold cursor-pointer" value="📊 匯出選定月份報表">
                 </div>
 
                 <div id="superAdminWrapper" class="flex flex-wrap gap-2 items-center hidden mr-2">
@@ -297,7 +297,7 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" // 🔥 超級管理員
+            "SUPERkldr": "SUPER_ADMIN" 
         };
 
         const firebaseConfig = {
@@ -460,7 +460,6 @@
                     const amEvents = dayEvents.filter(item => item.time.includes("上午"));
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
-                    // 🚀 依據需求，將人員姓名與件數重量完美分行、縮排，且規格用淡灰色 12px 呈現
                     let amString = amEvents.length > 0 ? amEvents.map(e => {
                         const parsed = parseWorkerInfo(e.worker_name, e.weight_count);
                         let itemHtml = `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${parsed.displayName}`;
@@ -729,7 +728,7 @@
                 }
             });
 
-            // 🚀 核心智慧升級：在讀取 JSON 備份檔時自動加上全形雙引號導正清洗，並優化除錯報告
+            // 🚀 智慧防呆引擎：自動清洗手寫 JSON 的全形雙引號
             document.getElementById('importJsonFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -737,7 +736,6 @@
                 reader.onload = async function(evt) {
                     try {
                         let rawText = evt.target.result;
-                        // 🧠 自動清洗機制：自動把被手動改壞的全形雙引號自動重置導正為半形直引號
                         let sanitizedText = rawText
                             .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"') 
                             .trim();
@@ -751,7 +749,11 @@
                                 if (item.date && item.time && item.department) {
                                     const uniqueId = Math.floor(Math.random() * 100000);
                                     const safeDeptName = item.department.replace('/', '-'); 
-                                    const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${item.worker_name || '備份'}_${uniqueId}`;
+                                    
+                                    // 🚀 核心大漏洞完全修復：全自動將負責人姓名中的所有「非法斜線 /」強制在隱形雲端路徑中洗成安全減號 -，杜絕 Firebase 網址分層死機！
+                                    const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
+                                    const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,25)}_${uniqueId}`;
+                                    
                                     const customDocRef = doc(db, "kldr", customDocName);
                                     batch.set(customDocRef, {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
@@ -844,7 +846,11 @@
             };
             try {
                 const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
-                const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${payload.worker_name}_${uniqueId}`;
+                
+                // 🚀 同步修復：一般前端表單新增排程時，也無條件杜絕負責人填寫斜線造成的路徑死機！
+                const safeWorkerFormName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
+                const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,25)}_${uniqueId}`;
+                
                 await setDoc(doc(db, "kldr", customDocName), payload);
                 alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; document.getElementById('department').value = ''; document.getElementById('floor').value = '';
