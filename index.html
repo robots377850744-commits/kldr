@@ -260,7 +260,7 @@
                     🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
                 </div>
                 <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-4 py-1.5 rounded-xl tracking-wide shadow-xs shrink-0">
-                    🔥 雲端全歷史總計 ➔ 全體吊運總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
+                    🔥 雲端全歷史總計 ➔ 排程預約總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
                 </div>
             </div>
             
@@ -537,7 +537,6 @@
                         closeCustomModal();
                     } catch (error) {
                         alert("🚨 變更失敗：請檢查與 Firebase 的雲端連線狀態！");
-                        console.error(error);
                     }
                 }
             });
@@ -607,7 +606,7 @@
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線全體排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
+                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線上全體排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
                 if (doubleCheck) {
                     const tripleCheck = prompt("為了防止誤觸，請在下方輸入大寫密碼 『RESET_ALL』 以確認抹除資料：");
                     if (tripleCheck === "RESET_ALL") {
@@ -674,40 +673,38 @@
 
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
-                // 🚀 初始化全歷史吊運計數器
-                let totalCranesCount = 0;
+                
+                // 🚀 初始化計數器：不管吊運還是電梯，只要有預約排程都一起加總
+                let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
                         
-                        const currentWorkType = data.workType || "吊運";
-                        // 🚀 關鍵加總邏輯：只要全雲端歷史資料中作業項目為「吊運」，計數器就無條件累加 1
-                        if (currentWorkType === "吊運") {
-                            totalCranesCount++;
-                        }
+                        // 🚀 核心加總邏輯修正：只要成功撈取到此有效排程（不論吊運、電梯），總數量即刻加 1
+                        totalSchedulesCount++;
 
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午" : "下午";
                         const floorPrefix = data.floor ? `[${data.floor}]` : "";
-                        const typePrefix = `[${currentWorkType}]`; 
+                        const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
                         
                         globalEventsArray.push({
                             id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: currentWorkType }
+                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運" }
                         });
                     }
                 });
                 
-                // 🚀 將即時跑出來的吊運歷史總數渲染到左下角精美面版上
-                document.getElementById('globalCraneTotalSpan').innerText = totalCranesCount;
+                // 🚀 將即時跑出來的 (吊運 + 電梯) 全庫排程歷史總機台數同步渲染到左下方看板上
+                document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
                 applyLiveFilters(); 
             });
 
             document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+            document.getElementById('department').addEventListener('change', applyLiveFilters);
             document.getElementById('resetFilterBtn').addEventListener('click', () => {
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
             });
