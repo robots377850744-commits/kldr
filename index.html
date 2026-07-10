@@ -270,7 +270,8 @@
                     <button type="button" id="exportExcelBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold cursor-pointer">📊 匯出選定月份報表</button>
                 </div>
 
-                <div id="superAdminWrapper" class="flex gap-2 items-center hidden mr-2">
+                <div id="superAdminWrapper" class="flex flex-wrap gap-2 items-center hidden mr-2">
+                    <button type="button" id="exportAllCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出雲端全資料庫總報表 (CSV)</button>
                     <button type="button" id="exportAllJsonBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出雲端全資料庫總備份 (JSON)</button>
                     <button type="button" id="clearAllDbBtn" class="bg-red-700 hover:bg-red-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">🔥 超級特權：一鍵清空資料庫</button>
                     <label class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">
@@ -296,7 +297,7 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" 
+            "SUPERkldr": "SUPER_ADMIN" // 🔥 超級管理員
         };
 
         const firebaseConfig = {
@@ -430,6 +431,7 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
+                // 點選日期總覽大彈窗（含智慧加總顯示）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -457,6 +459,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 點選單筆詳細大彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -484,8 +487,7 @@
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
-                        `• <b>樓層欄位：</b>${floorContentHtml}<br>` +
-                        `• <b>所屬站點：</b>${props.department || '未填'}<br>` +
+                        `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
@@ -553,6 +555,62 @@
                         alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
                         closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
+                }
+            });
+
+            // 🔥 內嵌升級：新增針對 SUPERkldr 頂級管理員的「全資料庫一鍵匯出 CSV 總報表」核心引擎
+            // 同時滿足後續在人員姓名後方多出 [PO:], [件數重量:] 的查看與比對需求，自動開拓獨立專屬欄位！
+            document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
+                
+                const confirmExport = confirm("📥 【最高控制主權確認】\n您即將下載此 Firebase 資料庫內的『全體歷史排程總報表』CSV 檔案。\n系統將自動為 [PO單號] 與 [件數重量] 建立全新對帳欄位方便比對。是否執行？");
+                if (!confirmExport) return;
+
+                document.getElementById('exportAllCsvBtn').disabled = true;
+                document.getElementById('exportAllCsvBtn').innerText = "⚡ CSV 生成中...";
+
+                try {
+                    const querySnapshot = await getDocs(scheduleRef);
+                    // 第一行：CSV 欄位標頭（特別追加 PO單號、件數重量對帳欄位）
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,PO單號(比對預留欄),件數重量(比對預留欄),雲端同步時間(台灣時區)\n";
+                    
+                    const rawRecords = [];
+                    querySnapshot.forEach((doc) => {
+                        rawRecords.push(doc.data());
+                    });
+                    
+                    // 依照日期與時段排序，讓 CSV 像精美帳本一樣整齊乾淨
+                    const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+                    sortedRecords.forEach((d) => {
+                        const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const workTypeStr = d.workType || "吊運";
+                        const floorStr = d.floor || "1F";
+                        const machineStr = d.machine || "未填";
+                        const nameStr = d.worker_name || "未填";
+                        
+                        // 雙引號包覆防夾逗號爆表錯誤，預留欄填寫空白方便未來對帳直接手打或拉公式
+                        csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${nameStr}","","","${localTimeStr}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const timeStamp = new Date().toISOString().slice(0,10);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `Firebase資料庫全紀錄總報表_${timeStamp}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert(`🎉 總 CSV 報表生成成功！已精準導出共 [ ${sortedRecords.length} ] 筆全紀錄，內含 PO 與件數比對專欄。`);
+                } catch (err) {
+                    alert("🚨 導出失敗：請檢查網絡或 Firebase SDK 連線狀況！");
+                    console.error(err);
+                } finally {
+                    document.getElementById('exportAllCsvBtn').disabled = false;
+                    document.getElementById('exportAllCsvBtn').innerText = "📥 匯出雲端全資料庫總報表 (CSV)";
                 }
             });
 
@@ -674,7 +732,6 @@
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
                 
-                // 🚀 初始化計數器：不管吊運還是電梯，只要有預約排程都一起加總
                 let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
@@ -682,7 +739,6 @@
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
                         
-                        // 🚀 核心加總邏輯修正：只要成功撈取到此有效排程（不論吊運、電梯），總數量即刻加 1
                         totalSchedulesCount++;
 
                         const colorValue = getDeptColor(data.department);
@@ -698,13 +754,12 @@
                     }
                 });
                 
-                // 🚀 將即時跑出來的 (吊運 + 電梯) 全庫排程歷史總機台數同步渲染到左下方看板上
                 document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
                 applyLiveFilters(); 
             });
 
             document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-            document.getElementById('department').addEventListener('change', applyLiveFilters);
+            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
             document.getElementById('resetFilterBtn').addEventListener('click', () => {
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
             });
