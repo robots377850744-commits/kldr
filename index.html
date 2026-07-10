@@ -254,11 +254,17 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <div class="mt-6 p-4 bg-zinc-50 rounded-xl border border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-zinc-500">
-                🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
+        <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 w-full xl:w-auto">
+                <div class="text-sm text-zinc-500 font-medium shrink-0">
+                    🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
+                </div>
+                <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-4 py-1.5 rounded-xl tracking-wide shadow-xs shrink-0">
+                    🔥 雲端全歷史總計 ➔ 全體吊運總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
+                </div>
             </div>
-            <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center">
+            
+            <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full xl:w-auto justify-start xl:justify-end">
                 <div id="exportWrapper" class="flex gap-2 items-center hidden mr-2">
                     <input type="month" id="exportMonthFilter" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 font-medium">
                     <button type="button" id="exportExcelBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold cursor-pointer">📊 匯出選定月份報表</button>
@@ -290,7 +296,7 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" // 🔥 超級管理員
+            "SUPERkldr": "SUPER_ADMIN" 
         };
 
         const firebaseConfig = {
@@ -312,7 +318,7 @@
         let currentAdminDept = null; 
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
-        let activeSelectedDocType = null; // 暫存目前被點開資料的作業項目種類
+        let activeSelectedDocType = null; 
         let calendar; 
 
         const now = new Date();
@@ -359,8 +365,8 @@
                 if (currentAdminDept === "SUPER_ADMIN") {
                     document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
-                    document.getElementById('superAdminWrapper').classList.remove('hidden'); // 解鎖核彈按鈕
-                    document.getElementById('exportWrapper').classList.remove('hidden'); // 同時解鎖報表
+                    document.getElementById('superAdminWrapper').classList.remove('hidden'); 
+                    document.getElementById('exportWrapper').classList.remove('hidden'); 
                 } else {
                     document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬前端擦拭功能)`;
                     document.getElementById('currentRole').className = "font-bold text-emerald-700";
@@ -424,7 +430,6 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 點選日期總覽大彈窗（含智慧加總顯示）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -437,7 +442,7 @@
                     const pmEvents = dayEvents.filter(item => item.time.includes("下午"));
 
                     let amString = amEvents.length > 0 ? amEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
-                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (currently no schedule)";
+                    let pmString = pmEvents.length > 0 ? pmEvents.map(e => `   • <span class="text-zinc-600 font-bold">[${e.workType || '吊運'}]</span> [${e.floor || '未填'}-${e.department}]  機台: ${e.machine || '未填'}  人員: ${e.worker_name}`).join('\n') : "   (目前無排程)";
 
                     const modalContentHtml = 
                         `<div class="bg-zinc-50 p-3 rounded-lg border border-zinc-200 mb-3"><span class="text-amber-600 font-bold">☀️ 上午場</span>\n${amString}</div>` +
@@ -448,11 +453,10 @@
                     
                     document.getElementById('modalBody').innerHTML = modalContentHtml;
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
-                    document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); // 總覽不顯示變更鈕
+                    document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -480,7 +484,8 @@
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
-                        `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
+                        `• <b>樓層欄位：</b>${floorContentHtml}<br>` +
+                        `• <b>所屬站點：</b>${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b>${props.worker_name || '未填'}` +
                         `</div>`;
@@ -521,16 +526,18 @@
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(點擊確認直接生效)`);
+                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
                 
                 if (confirmToggle) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
+                        
                         alert(`🎉 變更成功！該排程已一秒無痛變更為【${nextType}】。`);
                         closeCustomModal();
                     } catch (error) {
                         alert("🚨 變更失敗：請檢查與 Firebase 的雲端連線狀態！");
+                        console.error(error);
                     }
                 }
             });
@@ -550,7 +557,6 @@
                 }
             });
 
-            // 🔥 內嵌升級：SUPERkldr 專屬一鍵拉取雲端全資料庫總備份 JSON 的特權核心引擎
             document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
                 
@@ -566,7 +572,6 @@
                     
                     querySnapshot.forEach((doc) => {
                         const d = doc.data();
-                        // 排除我們自製的前端安全密碼認證章，只抽乾淨的產線內容
                         allDataArray.push({
                             date: d.date,
                             time: d.time,
@@ -579,7 +584,6 @@
                         });
                     });
 
-                    // 將陣列物件轉化為大器美觀、可直接用於一鍵匯入的標準 JSON 純文字
                     const finalJsonString = JSON.stringify(allDataArray, null, 2);
                     const blob = new Blob([finalJsonString], { type: 'application/json;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
@@ -603,7 +607,7 @@
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線上的所有部門排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
+                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線全體排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
                 if (doubleCheck) {
                     const tripleCheck = prompt("為了防止誤觸，請在下方輸入大寫密碼 『RESET_ALL』 以確認抹除資料：");
                     if (tripleCheck === "RESET_ALL") {
@@ -670,21 +674,35 @@
 
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
+                // 🚀 初始化全歷史吊運計數器
+                let totalCranesCount = 0;
+
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
+                        
+                        const currentWorkType = data.workType || "吊運";
+                        // 🚀 關鍵加總邏輯：只要全雲端歷史資料中作業項目為「吊運」，計數器就無條件累加 1
+                        if (currentWorkType === "吊運") {
+                            totalCranesCount++;
+                        }
+
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午" : "下午";
                         const floorPrefix = data.floor ? `[${data.floor}]` : "";
-                        const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
+                        const typePrefix = `[${currentWorkType}]`; 
+                        
                         globalEventsArray.push({
                             id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運" }
+                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: currentWorkType }
                         });
                     }
                 });
+                
+                // 🚀 將即時跑出來的吊運歷史總數渲染到左下角精美面版上
+                document.getElementById('globalCraneTotalSpan').innerText = totalCranesCount;
                 applyLiveFilters(); 
             });
 
