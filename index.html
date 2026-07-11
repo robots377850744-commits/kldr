@@ -122,7 +122,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 950px; /* 🚀 寬度加大以容納完美 HTML 表格 */
+            max-width: 950px; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -155,6 +155,7 @@
             <div id="modalBody" class="font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
             </div>
             <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
+                <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalToggleWorkTypeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔄 變更作業項目</button>
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
@@ -448,7 +449,6 @@
             let displayWeight = e.weight_count || "";
             let displayRemarks = e.remarks || "";
             
-            // 相容舊版字串拼接格式提取明細
             if (e.worker_name && e.worker_name.includes(" [PO:")) {
                 const match = e.worker_name.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
                 if (match) {
@@ -470,7 +470,7 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 🚀 UI/UX 重大升級：點選日期總覽彈窗「全面 Excel 表格記帳本化」呈獻
+                // 點選日期總覽大彈窗（HTML 表格矩陣化）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
@@ -479,13 +479,9 @@
                     const countFC = dayEvents.filter(e => e.department === "FC").length;
                     const countRDL = dayEvents.filter(e => e.department === "RDL").length;
 
-                    // 智慧拼裝 HTML 精美數據表格
                     let tableRowsHtml = "";
-                    
                     if (dayEvents.length > 0) {
-                        // 依照時間時段與工作項目自然排序
                         const sortedEvents = [...dayEvents].sort((a,b) => b.time.localeCompare(a.time));
-                        
                         sortedEvents.forEach(e => {
                             const parsed = parseWorkerInfo(e);
                             const typeBadge = e.workType === "電梯" 
@@ -533,10 +529,11 @@
                     
                     document.getElementById('modalDeleteBtn').className = "hidden"; 
                     document.getElementById('modalToggleWorkTypeBtn').className = "hidden"; 
+                    document.getElementById('modalSaveFieldsBtn').className = "hidden"; 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗
+                // 點選單筆詳細大彈窗（🚀 加開件數重量與備註就地直接編輯功能）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -555,22 +552,52 @@
                             <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
                             <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
-                        </select> <span class="text-xs text-blue-600 font-bold">(點擊即自動同步雲端)</span>`;
+                        </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
                     } else {
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
                     }
 
                     const parsed = parseWorkerInfo(props);
-                    let remarksBlock = parsed.displayRemarks ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line">${parsed.displayRemarks}</div>` : "";
+                    
+                    // 🚀 核心逆向還原：自動解開 weight_count 字串並分別塞入 Pieces 與 Weight 修改格中
+                    let piecesVal = "";
+                    let weightVal = "";
+                    let currentWeightCount = props.weight_count || parsed.displayWeight || "";
+                    if (currentWeightCount) {
+                        const pMatch = currentWeightCount.match(/(\d+)件/);
+                        if (pMatch) piecesVal = pMatch[1];
+                        const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/);
+                        if (wMatch) weightVal = wMatch[1];
+                    }
+                    let remarksVal = props.remarks || parsed.displayRemarks || "";
 
-                    const detailHtml = `<div class="bg-zinc-50 p-5 rounded-xl border border-zinc-200 text-base">` +
+                    let weightContentHtml = "";
+                    let remarksBlock = "";
+
+                    if (hasPermission) {
+                        weightContentHtml = `
+                            <div class="flex flex-wrap items-center gap-2 mt-1 bg-white p-2 rounded-lg border border-zinc-200 max-w-sm">
+                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-16 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
+                                <span class="text-zinc-300">|</span>
+                                <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
+                            </div>
+                        `;
+                        remarksBlock = `• <b>詳細備註內容修飾：</b><br>
+                            <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400">${remarksVal}</textarea>
+                        `;
+                    } else {
+                        weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
+                        remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line">${remarksVal}</div>` : "";
+                    }
+
+                    const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
                         `• <b>預約日期：</b>${info.event.startStr}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${parsed.displayName}</span><br>` +
-                        `• <b>物件重量：</b><span class="text-emerald-700 font-extrabold">${parsed.displayWeight || '未填'}</span><br>` +
+                        `• <b>物件重量欄位修改：</b>${weightContentHtml}<br>` +
                         remarksBlock +
                         `</div>`;
                     
@@ -580,120 +607,215 @@
                     
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
+                        document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); // 亮出綠色儲存按鈕
+                        
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
-
-                        document.getElementById('modalFloorSelect').addEventListener('change', async (e) => {
-                            const newFloor = e.target.value;
-                            try {
-                                const docRef = doc(db, "kldr", activeSelectedDocId);
-                                await updateDoc(docRef, { floor: newFloor });
-                                alert(`🎉 樓層更新成功！該筆排程已變更為【${newFloor}】。`);
-                                closeCustomModal();
-                            } catch (err) { alert("🚨 變更失敗！"); }
-                        });
                     } else {
-                        document.getElementById('modalDeleteBtn').className = "hidden";
-                        document.getElementById('modalToggleWorkTypeBtn').className = "hidden";
+                        document.getElementById('modalDeleteBtn').classList.add('hidden');
+                        document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
+                        document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
                     }
                     document.getElementById('customAlertModal').style.display = 'flex';
                 }
             });
             calendar.render();
 
+            // 🚀 核心功能綁定：點擊單筆彈窗綠色按鈕「儲存內容變更」的快速更新防火牆引擎
+            document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept) return;
+                
+                let p = document.getElementById('modalPiecesInput').value.trim();
+                let w = document.getElementById('modalWeightInput').value.trim();
+                let r = document.getElementById('modalRemarksInput').value.trim();
+                
+                let weightCountStr = "";
+                if (p || w) {
+                    weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`;
+                }
+                
+                try {
+                    const docRef = doc(db, "kldr", activeSelectedDocId);
+                    // 直接針對 weight_count 與 remarks 進行輕量更新
+                    await updateDoc(docRef, {
+                        weight_count: weightCountStr,
+                        remarks: r
+                    });
+                    alert("🎉 儲存大成功！該筆排程的規格與備註已一秒就地無痛同步雲端。");
+                    closeCustomModal();
+                } catch (error) {
+                    alert("🚨 儲存失敗：請檢查與 Firebase 的雲端連線狀態！");
+                    console.error(error);
+                }
+            });
+
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
+                
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                if (confirm(`🔄 您確定要直接將這筆排程修改為【${nextType}】嗎？`)) {
+                const confirmToggle = confirm(`🔄 【管理員特權即時變更】\n您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除、免重新填寫，點擊確認直接生效)`);
+                
+                if (confirmToggle) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        alert(`🎉 變更成功！已切換為【${nextType}】。`);
+                        
+                        alert(`🎉 變更成功！該排程已一秒無痛變更為【${nextType}】。`);
                         closeCustomModal();
-                    } catch (error) { alert("🚨 變更失敗！"); }
+                    } catch (error) {
+                        alert("🚨 變更失敗：請檢查與 Firebase 的雲端連線狀態！");
+                    }
                 }
             });
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
+                const confirmDelete = confirm(`⚠️ 【特權確認】\n您確定要將這筆排程從雲端徹底移除嗎？\n(移除後無法復原)`);
+                if (confirmDelete) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！");
+                        alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
                         closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
             });
 
-            // 一鍵拉取雲端全資料庫總報表 CSV
             document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
-                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
-                if (!confirm("📥 您確定要下載全體歷史排程總報表 CSV 檔案嗎？")) return;
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
+                
+                const confirmExport = confirm("📥 【最高控制主權確認】\n您即將下載此 Firebase 資料庫內的『全體歷史排程總報表』CSV 檔案。\n系統將自動為 [PO單號] 與 [件數重量] 建立全新對帳欄位方便比對。是否執行？");
+                if (!confirmExport) return;
+
+                document.getElementById('exportAllCsvBtn').disabled = true;
+                document.getElementById('exportAllCsvBtn').innerText = "⚡ CSV 生成中...";
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,詳細備註,建立時間\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,PO單號,件數重量,詳細備註,雲端同步時間(台灣時區)\n";
+                    
                     const rawRecords = [];
-                    querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
+                    querySnapshot.forEach((doc) => {
+                        rawRecords.push(doc.data());
+                    });
+                    
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                     sortedRecords.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const workTypeStr = d.workType || "吊運";
+                        const floorStr = d.floor || "1F";
+                        const machineStr = d.machine || "未填";
+                        
                         const parsed = parseWorkerInfo(d);
-                        // 清洗雙引號防空爆
-                        const cleanRemarks = (parsed.displayRemarks || "").replace(/"/g, '""');
-                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${parsed.displayWeight}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const cleanRemarks = (d.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
+                        const cleanWeight = (d.weight_count || parsed.displayWeight || "");
+                        
+                        csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${parsed.displayName}","${parsed.displayPo}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
+                    
+                    const timeStamp = new Date().toISOString().slice(0,10);
                     const link = document.createElement("a");
                     link.setAttribute("href", url);
-                    link.setAttribute("download", `全雲端排程總報表_${new Date().toISOString().slice(0,10)}.csv`);
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                } catch (err) { alert("🚨 導出失敗！"); }
+                    link.setAttribute("download", `Firebase資料庫全紀錄總報表_${timeStamp}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert(`🎉 總 CSV 報表生成成功！已精準導出共 [ ${sortedRecords.length} ] 筆全紀錄。`);
+                } catch (err) {
+                    alert("🚨 導出失敗：請檢查網絡或 Firebase SDK 連線狀況！");
+                    console.error(err);
+                } finally {
+                    document.getElementById('exportAllCsvBtn').disabled = false;
+                    document.getElementById('exportAllCsvBtn').innerText = "📥 匯出雲端全資料庫總報表 (CSV)";
+                }
             });
 
             document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
-                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
-                if (!confirm("📥 是否下載雲端全資料庫備份 JSON 還原檔？")) return;
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
+                
+                const confirmExport = confirm("📥 【最高控制主權確認】\n您即將下載此 Firebase 資料庫內的『所有歷史總排程紀錄』JSON 還原備份檔案。\n此動作將撈取全體資料。是否確認執行？");
+                if (!confirmExport) return;
+
+                document.getElementById('exportAllJsonBtn').disabled = true;
+                document.getElementById('exportAllJsonBtn').innerText = "⚡ 正在直攻核心撈取中...";
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
                     const allDataArray = [];
+                    
                     querySnapshot.forEach((doc) => {
                         const d = doc.data();
                         allDataArray.push({
-                            date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F",
-                            department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
-                            weight_count: d.weight_count || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
+                            date: d.date,
+                            time: d.time,
+                            workType: d.workType || "吊運",
+                            floor: d.floor || "1F",
+                            department: d.department,
+                            machine: d.machine || "未填",
+                            worker_name: d.worker_name || "未填",
+                            weight_count: d.weight_count || "",
+                            remarks: d.remarks || "",
+                            created_at: d.created_at || new Date().toISOString()
                         });
                     });
-                    const blob = new Blob([JSON.stringify(allDataArray, null, 2)], { type: 'application/json;charset=utf-8;' });
+
+                    const finalJsonString = JSON.stringify(allDataArray, null, 2);
+                    const blob = new Blob([finalJsonString], { type: 'application/json;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a"); link.setAttribute("href", url);
-                    link.setAttribute("download", `全雲端資料庫還原檔_${new Date().toISOString().slice(0,10)}.json`);
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                } catch (err) { alert("🚨 導出失敗！"); }
+                    
+                    const timeStamp = new Date().toISOString().slice(0,10);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `Firebase資料庫全紀錄總備份_${timeStamp}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert(`🎉 總資料庫備份成功！已精準導出共 [ ${allDataArray.length} ] 筆完整產線歷史數據檔。`);
+                } catch (err) {
+                    alert("🚨 導出失敗：請檢查網絡或 Firebase SDK 連線狀況！");
+                    console.error(err);
+                } finally {
+                    document.getElementById('exportAllJsonBtn').disabled = false;
+                    document.getElementById('exportAllJsonBtn').innerText = "📥 匯出雲端全資料庫總備份 (JSON)";
+                }
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                if (confirm("🚨🚨🚨【極度危險】確定要一鍵重置清空整個雲端資料庫嗎？")) {
-                    if (prompt("請輸入大寫密碼 『RESET_ALL』 以確認抹除：") === "RESET_ALL") {
+                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您正在準備『一鍵清空整個 Firebase 雲端資料庫』的所有行事曆數據！\n這將會使目前線上全體排程在 1 秒內徹底蒸發。\n\n您確定要繼續執行嗎？");
+                if (doubleCheck) {
+                    const tripleCheck = prompt("為了防止誤觸，請在下方輸入大寫密碼 『RESET_ALL』 以確認抹除資料：");
+                    if (tripleCheck === "RESET_ALL") {
                         try {
                             const querySnapshot = await getDocs(scheduleRef);
                             const batch = writeBatch(db);
-                            querySnapshot.forEach((s) => batch.set(s.ref, { request_delete_pass: "SUPERkldr" }, { merge: true }));
+                            
+                            querySnapshot.forEach((documentSnapshot) => {
+                                batch.set(documentSnapshot.ref, { request_delete_pass: "SUPERkldr" }, { merge: true });
+                            });
                             await batch.commit();
+
                             const deleteBatch = writeBatch(db);
-                            querySnapshot.forEach((s) => deleteBatch.delete(s.ref));
+                            querySnapshot.forEach((documentSnapshot) => {
+                                deleteBatch.delete(documentSnapshot.ref);
+                            });
                             await deleteBatch.commit();
-                            alert("💥 資料庫已彻底淨空重置！");
-                        } catch (error) { alert("🚨 抹除失敗！"); }
+                            
+                            alert("💥 資料庫已成功完成徹底淨空！目前線上排程已重置為 0 筆。");
+                        } catch (error) {
+                            alert("🚨 抹除失敗：請確保 Firebase Rules 規則已正確發布上線！");
+                            console.error(error);
+                        }
+                    } else {
+                        alert("🔒 密碼不符，全刪除指令已被安全安全攔截。");
                     }
                 }
             });
@@ -704,23 +826,27 @@
                 const reader = new FileReader();
                 reader.onload = async function(evt) {
                     try {
-                        let sanitizedText = evt.target.result.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').trim();
+                        let rawText = evt.target.result;
+                        let sanitizedText = rawText
+                            .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"') 
+                            .trim();
+
                         const importedSchedules = JSON.parse(sanitizedText);
-                        if (!Array.isArray(importedSchedules)) return alert("🚨 格式非 JSON 陣列！");
-                        
-                        if (confirm(`📋 偵測到 [ ${importedSchedules.length} ] 筆排程，是否批次注入？`)) {
+                        if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗：檔案格式不符合規範，必須為一個 JSON 陣列！"); return; }
+                        const proceed = confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。\n確定要將這些資料批次寫入 Firebase 數據庫中嗎？`);
+                        if (proceed) {
                             let successCount = 0; let batch = writeBatch(db); let count = 0;
                             for (const item of importedSchedules) {
                                 if (item.date && item.time && item.department) {
                                     const uniqueId = Math.floor(Math.random() * 100000);
-                                    const safeDeptName = item.department.replace('/', '-');
-                                    // 斜線資安安全清洗防卡死機制
+                                    const safeDeptName = item.department.replace('/', '-'); 
+                                    
                                     const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
                                     const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,20)}_${uniqueId}`;
                                     
                                     batch.set(doc(db, "kldr", customDocName), {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
-                                        floor: item.floor || "1F", department: item.department, machine: item.machine || "未填",
+                                        floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
                                         remarks: item.remarks || "", secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
                                     });
@@ -729,34 +855,37 @@
                                 }
                             }
                             if (count > 0) { await batch.commit(); }
-                            alert(`🎉 批次還原大成功！已同步 ${successCount} 筆排程！`);
+                            alert(`🎉 批次匯入大成功！已成功同步 ${successCount} 筆排程數據。`);
+                            document.getElementById('importJsonFile').value = ''; 
                         }
-                    } catch (err) { alert("🚨 JSON 解析錯誤！" + err.message); }
+                    } catch (err) { 
+                        console.error("JSON 結構解析死機報告：", err);
+                        alert("🚨 讀取 JSON 檔案發生錯誤，請確保該檔案結構完全正確！\n\n💡 提示：若您剛剛手動修改過內容，請確保沒有遺留多餘的結尾逗號，且文字內部沒有直接按 Enter 鍵換行。\n\n錯誤訊息: " + err.message); 
+                    }
                 };
                 reader.readAsText(file);
             });
 
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
+                
                 let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
+                        
                         totalSchedulesCount++;
 
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午" : "下午";
                         const floorPrefix = data.floor ? `[${data.floor}]` : "";
-                        
-                        // 🚀 UI/UX 經典雙重高辨識標籤標記配置
                         const typeEmoji = data.workType === "電梯" ? "🟡" : "🔴";
                         const typeText  = data.workType || "吊運";
-
+                        
                         globalEventsArray.push({
-                            id: doc.id, 
-                            title: `${typeEmoji} [${typeText}] ${showTime}: ${floorPrefix}${data.department} - ${data.worker_name.split(' ')[0]} (${data.machine || '未填'})`, 
+                            id: doc.id, title: `${typeEmoji} [${typeText}] ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
                             extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", remarks: data.remarks || "" }
                         });
@@ -773,28 +902,28 @@
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
             });
 
-            // 原選定月份之 CSV 與 JSON 報表匯出功能模組
             document.getElementById('exportExcelBtn').addEventListener('click', () => {
-                if(localSchedules.length === 0) { alert("目前雲端無數據！"); return; }
+                if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
                 const selectedMonth = document.getElementById('exportMonthFilter').value;
-                if (!selectedMonth) { alert("請選擇月份！"); return; }
+                if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
                 const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
-                if (filteredSchedules.length === 0) { alert(`⚠️ 該月份無數據。`); return; }
+                if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
 
                 const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
-                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `選定月份數據還原檔_${selectedMonth}.json`);
+                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
                 document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
 
-                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,詳細備註,建立時間\n";
+                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
                 const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
                 sortedSchedules.forEach(item => {
                     const parsed = parseWorkerInfo(item);
-                    const cleanRemarks = (parsed.displayRemarks || "").replace(/"/g, '""');
-                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${parsed.displayName}","${parsed.displayWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
+                    const cleanRemarks = (item.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
+                    const cleanWeight = (item.weight_count || parsed.displayWeight || "");
+                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
                 });
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
-                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `月報表_${selectedMonth}.csv`);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
             });
         }
@@ -804,7 +933,6 @@
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
             
-            // 🚀 智慧整合：自動抓取件數、重量並打包成標準格式
             let pieces = document.getElementById('inputPieces').value.trim();
             let weight = document.getElementById('inputWeight').value.trim();
             let remarks = document.getElementById('inputRemarks').value.trim();
@@ -815,19 +943,14 @@
             }
 
             const payload = {
-                date: document.getElementById('date').value, 
-                time: document.getElementById('timePeriod').value,
-                workType: document.getElementById('workType').value, 
-                floor: document.getElementById('floor').value,
-                department: document.getElementById('department').value, 
-                machine: document.getElementById('machine').value.trim(), 
+                date: document.getElementById('date').value, time: document.getElementById('timePeriod').value,
+                workType: document.getElementById('workType').value, floor: document.getElementById('floor').value,
+                department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
                 weight_count: weightCountStr,
                 remarks: remarks,
-                secret_key: BACKEND_SECRET, 
-                created_at: new Date().toISOString()
+                secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
             };
-
             try {
                 const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
                 const safeWorkerFormName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
@@ -835,11 +958,8 @@
                 
                 await setDoc(doc(db, "kldr", customDocName), payload);
                 alert('🎉 排程已成功同步至雲端資料庫！表格已同步刷新。');
-                
-                // 完美清空輸入框，備註與重量重置
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
-                document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
-                document.getElementById('inputRemarks').value = '';
+                document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; document.getElementById('inputRemarks').value = '';
             } catch (error) { alert('🚨 同步失敗！請檢查權限。'); console.error(error); } finally { btn.disabled = false; btn.innerText = "確認排程"; }
         };
     </script>
