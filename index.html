@@ -433,7 +433,6 @@
 
             const filteredEvents = globalEventsArray.filter(evt => {
                 const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
-                // 🚀 核心優化：模糊化比對部門，不論資料庫是寫減號還是斜線都通算
                 const cleanD = (d) => d ? d.replace('-', '/') : '';
                 const matchDept = (selectedDept === "ALL") || (cleanD(evt.extendedProps.department) === cleanD(selectedDept));
                 return matchFloor && matchDept;
@@ -444,7 +443,6 @@
             }
         }
 
-        // 智慧雙相容結構解析器
         function parseWorkerInfo(e) {
             let displayName = e.worker_name || "未填";
             let displayPo = e.po || "";
@@ -493,8 +491,8 @@
                             const deptColor = getDeptColor(e.department);
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
                             
-                            const remarksScrollContainer = parsed.displayRemarks 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayRemarks}</div>`
+                            const remarksScrollContainer = (e.remarks || parsed.displayRemarks)
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks || parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
@@ -507,7 +505,7 @@
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="6" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無任何吊運 or 電梯預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="6" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
@@ -533,14 +531,13 @@
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日預約總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
                     
-                    // 🛡️ 樣式解鎖修復：全面替換 className="hidden" 的暴力破壞，改用標準 classList 防止樣式洗白
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗
+                // 點選單筆詳細大彈窗（🚀 已加開「日期就地重選變更」功能）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -548,12 +545,14 @@
                     activeSelectedDocType = props.workType || "吊運";
                     const activeFloor = props.floor || "1F";
 
-                    // 🛡️ 權限檢驗智慧修復：模糊相容 BE-Recon 與 BE/Recon，徹底打通其餘特權的編輯與刪除權限！
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
+                    let dateContentHtml = "";
                     let floorContentHtml = "";
                     if (hasPermission) {
+                        // 🚀 日期就地變更：直接升級為智慧 Date 輸入框
+                        dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">`;
                         floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
                             <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
@@ -563,6 +562,7 @@
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
                         </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
                     } else {
+                        dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
                     }
 
@@ -599,7 +599,7 @@
                     }
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
-                        `• <b>預約日期：</b>${info.event.startStr}<br>` +
+                        `• <b>預約日期：</b>${dateContentHtml}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
@@ -620,16 +620,6 @@
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
-
-                        document.getElementById('modalFloorSelect').addEventListener('change', async (e) => {
-                            const newFloor = e.target.value;
-                            try {
-                                const docRef = doc(db, "kldr", activeSelectedDocId);
-                                await updateDoc(docRef, { floor: newFloor });
-                                alert(`🎉 樓層更新成功！該筆排程已變更為【${newFloor}】。`);
-                                closeCustomModal();
-                            } catch (err) { alert("🚨 樓層變更失敗！"); }
-                        });
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
@@ -640,10 +630,11 @@
             });
             calendar.render();
 
-            // 快速儲存內容變更按鈕
+            // 💾 儲存內容變更按鈕核心邏輯（同步整合最新加開的日期重選轉移機制）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
+                let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
                 let p = document.getElementById('modalPiecesInput').value.trim();
                 let w = document.getElementById('modalWeightInput').value.trim();
                 let r = document.getElementById('modalRemarksInput').value.trim();
@@ -655,11 +646,18 @@
                 
                 try {
                     const docRef = doc(db, "kldr", activeSelectedDocId);
-                    await updateDoc(docRef, {
+                    
+                    let updatePayload = {
                         weight_count: weightCountStr,
                         remarks: r
-                    });
-                    alert("🎉 儲存大成功！該筆排程的規格與備註已同步雲端。");
+                    };
+                    // 如果有變更日期，一併包進 Payload 寫入
+                    if (dStr) {
+                        updatePayload.date = dStr;
+                    }
+
+                    await updateDoc(docRef, updatePayload);
+                    alert("🎉 變更成功！排程數據（包含最新日期移轉）已即時寫入雲端資料庫。");
                     closeCustomModal();
                 } catch (error) {
                     alert("🚨 儲存失敗：請檢查網絡連線狀況！");
@@ -673,7 +671,7 @@
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        alert(`🎉 變更成功！已切換為【${nextType}】。`);
+                        alert(`🎉 變更成功！該排程已變更為【${nextType}】。`);
                         closeCustomModal();
                     } catch (error) { alert("🚨 變更失敗！"); }
                 }
@@ -681,13 +679,13 @@
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
+                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？\n(移除後無法復原)`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！");
+                        alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
                         closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
@@ -813,12 +811,14 @@
 
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
+                
                 let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.date && data.time && data.department) {
                         localSchedules.push(data);
+                        
                         totalSchedulesCount++;
 
                         const colorValue = getDeptColor(data.department);
@@ -840,7 +840,6 @@
             });
 
             document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-            // 🚀 智慧篩選 Bug 完美修復：從舊版的錯誤監聽 'department'，一秒更正為對應下拉選單 filterDept 的事件監聽！
             document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
             document.getElementById('resetFilterBtn').addEventListener('click', () => {
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
