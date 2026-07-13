@@ -219,22 +219,18 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 border-t border-zinc-200/60 pt-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
-                    <input type="number" id="inputPieces" min="0" placeholder="4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputPieces" min="0" placeholder="例如：4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重 (kg)</label>
-                    <input type="number" id="inputWeight" min="0" placeholder="1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputWeight" min="0" placeholder="例如：1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 主機最大規格 (智慧抓取預留欄)</label>
-                    <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
-                </div>
-                <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
-                    <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
+                    <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：主機台750kg..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
@@ -315,7 +311,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const GATE_PASSWORD  = "kl"; 
+        const GATE_PASSWORD  = "kl"; // 網頁解鎖進門密碼：小寫 kl
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
         const ADMIN_PASSWORDS = {
@@ -359,7 +355,9 @@
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { document.getElementById('unlockBtn').click(); }
+            if (e.key === 'Enter') {
+                document.getElementById('unlockBtn').click();
+            }
         });
 
         document.getElementById('unlockBtn').addEventListener('click', () => {
@@ -368,17 +366,24 @@
                 document.getElementById('passwordOverlay').style.display = 'none';
                 document.getElementById('mainSystem').classList.remove('hidden');
                 initSystem();
-            } else { document.getElementById('loginError').classList.remove('hidden'); }
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
         });
 
         document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { document.getElementById('adminLoginBtn').click(); }
+            if (e.key === 'Enter') {
+                document.getElementById('adminLoginBtn').click();
+            }
         });
 
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
             const input = document.getElementById('adminPassword').value.trim();
+            
             if (ADMIN_PASSWORDS[input]) {
-                currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
+                currentAdminDept = ADMIN_PASSWORDS[input]; 
+                isAdmin = true; 
+                
                 if (currentAdminDept === "SUPER_ADMIN") {
                     document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
@@ -389,18 +394,53 @@
                     document.getElementById('currentRole').className = "font-bold text-emerald-700";
                     document.getElementById('exportWrapper').classList.remove('hidden');
                 }
+                
                 document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
                 document.getElementById('adminLoginBtn').style.display = "none";
                 alert(`權限驗證成功！現已成功開通專屬高階維護功能。`);
-            } else { alert("特權金鑰錯誤！權限驗證失敗。"); }
+            } else {
+                alert("特權金鑰錯誤！權限驗證失敗。");
+            }
         });
 
-        // 智慧型主機台重量尺寸 Regex 抓取與清洗引擎 (完美相容全半形括號)
-        function autoExtractMainSpec(remarksText) {
-            if (!remarksText) return "";
-            const regex = /(\([\u4e00-\u9fa5a-zA-Z\d]*主機台.*?\)[-－\s\w*×xX·\.#\/]*m*m*)/i;
-            const match = remarksText.match(regex);
-            return match ? match[0].trim() : "";
+        function getDeptColor(deptName) {
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            let hash = 0;
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
+        }
+
+        function formatToTaiwanTime(isoString) {
+            if (!isoString) return "";
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+            } catch (e) { return isoString; }
+        }
+
+        function applyLiveFilters() {
+            const selectedFloor = document.getElementById('filterFloor').value;
+            const selectedDept = document.getElementById('filterDept').value;
+
+            const filteredEvents = globalEventsArray.filter(evt => {
+                const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
+                const cleanD = (d) => d ? d.replace('-', '/') : '';
+                const matchDept = (selectedDept === "ALL") || (cleanD(evt.extendedProps.department) === cleanD(selectedDept));
+                return matchFloor && matchDept;
+            });
+
+            if (calendar) {
+                calendar.setOption('events', filteredEvents);
+            }
         }
 
         function parseWorkerInfo(e) {
@@ -408,33 +448,33 @@
             let displayPo = e.po || "";
             let displayWeight = e.weight_count || "";
             let displayRemarks = e.remarks || "";
-            let displayMainSpec = e.main_spec || "";
             
             if (e.worker_name && e.worker_name.includes(" [PO:")) {
                 const match = e.worker_name.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
                 if (match) {
-                    displayName = match[1]; displayPo = match[2];
+                    displayName = match[1];
+                    displayPo = match[2];
                     if (!displayWeight) displayWeight = match[3];
                 }
             }
-            // 🧠 智慧抓取核心補錄：若主機規格欄位為空，但備註有填，自動觸發背景清洗
-            if (!displayMainSpec && displayRemarks) {
-                displayMainSpec = autoExtractMainSpec(displayRemarks);
-            }
-            return { displayName, displayPo, displayWeight, displayRemarks, displayMainSpec };
+            return { displayName, displayPo, displayWeight, displayRemarks };
         }
 
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
+                initialView: 'dayGridMonth',
+                locale: 'zh-tw',
+                height: 'auto', 
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-                buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
+                buttonText: { today: '今天' },
+                validRange: { end: '2027-06-01' },
                 
-                // 日期總覽大彈窗 (多開獨立規格欄位，並加上內嵌滾動 Scroll 箱)
+                // 點選日期總覽大彈窗（HTML 表格記帳本矩陣化）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
+                    
                     const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
                     const countFC = dayEvents.filter(e => e.department === "FC").length;
                     const countRDL = dayEvents.filter(e => e.department === "RDL").length;
@@ -451,48 +491,43 @@
                             const deptColor = getDeptColor(e.department);
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
                             
-                            // 🚀 問題3：新加的主機最大重量欄位也包裹獨立 Scroll 容器限制行高，保障排版完美整齊！
-                            const mainSpecScrollBox = parsed.displayMainSpec 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/50 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
-                                : `<span class="text-zinc-400 font-normal">-</span>`;
-
-                            const remarksScrollBox = (e.remarks || parsed.displayRemarks)
+                            const remarksScrollContainer = (e.remarks || parsed.displayRemarks)
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks || parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
                                 <td class="p-3 font-bold">${e.time} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
-                                <td class="p-3 text-zinc-900 text-xs">${e.machine || '未填'}</td>
-                                <td class="p-3 text-xs text-zinc-700">${parsed.displayName}</td>
-                                <td class="p-3 text-emerald-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
-                                <td class="p-3 max-w-[180px]">${mainSpecScrollBox}</td>
-                                <td class="p-3 max-w-[220px]">${remarksScrollBox}</td>
+                                <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
+                                <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
+                                <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
+                                <td class="p-3 max-w-[290px]">${remarksScrollContainer}</td>
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="7" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="6" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
                         <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide">
-                                        <th class="p-3 w-[100px]">時段 / 項目</th>
-                                        <th class="p-3 w-[110px]">樓層站點</th>
-                                        <th class="p-3">預約機台</th>
-                                        <th class="p-3">現場負責</th>
-                                        <th class="p-3 w-[110px]">件數 / 總重</th>
-                                        <th class="p-3 max-w-[180px] text-blue-800 font-black">⚙️ 主機最大規格 (手動/智慧)</th>
-                                        <th class="p-3 max-w-[220px]">詳細備註事項說明</th>
+                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-sm tracking-wide">
+                                        <th class="p-3 w-[110px]">時段 / 項目</th>
+                                        <th class="p-3 w-[120px]">樓層站點</th>
+                                        <th class="p-3">預約機台名稱</th>
+                                        <th class="p-3">現場負責人</th>
+                                        <th class="p-3 w-[140px]">件數 / 總重</th>
+                                        <th class="p-3 max-w-[290px]">詳細備註事項說明 (支援下拉滑動)</th>
                                     </tr>
                                 </thead>
-                                <tbody>${tableRowsHtml}</tbody>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
                             </table>
                         </div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程數據矩陣明細 】`;
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日預約總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
                     
@@ -502,7 +537,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗 (內頁也一併支援就地修改)
+                // 點選單筆詳細大彈窗（🚀 已加開「日期就地重選變更」功能）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -513,11 +548,12 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "";
+                    let dateContentHtml = "";
+                    let floorContentHtml = "";
                     if (hasPermission) {
                         // 🚀 日期就地變更：直接升級為智慧 Date 輸入框
-                        dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
-                        floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">`;
+                        floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 transition">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
                             <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
                             <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
@@ -532,31 +568,34 @@
 
                     const parsed = parseWorkerInfo(props);
                     
-                    let piecesVal = "", weightVal = "";
+                    let piecesVal = "";
+                    let weightVal = "";
                     let currentWeightCount = props.weight_count || parsed.displayWeight || "";
                     if (currentWeightCount) {
-                        const pMatch = currentWeightCount.match(/(\d+)件/); if (pMatch) piecesVal = pMatch[1];
-                        const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) weightVal = wMatch[1];
+                        const pMatch = currentWeightCount.match(/(\d+)件/);
+                        if (pMatch) piecesVal = pMatch[1];
+                        const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/);
+                        if (wMatch) weightVal = wMatch[1];
                     }
                     let remarksVal = props.remarks || parsed.displayRemarks || "";
-                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || "";
 
-                    let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "";
+                    let weightContentHtml = "";
+                    let remarksBlock = "";
 
                     if (hasPermission) {
                         weightContentHtml = `
-                            <div class="flex flex-wrap items-center gap-2 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-sm">
-                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
-                                <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
-                            </div>`;
-                        mainSpecRowHtml = `• <b class="text-blue-800">主機最大規格：</b><br>
-                            <input type="text" id="modalMainSpecInput" value="${mainSpecVal}" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>`;
+                            <div class="flex flex-wrap items-center gap-2 mt-1 bg-white p-2 rounded-lg border border-zinc-200 max-w-sm">
+                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-16 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
+                                <span class="text-zinc-300">|</span>
+                                <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
+                            </div>
+                        `;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
-                            <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>`;
+                            <textarea id="modalRemarksInput" rows="4" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>
+                        `;
                     } else {
                         weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
-                        mainSpecRowHtml = mainSpecVal ? `• <b class="text-blue-800">主機最大規格：</b><span class="text-blue-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSpecVal}</span><br>` : "";
-                        remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[120px] scrollbar-thin">${remarksVal}</div>` : "";
+                        remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[150px] scrollbar-thin">${remarksVal}</div>` : "";
                     }
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
@@ -566,8 +605,7 @@
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${parsed.displayName}</span><br>` +
-                        `• <b>物件重量欄位：</b>${weightContentHtml}<br>` +
-                        mainSpecRowHtml +
+                        `• <b>物件重量欄位修改：</b>${weightContentHtml}<br>` +
                         remarksBlock +
                         `</div>`;
                     
@@ -578,6 +616,7 @@
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
+                        
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
@@ -591,7 +630,7 @@
             });
             calendar.render();
 
-            // 💾 儲存與更新覆蓋核心邏輯 (新加：支援就地更新主機規格欄)
+            // 💾 儲存內容變更按鈕核心邏輯（同步整合最新加開的日期重選轉移機制）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -599,19 +638,30 @@
                 let p = document.getElementById('modalPiecesInput').value.trim();
                 let w = document.getElementById('modalWeightInput').value.trim();
                 let r = document.getElementById('modalRemarksInput').value.trim();
-                let ms = document.getElementById('modalMainSpecInput') ? document.getElementById('modalMainSpecInput').value.trim() : "";
                 
                 let weightCountStr = "";
-                if (p || w) { weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`; }
+                if (p || w) {
+                    weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`;
+                }
                 
                 try {
                     const docRef = doc(db, "kldr", activeSelectedDocId);
-                    let updatePayload = { weight_count: weightCountStr, remarks: r, main_spec: ms };
-                    if (dStr) updatePayload.date = dStr;
+                    
+                    let updatePayload = {
+                        weight_count: weightCountStr,
+                        remarks: r
+                    };
+                    // 如果有變更日期，一併包進 Payload 寫入
+                    if (dStr) {
+                        updatePayload.date = dStr;
+                    }
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！已無痛同步雲端。"); closeCustomModal();
-                } catch (error) { alert("🚨 儲存變更失敗！"); }
+                    alert("🎉 變更成功！排程數據（包含最新日期移轉）已即時寫入雲端資料庫。");
+                    closeCustomModal();
+                } catch (error) {
+                    alert("🚨 儲存失敗：請檢查網絡連線狀況！");
+                }
             });
 
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
@@ -621,57 +671,63 @@
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        alert("🎉 變更成功！"); closeCustomModal();
+                        alert(`🎉 變更成功！該排程已變更為【${nextType}】。`);
+                        closeCustomModal();
                     } catch (error) { alert("🚨 變更失敗！"); }
                 }
             });
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
+                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？\n(移除後無法復原)`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！"); closeCustomModal();
+                        alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
+                        closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
             });
 
-            // 導出 CSV (全面新增主機最大規格獨立欄)
             document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
-                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
                 if (!confirm("📥 您確定要下載全體歷史排程總報表 CSV 檔案嗎？")) return;
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,主機台最大規格,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,PO單號,件數重量,詳細備註,雲端同步時間(台灣時區)\n";
+                    
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                     sortedRecords.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
-                        const parsed = parseWorkerInfo(d);
-                        const cleanRemarks = (d.remarks || parsed.displayRemarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
-                        const cleanWeight = (d.weight_count || parsed.displayWeight || "");
-                        const cleanMainSpec = (d.main_spec || parsed.displayMainSpec || "").replace(/"/g, '""');
+                        const workTypeStr = d.workType || "吊運";
+                        const floorStr = d.floor || "1F";
+                        const machineStr = d.machine || "未填";
                         
-                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainSpec}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const parsed = parseWorkerInfo(d);
+                        const cleanRemarks = (d.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
+                        const cleanWeight = (d.weight_count || parsed.displayWeight || "");
+                        
+                        csvContent += `"${d.date}","${d.time}","${workTypeStr}","${floorStr}","${d.department}","${machineStr}","${parsed.displayName}","${parsed.displayPo}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a"); link.setAttribute("href", url);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
                     link.setAttribute("download", `全雲端排程總報表_${new Date().toISOString().slice(0,10)}.csv`);
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                    alert(`🎉 CSV 導出大成功！`);
+                    alert(`🎉 總 CSV 報表生成成功！已精準導出共 [ ${sortedRecords.length} ] 筆全紀錄。`);
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
             document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
-                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
+                if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕：此按鈕限最高核心管理員使用！");
                 if (!confirm("📥 是否下載雲端全資料庫備份 JSON 還原檔？")) return;
 
                 try {
@@ -682,46 +738,50 @@
                         allDataArray.push({
                             date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F",
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
-                            weight_count: d.weight_count || "", main_spec: d.main_spec || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
+                            weight_count: d.weight_count || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
                         });
                     });
                     const blob = new Blob([JSON.stringify(allDataArray, null, 2)], { type: 'application/json;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement("a"); link.setAttribute("href", url);
-                    link.setAttribute("download", `全雲端還原總備份_${new Date().toISOString().slice(0,10)}.json`);
+                    link.setAttribute("download", `全雲端資料庫還原檔_${new Date().toISOString().slice(0,10)}.json`);
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    alert(`🎉 總資料庫備份成功！已導出完整歷史數據檔。`);
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                const doubleCheck = confirm("🚨🚨🚨【警告】您確定要一鍵清空整個 Firebase 雲端資料庫嗎？");
+                const doubleCheck = confirm("🚨🚨🚨【警告：極度危險操作】\n您確定要一鍵清空整個 Firebase 雲端資料庫嗎？");
                 if (doubleCheck) {
-                    if (prompt("請輸入大寫密碼 『RESET_ALL』 以確認：") === "RESET_ALL") {
+                    if (prompt("為了防止誤觸，請輸入大寫密碼 『RESET_ALL』 以確認：") === "RESET_ALL") {
                         try {
                             const querySnapshot = await getDocs(scheduleRef);
                             const batch = writeBatch(db);
-                            querySnapshot.forEach((s) => batch.set(s.ref, { request_delete_pass: "SUPERkldr" }, { merge: true }));
+                            querySnapshot.forEach((documentSnapshot) => {
+                                batch.set(documentSnapshot.ref, { request_delete_pass: "SUPERkldr" }, { merge: true });
+                            });
                             await batch.commit();
+
                             const deleteBatch = writeBatch(db);
-                            querySnapshot.forEach((s) => deleteBatch.delete(s.ref));
+                            querySnapshot.forEach((documentSnapshot) => { deleteBatch.delete(documentSnapshot.ref); });
                             await deleteBatch.commit();
-                            alert("💥 資料庫已彻底清空！");
+                            alert("💥 資料庫已成功完成徹底淨空！");
                         } catch (error) { alert("🚨 抹除失敗！"); }
                     }
                 }
             });
 
-            // 🚀 智慧匯入引擎重構：在匯入備份檔時自動執行「問題1」的智慧正則抓取填入
             document.getElementById('importJsonFile').addEventListener('change', function(e) {
-                const file = e.target.files[0]; if (!file) return;
+                const file = e.target.files[0];
+                if (!file) return;
                 const reader = new FileReader();
                 reader.onload = async function(evt) {
                     try {
                         let sanitizedText = evt.target.result.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').trim();
                         const importedSchedules = JSON.parse(sanitizedText);
-                        if (!Array.isArray(importedSchedules)) { alert("🚨 非 JSON 陣列！"); return; }
+                        if (!Array.isArray(importedSchedules)) { alert("🚨 匯入失敗：檔案格式不符合規範，必須為一個 JSON 陣列！"); return; }
                         
-                        if (confirm(`📋 偵測到 %5B ${importedSchedules.length} %5D 筆排程，是否執行智慧抓取填入？`)) {
+                        if (confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。是否進行注入？`)) {
                             let successCount = 0; let batch = writeBatch(db); let count = 0;
                             for (const item of importedSchedules) {
                                 if (item.date && item.time && item.department) {
@@ -730,28 +790,19 @@
                                     const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
                                     const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,20)}_${uniqueId}`;
                                     
-                                    // 🚀 核心配套二：當發現 remarks 備註欄內有主機台規格，但 main_spec 欄位為空時，自動攔截抓取並分離填入新獨立欄位！
-                                    let itemRemarks = item.remarks || "";
-                                    let itemMainSpec = item.main_spec || "";
-                                    if (!itemMainSpec && itemRemarks) {
-                                        itemMainSpec = autoExtractMainSpec(itemRemarks);
-                                    }
-
                                     batch.set(doc(db, "kldr", customDocName), {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
                                         floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
-                                        worker_name: item.worker_name || "未填", 
-                                        weight_count: item.weight_count || "",
-                                        main_spec: itemMainSpec, 
-                                        remarks: itemRemarks,
-                                        secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
+                                        worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
+                                        remarks: item.remarks || "", secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
                                     });
                                     count++; successCount++;
                                     if (count === 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
                                 }
                             }
                             if (count > 0) { await batch.commit(); }
-                            alert(`🎉 智慧注入大成功！已完美解析還原 ${successCount} 筆排程！`);
+                            alert(`🎉 批次匯入大成功！已成功同步 ${successCount} 筆排程數據。`);
+                            document.getElementById('importJsonFile').value = ''; 
                         }
                     } catch (err) { alert("🚨 讀取 JSON 檔案發生錯誤！" + err.message); }
                 };
@@ -760,12 +811,15 @@
 
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
+                
                 let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.date && data.time && data.department) {
-                        localSchedules.push(data); totalSchedulesCount++;
+                        localSchedules.push(data);
+                        
+                        totalSchedulesCount++;
 
                         const colorValue = getDeptColor(data.department);
                         const showTime = data.time.includes("上午") ? "上午" : "下午";
@@ -776,10 +830,11 @@
                         globalEventsArray.push({
                             id: doc.id, title: `${typeEmoji} [${typeText}] ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_spec: data.main_spec || "", remarks: data.remarks || "" }
+                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", remarks: data.remarks || "" }
                         });
                     }
                 });
+                
                 document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
                 applyLiveFilters(); 
             });
@@ -788,6 +843,31 @@
             document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
             document.getElementById('resetFilterBtn').addEventListener('click', () => {
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
+            });
+
+            document.getElementById('exportExcelBtn').addEventListener('click', () => {
+                if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
+                const selectedMonth = document.getElementById('exportMonthFilter').value;
+                if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
+                const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
+                if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
+
+                const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
+                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
+                document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
+
+                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
+                const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                sortedSchedules.forEach(item => {
+                    const parsed = parseWorkerInfo(item);
+                    const cleanRemarks = (item.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
+                    const cleanWeight = (item.weight_count || parsed.displayWeight || "");
+                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             });
         }
 
@@ -798,7 +878,6 @@
             
             let pieces = document.getElementById('inputPieces').value.trim();
             let weight = document.getElementById('inputWeight').value.trim();
-            let mainSpec = document.getElementById('inputMainSpec').value.trim();
             let remarks = document.getElementById('inputRemarks').value.trim();
             
             let weightCountStr = "";
@@ -812,7 +891,6 @@
                 department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
                 weight_count: weightCountStr,
-                main_spec: mainSpec,
                 remarks: remarks,
                 secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
             };
@@ -822,10 +900,9 @@
                 const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
                 
                 await setDoc(doc(db, "kldr", customDocName), payload);
-                alert('🎉 排程已成功同步至雲端資料庫！');
+                alert('🎉 排程已成功同步至雲端資料庫！表格已同步刷新。');
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
-                document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
-                document.getElementById('inputMainSpec').value = ''; document.getElementById('inputRemarks').value = '';
+                document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; document.getElementById('inputRemarks').value = '';
             } catch (error) { alert('🚨 同步失敗！請檢查權限。'); console.error(error); } finally { btn.disabled = false; btn.innerText = "確認排程"; }
         };
     </script>
