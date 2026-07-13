@@ -122,7 +122,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 1100px; /* 🚀 寬度再度微加寬，完美包容所有新表格列 */
+            max-width: 950px; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -172,7 +172,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">日期</label>
-                    <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition 'font-semibold'">
+                    <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">時間時段</label>
@@ -456,8 +456,8 @@
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/50 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
-                            const remarksScrollBox = parsed.displayRemarks 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayRemarks}</div>`
+                            const remarksScrollBox = (e.remarks || parsed.displayRemarks)
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks || parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
@@ -515,6 +515,7 @@
 
                     let dateContentHtml = "", floorContentHtml = "";
                     if (hasPermission) {
+                        // 🚀 日期就地變更：直接升級為智慧 Date 輸入框
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
@@ -523,7 +524,7 @@
                             <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
                             <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
-                        </select>`;
+                        </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
                     } else {
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
@@ -620,7 +621,7 @@
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        alert(`🎉 變更成功！`); closeCustomModal();
+                        alert("🎉 變更成功！"); closeCustomModal();
                     } catch (error) { alert("🚨 變更失敗！"); }
                 }
             });
@@ -693,7 +694,8 @@
             });
 
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
-                if (confirm("🚨🚨🚨【警告】您確定要一鍵清空整個 Firebase 雲端資料庫嗎？")) {
+                const doubleCheck = confirm("🚨🚨🚨【警告】您確定要一鍵清空整個 Firebase 雲端資料庫嗎？");
+                if (doubleCheck) {
                     if (prompt("請輸入大寫密碼 『RESET_ALL』 以確認：") === "RESET_ALL") {
                         try {
                             const querySnapshot = await getDocs(scheduleRef);
@@ -717,9 +719,9 @@
                     try {
                         let sanitizedText = evt.target.result.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"').trim();
                         const importedSchedules = JSON.parse(sanitizedText);
-                        if (!Array.isArray(importedSchedules)) return alert("🚨 非 JSON 陣列！");
+                        if (!Array.isArray(importedSchedules)) { alert("🚨 非 JSON 陣列！"); return; }
                         
-                        if (confirm(`📋 偵測到 [ ${importedSchedules.length} ] 筆排程，是否執行智慧抓取填入？`)) {
+                        if (confirm(`📋 偵測到 %5B ${importedSchedules.length} %5D 筆排程，是否執行智慧抓取填入？`)) {
                             let successCount = 0; let batch = writeBatch(db); let count = 0;
                             for (const item of importedSchedules) {
                                 if (item.date && item.time && item.department) {
@@ -740,7 +742,7 @@
                                         floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", 
                                         weight_count: item.weight_count || "",
-                                        main_spec: itemMainSpec, // 注入抓取出的規格
+                                        main_spec: itemMainSpec, 
                                         remarks: itemRemarks,
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
                                     });
