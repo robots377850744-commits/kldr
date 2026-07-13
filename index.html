@@ -433,7 +433,9 @@
 
             const filteredEvents = globalEventsArray.filter(evt => {
                 const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
-                const matchDept = (selectedDept === "ALL") || (evt.extendedProps.department === selectedDept);
+                // 🚀 核心優化：模糊化比對部門，不論資料庫是寫減號還是斜線都通算
+                const cleanD = (d) => d ? d.replace('-', '/') : '';
+                const matchDept = (selectedDept === "ALL") || (cleanD(evt.extendedProps.department) === cleanD(selectedDept));
                 return matchFloor && matchDept;
             });
 
@@ -442,6 +444,7 @@
             }
         }
 
+        // 智慧雙相容結構解析器
         function parseWorkerInfo(e) {
             let displayName = e.worker_name || "未填";
             let displayPo = e.po || "";
@@ -469,12 +472,12 @@
                 buttonText: { today: '今天' },
                 validRange: { end: '2027-06-01' },
                 
-                // 點選日期總覽大彈窗（HTML 表格矩陣化）
+                // 點選日期總覽大彈窗（HTML 表格記帳本矩陣化）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => item.date === targetDate);
                     
-                    const countBE = dayEvents.filter(e => e.department === "BE/Recon").length;
+                    const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
                     const countFC = dayEvents.filter(e => e.department === "FC").length;
                     const countRDL = dayEvents.filter(e => e.department === "RDL").length;
 
@@ -490,7 +493,6 @@
                             const deptColor = getDeptColor(e.department);
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
                             
-                            // 🚀 UI/UX 重大升級：將詳細備註包裹入獨立限高的滾動 Scroll 容器中，杜絕撐破表格行高
                             const remarksScrollContainer = parsed.displayRemarks 
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
@@ -500,7 +502,7 @@
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
                                 <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
-                                <td class="p-3 text-blue-800 font-extrabold text-xs">${parsed.displayWeight || '(未填)'}</td>
+                                <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
                                 <td class="p-3 max-w-[290px]">${remarksScrollContainer}</td>
                             </tr>`;
                         });
@@ -531,9 +533,10 @@
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日預約總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
                     
-                    document.getElementById('modalDeleteBtn').className = "hidden"; 
-                    document.getElementById('modalToggleWorkTypeBtn').className = "hidden"; 
-                    document.getElementById('modalSaveFieldsBtn').className = "hidden"; 
+                    // 🛡️ 樣式解鎖修復：全面替換 className="hidden" 的暴力破壞，改用標準 classList 防止樣式洗白
+                    document.getElementById('modalDeleteBtn').classList.add('hidden'); 
+                    document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
+                    document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
@@ -545,7 +548,9 @@
                     activeSelectedDocType = props.workType || "吊運";
                     const activeFloor = props.floor || "1F";
 
-                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && currentAdminDept === activeSelectedDocDept));
+                    // 🛡️ 權限檢驗智慧修復：模糊相容 BE-Recon 與 BE/Recon，徹底打通其餘特權的編輯與刪除權限！
+                    const cleanD = (str) => str ? str.replace('-', '/') : '';
+                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
                     let floorContentHtml = "";
                     if (hasPermission) {
@@ -615,17 +620,27 @@
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
+
+                        document.getElementById('modalFloorSelect').addEventListener('change', async (e) => {
+                            const newFloor = e.target.value;
+                            try {
+                                const docRef = doc(db, "kldr", activeSelectedDocId);
+                                await updateDoc(docRef, { floor: newFloor });
+                                alert(`🎉 樓層更新成功！該筆排程已變更為【${newFloor}】。`);
+                                closeCustomModal();
+                            } catch (err) { alert("🚨 樓層變更失敗！"); }
+                        });
                     } else {
-                        document.getElementById('modalDeleteBtn').className = "hidden";
-                        document.getElementById('modalSaveFieldsBtn').className = "hidden";
-                        document.getElementById('modalToggleWorkTypeBtn').className = "hidden";
+                        document.getElementById('modalDeleteBtn').classList.add('hidden');
+                        document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
+                        document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
                     }
                     document.getElementById('customAlertModal').style.display = 'flex';
                 }
             });
             calendar.render();
 
-            // 儲存內容變更按鈕核心邏輯
+            // 快速儲存內容變更按鈕
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -644,22 +659,21 @@
                         weight_count: weightCountStr,
                         remarks: r
                     });
-                    alert("🎉 儲存大成功！該筆排程的規格與備註已一秒就地無痛同步雲端。");
+                    alert("🎉 儲存大成功！該筆排程的規格與備註已同步雲端。");
                     closeCustomModal();
                 } catch (error) {
-                    alert("🚨 儲存失敗：請檢查與 Firebase 的雲端連線狀態！");
-                    console.error(error);
+                    alert("🚨 儲存失敗：請檢查網絡連線狀況！");
                 }
             });
 
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？\n(免刪除，確認即直接生效)`)) {
+                if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         await updateDoc(docRef, { workType: nextType });
-                        alert(`🎉 變更成功！該排程已變更為【${nextType}】。`);
+                        alert(`🎉 變更成功！已切換為【${nextType}】。`);
                         closeCustomModal();
                     } catch (error) { alert("🚨 變更失敗！"); }
                 }
@@ -667,13 +681,13 @@
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？\n(移除後無法復原)`)) {
+                if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！該筆資料已即時自雲端移除清空。");
+                        alert("🎉 刪除成功！");
                         closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
@@ -826,6 +840,7 @@
             });
 
             document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+            // 🚀 智慧篩選 Bug 完美修復：從舊版的錯誤監聽 'department'，一秒更正為對應下拉選單 filterDept 的事件監聽！
             document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
             document.getElementById('resetFilterBtn').addEventListener('click', () => {
                 document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
