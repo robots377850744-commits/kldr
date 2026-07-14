@@ -122,7 +122,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 1100px; /* 🚀 擴大寬度以完美容納新加的獨立行 */
+            max-width: 1100px; /* 🚀 寬度加大，完美承載 7 大主要欄位資訊 */
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -220,21 +220,21 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 border-t border-zinc-200/60 pt-3">
-                <div class="md:col-span-1">
+                <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
-                    <input type="number" id="inputPieces" min="0" placeholder="例如：4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputPieces" min="0" placeholder="4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重 (kg)</label>
-                    <input type="number" id="inputWeight" min="0" placeholder="例如：1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputWeight" min="0" placeholder="1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 最大重量及最大尺寸</label>
                     <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
                 </div>
                 <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
-                    <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：主機台750kg..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
+                    <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
@@ -400,7 +400,7 @@
             let displayPo = e.po || "";
             let displayWeight = e.weight_count || "";
             let displayRemarks = e.remarks || "";
-            let displayMainSpec = e.main_spec || ""; // 🚀 映射新開的獨立欄位
+            let displayMainSpec = e.main_spec || ""; // 🚀 100% 乾淨對齊新開欄位
             
             if (e.worker_name && e.worker_name.includes(" [PO:")) {
                 const match = e.worker_name.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
@@ -419,9 +419,11 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 日期總覽大彈窗 (在指定兩欄位之間完美多開一欄「最大重量及最大尺寸」列)
+                // 🚀 日期總覽大彈窗（在指定兩欄位之間完美多開一欄「最大重量及最大尺寸」列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
+                    
+                    // 🔒 保留您最穩健的原汁原味讀取過濾結構
                     const dayEvents = localSchedules.filter(item => {
                         if (!item.date) return false;
                         return item.date.toString().replace(/\//g, '-') === targetDate;
@@ -443,9 +445,9 @@
                             const deptColor = getDeptColor(e.department);
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
                             
-                            // 🚀 新格子包裹獨立 Scroll 容器限制行高，保障排版完美整齊
+                            // 🚀 欄位多開與下拉限高滾動配置
                             const mainSpecScrollBox = parsed.displayMainSpec 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/50 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/60 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             const remarksScrollBox = (e.remarks || parsed.displayRemarks)
@@ -532,7 +534,7 @@
                         const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) weightVal = wMatch[1];
                     }
                     let remarksVal = props.remarks || parsed.displayRemarks || "";
-                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || ""; // 🚀 讀取最新獨立欄位數據
+                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || ""; // 🚀 讀取獨立欄位
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "";
 
@@ -542,7 +544,7 @@
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
                             </div>`;
-                        // 🚀 就地手動編輯與粘貼區
+                        // 🚀 就地編輯區：手動黏貼貼上欄位
                         mainSpecRowHtml = `• <b class="text-blue-800">最大重量及最大尺寸：</b><br>
                             <input type="text" id="modalMainSpecInput" value="${mainSpecVal}" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>`;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
@@ -572,8 +574,8 @@
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
-                        const MathRandom = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
-                        document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${MathRandom}】`;
+                        const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
+                        document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
@@ -584,9 +586,6 @@
                 }
             });
             calendar.render();
-
-            // 🚀 智慧排序同步：在日曆渲染完畢後，強迫立刻執行一次即時同步繪製，解除「128台卡住看不見」的現象！
-            applyLiveFilters();
 
             // 💾 儲存與更新覆蓋
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
@@ -744,6 +743,7 @@
                 reader.readAsText(file);
             });
 
+            // 🛡️ 100% 完全保留您原本最穩定、從未出過錯的 onSnapshot 原創讀取核心
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
                 let totalSchedulesCount = 0;
@@ -768,6 +768,37 @@
                 });
                 document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
                 applyLiveFilters(); 
+            });
+
+            document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+            document.getElementById('resetFilterBtn').addEventListener('click', () => {
+                document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
+            });
+
+            document.getElementById('exportExcelBtn').addEventListener('click', () => {
+                if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
+                const selectedMonth = document.getElementById('exportMonthFilter').value;
+                if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
+                const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
+                if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
+
+                const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
+                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
+                document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
+
+                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
+                const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                sortedSchedules.forEach(item => {
+                    const parsed = parseWorkerInfo(item);
+                    const cleanRemarks = (item.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
+                    const cleanWeight = (item.weight_count || parsed.displayWeight || "");
+                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             });
         }
 
