@@ -228,17 +228,10 @@
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重 (kg)</label>
                     <input type="number" id="inputWeight" min="0" placeholder="例如：1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 最大重量</label>
-                    <input type="text" id="inputMainWeight" placeholder="例如：(主機台2937kg)" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 最大重量及最大尺寸</label>
+                    <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
                 </div>
-                
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">📏 最大尺寸</label>
-                    <input type="text" id="inputMainSize" placeholder="例如：205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
-                </div>
-
                 <div class="md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
                     <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
@@ -407,6 +400,7 @@
             let displayPo = e.po || "";
             let displayWeight = e.weight_count || "";
             let displayRemarks = e.remarks || "";
+            let displayMainSpec = e.main_spec || ""; 
             
             if (e.worker_name && e.worker_name.includes(" [PO:")) {
                 const match = e.worker_name.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
@@ -415,7 +409,7 @@
                     if (!displayWeight) displayWeight = match[3];
                 }
             }
-            return { displayName, displayPo, displayWeight, displayRemarks };
+            return { displayName, displayPo, displayWeight, displayRemarks, displayMainSpec };
         }
 
         function initSystem() {
@@ -425,7 +419,7 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 🚀 總覽彈窗表格化改造：精準擴充最大重量與最大尺寸列
+                // 🚀 日期總覽大彈窗（在指定兩欄位之間完美多開一欄「最大重量及最大尺寸」列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -454,24 +448,26 @@
                             const deptColor = getDeptColor(e.department || "");
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department || '未填'}</span>`;
                             
-                            const remarksScrollContainer = (e.remarks || parsed.displayRemarks)
+                            const mainSpecScrollBox = e.main_spec 
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/60 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${e.main_spec}</div>`
+                                : `<span class="text-zinc-400 font-normal">-</span>`;
+
+                            const remarksScrollBox = (e.remarks || parsed.displayRemarks)
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks || parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
-                            // 🚀 數據渲染行插入：讀取手動錄入的獨立欄位
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
                                 <td class="p-3 font-bold">${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
                                 <td class="p-3 font-bold text-zinc-700">${e.worker_name || '未填'}</td>
                                 <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
-                                <td class="p-3 text-zinc-900 text-xs font-black">${e.main_weight || '-'}</td>
-                                <td class="p-3 text-zinc-900 text-xs font-black">${e.main_size || '-'}</td>
-                                <td class="p-3 max-w-[250px]">${remarksScrollContainer}</td>
+                                <td class="p-3 max-w-[180px]">${mainSpecScrollBox}</td>
+                                <td class="p-3 max-w-[220px]">${remarksScrollBox}</td>
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="7" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
@@ -483,10 +479,9 @@
                                         <th class="p-3 w-[120px]">樓層站點</th>
                                         <th class="p-3">預約機台名稱</th>
                                         <th class="p-3">現場負責人</th>
-                                        <th class="p-3 w-[120px]">件數 / 總重</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 最大重量</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
-                                        <th class="p-3 max-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
+                                        <th class="p-3 w-[140px]">件數 / 總重</th>
+                                        <th class="p-3 max-w-[180px] text-blue-800 font-black">⚙️ 最大重量及最大尺寸</th>
+                                        <th class="p-3 max-w-[290px]">詳細備註事項說明 (支援下拉滑動)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -505,7 +500,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆卡片點擊詳細彈窗手動快速編輯
+                // 點選單筆詳細大彈窗 (支援就地手動編輯與儲存)
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -541,8 +536,7 @@
                         const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) weightVal = wMatch[1];
                     }
                     let remarksVal = props.remarks || parsed.displayRemarks || "";
-                    let mainWeightVal = props.main_weight || "";
-                    let mainSizeVal = props.main_size || "";
+                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || ""; 
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "";
 
@@ -552,21 +546,14 @@
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
                             </div>`;
-                        // 🚀 單筆編輯修改面板：增加最大重量與最大尺寸兩個手動輸入輸入框
-                        mainSpecRowHtml = `
-                            • <b class="text-blue-800">⚙️ 最大重量手動修改：</b><br>
-                            <input type="text" id="modalMainWeightInput" value="${mainWeightVal}" placeholder="例如：(主機台2937kg)" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
-                            • <b class="text-blue-800">📏 最大尺寸手動修改：</b><br>
-                            <input type="text" id="modalMainSizeInput" value="${mainSizeVal}" placeholder="例如：205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
-                        `;
+                        // 🚀 內頁修改區加開：主機規格手動填寫框
+                        mainSpecRowHtml = `• <b class="text-blue-800">最大重量及最大尺寸：</b><br>
+                            <input type="text" id="modalMainSpecInput" value="${mainSpecVal}" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>`;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
                             <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>`;
                     } else {
                         weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
-                        mainSpecRowHtml = `
-                            ${mainWeightVal ? `• <b class="text-blue-800">最大重量：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainWeightVal}</span><br>` : ''}
-                            ${mainSizeVal ? `• <b class="text-blue-800">最大尺寸：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSizeVal}</span><br>` : ''}
-                        `;
+                        mainSpecRowHtml = mainSpecVal ? `• <b class="text-blue-800">最大重量及最大尺寸：</b><span class="text-blue-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSpecVal}</span><br>` : "";
                         remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[120px] scrollbar-thin">${remarksVal}</div>` : "";
                     }
 
@@ -602,7 +589,10 @@
             });
             calendar.render();
 
-            // 💾 儲存與手動變更寫入邏輯
+            // 🚀 智慧排序載入安全盾：在行事曆誕生的一瞬間，強迫立刻執行一次即時過濾繪製，解除「128台卡住變白」的盲區！
+            applyLiveFilters();
+
+            // 💾 儲存與更新覆蓋
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -610,17 +600,14 @@
                 let p = document.getElementById('modalPiecesInput').value.trim();
                 let w = document.getElementById('modalWeightInput').value.trim();
                 let r = document.getElementById('modalRemarksInput').value.trim();
-                
-                // 手動黏貼寫入
-                let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
-                let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
+                let ms = document.getElementById('modalMainSpecInput') ? document.getElementById('modalMainSpecInput').value.trim() : ""; 
                 
                 let weightCountStr = "";
                 if (p || w) { weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`; }
                 
                 try {
                     const docRef = doc(db, "kldr", activeSelectedDocId);
-                    let updatePayload = { weight_count: weightCountStr, remarks: r, main_weight: mw, main_size: ms };
+                    let updatePayload = { weight_count: weightCountStr, remarks: r, main_spec: ms };
                     if (dStr) updatePayload.date = dStr;
 
                     await updateDoc(docRef, updatePayload);
@@ -659,7 +646,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量及最大尺寸,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -669,11 +656,9 @@
                         const parsed = parseWorkerInfo(d);
                         const cleanRemarks = (d.remarks || parsed.displayRemarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
                         const cleanWeight = (d.weight_count || parsed.displayWeight || "");
+                        const cleanMainSpec = (d.main_spec || parsed.displayMainSpec || "").replace(/"/g, '""');
                         
-                        const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
-                        const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
-                        
-                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainSpec}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -696,7 +681,7 @@
                         allDataArray.push({
                             date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F",
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
-                            weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
+                            weight_count: d.weight_count || "", main_spec: d.main_spec || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
                         });
                     });
                     const blob = new Blob([JSON.stringify(allDataArray, null, 2)], { type: 'application/json;charset=utf-8;' });
@@ -747,8 +732,7 @@
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
                                         floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
-                                        main_weight: item.main_weight || "",
-                                        main_size: item.main_size || "",
+                                        main_spec: item.main_spec || "",
                                         remarks: item.remarks || "",
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
                                     });
@@ -764,7 +748,7 @@
                 reader.readAsText(file);
             });
 
-            // 🔒 100% 完好留存您原創的最穩定聆聽迴圈
+            // 🛡️ 100% 完好留存您原創的最穩定監聽結構
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
                 let totalSchedulesCount = 0;
@@ -780,12 +764,13 @@
                         const typeEmoji = data.workType === "電梯" ? "🟡" : "🔴";
                         const typeText  = data.workType || "吊運";
 
+                        // 🛡️ 智慧補零轉換：僅在此處將日期的斜線換成 FullCalendar v6 專用的減號格式，解除隱形阻斷！
                         let cleanEventDate = data.date.toString().replace(/\//g, '-');
 
                         globalEventsArray.push({
                             id: doc.id, title: `${typeEmoji} [${typeText}] ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
                             start: cleanEventDate, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_weight: data.main_weight || "", main_size: data.main_size || "", remarks: data.remarks || "" }
+                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_spec: data.main_spec || "", remarks: data.remarks || "" }
                         });
                     }
                 });
@@ -801,9 +786,7 @@
             
             let pieces = document.getElementById('inputPieces').value.trim();
             let weight = document.getElementById('inputWeight').value.trim();
-            
-            let mainWeight = document.getElementById('inputMainWeight').value.trim();
-            let mainSize = document.getElementById('inputMainSize').value.trim();
+            let mainSpec = document.getElementById('inputMainSpec').value.trim();
             let remarks = document.getElementById('inputRemarks').value.trim();
             
             let weightCountStr = "";
@@ -817,8 +800,7 @@
                 department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
                 weight_count: weightCountStr,
-                main_weight: mainWeight,
-                main_size: mainSize,
+                main_spec: mainSpec,
                 remarks: remarks,
                 secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
             };
@@ -831,8 +813,7 @@
                 alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
                 document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
-                document.getElementById('inputMainWeight').value = ''; document.getElementById('inputMainSize').value = ''; 
-                document.getElementById('inputRemarks').value = '';
+                document.getElementById('inputMainSpec').value = ''; document.getElementById('inputRemarks').value = '';
             } catch (error) { alert('🚨 同步失敗！請檢查權限。'); console.error(error); } finally { btn.disabled = false; btn.innerText = "確認排程"; }
         };
     </script>
