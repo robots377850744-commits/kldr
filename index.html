@@ -781,4 +781,36 @@
             
             let pieces = document.getElementById('inputPieces').value.trim();
             let weight = document.getElementById('inputWeight').value.trim();
-            let mainSpec
+            let mainSpec = document.getElementById('inputMainSpec').value.trim();
+            let remarks = document.getElementById('inputRemarks').value.trim();
+            
+            let weightCountStr = "";
+            if (pieces || weight) {
+                weightCountStr = `${pieces ? pieces + '件' : ''}${pieces && weight ? '/' : ''}${weight ? '總重 ' + weight + 'kg' : ''}`;
+            }
+
+            const payload = {
+                date: document.getElementById('date').value, time: document.getElementById('timePeriod').value,
+                workType: document.getElementById('workType').value, floor: document.getElementById('floor').value,
+                department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
+                worker_name: document.getElementById('name').value.trim(),
+                weight_count: weightCountStr,
+                main_spec: mainSpec,
+                remarks: remarks,
+                secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
+            };
+            try {
+                const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
+                const safeWorkerFormName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
+                const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
+                
+                await setDoc(doc(db, "kldr", customDocName), payload);
+                alert('🎉 排程已成功同步至雲端資料庫！');
+                document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
+                document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
+                document.getElementById('inputMainSpec').value = ''; document.getElementById('inputRemarks').value = '';
+            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); console.error(error); } finally { btn.disabled = false; btn.innerText = "確認排程"; }
+        };
+    </script>
+</body>
+</html>
