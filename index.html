@@ -233,7 +233,7 @@
                     <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
                 </div>
                 <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
                     <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
@@ -412,20 +412,6 @@
             return { displayName, displayPo, displayWeight, displayRemarks, displayMainSpec };
         }
 
-        // 🧠 智慧日期補零清洗對齊工具（完美相容 2026/7/20 格式防 FullCalendar 隱形卡死）
-        function safeFormatDate(dateStr) {
-            if (!dateStr) return "";
-            let clean = dateStr.toString().replace(/\//g, '-');
-            let parts = clean.split('-');
-            if (parts.length === 3) {
-                let y = parts[0];
-                let m = parts[1].padStart(2, '0');
-                let d = parts[2].padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-            return clean;
-        }
-
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -433,14 +419,13 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 日期總覽表格矩陣
+                // 🚀 日期總覽大彈窗（在指定兩欄位之間完美多開一欄「最大重量及最大尺寸」列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
-                    
-                    // 🛡️ 採用智慧補零校正比對日期
                     const dayEvents = localSchedules.filter(item => {
                         if (!item.date) return false;
-                        return safeFormatDate(item.date) === targetDate;
+                        const dStr = item.date.toString().trim();
+                        return dStr === targetDate || dStr.replace(/\//g, '-') === targetDate;
                     });
                     
                     const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
@@ -449,18 +434,22 @@
 
                     let tableRowsHtml = "";
                     if (dayEvents.length > 0) {
-                        const sortedEvents = [...dayEvents].sort((a,b) => b.time.localeCompare(a.time));
+                        const sortedEvents = [...dayEvents].sort((a,b) => {
+                            const aTime = a.time || "";
+                            const bTime = b.time || "";
+                            return bTime.localeCompare(aTime);
+                        });
                         sortedEvents.forEach(e => {
                             const parsed = parseWorkerInfo(e);
                             const typeBadge = e.workType === "電梯" 
                                 ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md text-xs font-black">🟡 電梯</span>`
                                 : `<span class="bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded-md text-xs font-black">🔴 吊運</span>`;
                             
-                            const deptColor = getDeptColor(e.department);
-                            const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
+                            const deptColor = getDeptColor(e.department || "");
+                            const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department || '未填'}</span>`;
                             
-                            const mainSpecScrollBox = parsed.displayMainSpec 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/60 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
+                            const mainSpecScrollBox = e.main_spec 
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/60 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${e.main_spec}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             const remarksScrollBox = (e.remarks || parsed.displayRemarks)
@@ -468,10 +457,10 @@
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold">${e.time} <div class="mt-1">${typeBadge}</div></td>
+                                <td class="p-3 font-bold">${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
-                                <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
+                                <td class="p-3 font-bold text-zinc-700">${e.worker_name || '未填'}</td>
                                 <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
                                 <td class="p-3 max-w-[180px]">${mainSpecScrollBox}</td>
                                 <td class="p-3 max-w-[220px]">${remarksScrollBox}</td>
@@ -495,7 +484,9 @@
                                         <th class="p-3 max-w-[290px]">詳細備註事項說明 (支援下拉滑動)</th>
                                     </tr>
                                 </thead>
-                                <tbody>${tableRowsHtml}</tbody>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
                             </table>
                         </div>`;
                     
@@ -509,7 +500,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆詳細彈窗手動快速編輯
+                // 點選單筆詳細大彈窗 (支援就地手動編輯與儲存)
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -522,7 +513,7 @@
 
                     let dateContentHtml = "", floorContentHtml = "";
                     if (hasPermission) {
-                        dateContentHtml = `<input type="date" id="modalDateInput" value="${safeFormatDate(props.date || info.event.startStr)}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
                             <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
@@ -555,6 +546,7 @@
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
                             </div>`;
+                        // 🚀 內頁修改區加開：主機規格手動填寫框
                         mainSpecRowHtml = `• <b class="text-blue-800">最大重量及最大尺寸：</b><br>
                             <input type="text" id="modalMainSpecInput" value="${mainSpecVal}" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>`;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
@@ -571,13 +563,13 @@
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
-                        `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${parsed.displayName}</span><br>` +
+                        `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${props.worker_name || '未填'}</span><br>` +
                         `• <b>物件重量欄位修改：</b>${weightContentHtml}<br>` +
                         mainSpecRowHtml +
                         remarksBlock +
                         `</div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📋 預預約排程單筆明細`;
+                    document.getElementById('modalTitle').innerText = `📋 預約排程單筆明細`;
                     document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
@@ -597,10 +589,10 @@
             });
             calendar.render();
 
-            // 解除非即時刷新隱形限制
+            // 🚀 智慧排序載入安全盾：在行事曆誕生的一瞬間，強迫立刻執行一次即時過濾繪製，解除「128台卡住變白」的盲區！
             applyLiveFilters();
 
-            // 💾 儲存與更新
+            // 💾 儲存與更新覆蓋
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -756,7 +748,7 @@
                 reader.readAsText(file);
             });
 
-            // 🛡️ 100% 完美回歸、原封不動使用您最穩定、從未出錯的 Firebase 即時聆聽與計數迴圈
+            // 🛡️ 100% 完好留存您原創的最穩定監聽結構
             onSnapshot(scheduleRef, (snapshot) => {
                 globalEventsArray = []; localSchedules = [];
                 let totalSchedulesCount = 0;
@@ -784,37 +776,6 @@
                 });
                 document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
                 applyLiveFilters(); 
-            });
-
-            document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-            document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
-            document.getElementById('resetFilterBtn').addEventListener('click', () => {
-                document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
-            });
-
-            document.getElementById('exportExcelBtn').addEventListener('click', () => {
-                if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
-                const selectedMonth = document.getElementById('exportMonthFilter').value;
-                if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
-                const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
-                if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
-
-                const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
-                const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
-                document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
-
-                let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
-                const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-                sortedSchedules.forEach(item => {
-                    const parsed = parseWorkerInfo(item);
-                    const cleanRemarks = (item.remarks || parsed.displayRemarks || "").replace(/"/g, '""');
-                    const cleanWeight = (item.weight_count || parsed.displayWeight || "");
-                    csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
-                });
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             });
         }
 
