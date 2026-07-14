@@ -240,8 +240,8 @@
                 </div>
 
                 <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
-                    <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
+                    <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
@@ -402,6 +402,46 @@
             } else { alert("特權金鑰錯誤！權限驗證失敗。"); }
         });
 
+        function getDeptColor(deptName) {
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            let hash = 0;
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
+        }
+
+        function formatToTaiwanTime(isoString) {
+            if (!isoString) return "";
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+            } catch (e) { return isoString; }
+        }
+
+        function applyLiveFilters() {
+            const selectedFloor = document.getElementById('filterFloor').value;
+            const selectedDept = document.getElementById('filterDept').value;
+
+            const filteredEvents = globalEventsArray.filter(evt => {
+                const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
+                const cleanD = (d) => d ? d.replace('-', '/') : '';
+                const matchDept = (selectedDept === "ALL") || (cleanD(evt.extendedProps.department) === cleanD(selectedDept));
+                return matchFloor && matchDept;
+            });
+
+            if (calendar) {
+                calendar.setOption('events', filteredEvents);
+            }
+        }
+
         function parseWorkerInfo(workerName, weightCount) {
             let displayName = workerName || "未填";
             let displayPo = "";
@@ -410,8 +450,7 @@
             if (workerName && workerName.includes(" [PO:")) {
                 const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
                 if (match) {
-                    displayName = match[1];
-                    displayPo = match[2];
+                    displayName = match[1]; displayPo = match[2];
                     if (!displayWeight) displayWeight = match[3];
                 }
             }
@@ -462,7 +501,7 @@
                                 <td class="p-3 font-bold">${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
-                                <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
+                                <td class="p-3 font-bold text-zinc-700">${e.worker_name || '未填'}</td>
                                 <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
                                 <td class="p-3 text-zinc-900 text-xs font-bold">${e.main_weight || '-'}</td>
                                 <td class="p-3 text-zinc-900 text-xs font-bold">${e.main_size || '-'}</td>
@@ -600,14 +639,17 @@
             });
             calendar.render();
 
+            // 解除非即時刷新隱形限制
+            applyLiveFilters();
+
             // 💾 儲存與手動變更寫入邏輯
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
-                let p = document.getElementById('modalPiecesInput').value.trim();
-                let w = document.getElementById('modalWeightInput').value.trim();
-                let r = document.getElementById('modalRemarksInput').value.trim();
+                let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
+                let w = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
+                let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 
@@ -758,33 +800,64 @@
                 };
                 reader.readAsText(file);
             });
-
-            // 🛡️ 100% 完好留存您原創的最穩定聆聽迴圈
-            onSnapshot(scheduleRef, (snapshot) => {
-                globalEventsArray = []; localSchedules = [];
-                let totalSchedulesCount = 0;
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.date && data.time && data.department) {
-                        localSchedules.push(data); totalSchedulesCount++;
-
-                        const colorValue = getDeptColor(data.department);
-                        const showTime = data.time.includes("上午") ? "上午" : "下午";
-                        const floorPrefix = data.floor ? `[${data.floor}]` : "";
-                        const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
-
-                        globalEventsArray.push({
-                            id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
-                            start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                            extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_weight: data.main_weight || "", main_size: data.main_size || "", remarks: data.remarks || "" }
-                        });
-                    }
-                });
-                document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
-                applyLiveFilters(); 
-            });
         }
+
+        // 🛡️ 關鍵修正：將 onSnapshot 移到全域最頂層，確保網頁一開啟就能立刻連線拉取資料
+        onSnapshot(scheduleRef, (snapshot) => {
+            globalEventsArray = []; localSchedules = [];
+            let totalSchedulesCount = 0;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.date && data.time && data.department) {
+                    localSchedules.push(data); totalSchedulesCount++;
+
+                    const colorValue = getDeptColor(data.department);
+                    const showTime = data.time.includes("上午") ? "上午" : "下午";
+                    const floorPrefix = data.floor ? `[${data.floor}]` : "";
+                    const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
+
+                    globalEventsArray.push({
+                        id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
+                        start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
+                        extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_weight: data.main_weight || "", main_size: data.main_size || "", remarks: data.remarks || "" }
+                    });
+                }
+            });
+            document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
+            applyLiveFilters(); 
+        });
+
+        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
+        });
+
+        document.getElementById('exportExcelBtn').addEventListener('click', () => {
+            if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
+            const selectedMonth = document.getElementById('exportMonthFilter').value;
+            if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
+            const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
+            if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
+
+            const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
+            const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
+            document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
+
+            let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
+            const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+            sortedSchedules.forEach(item => {
+                const parsed = parseWorkerInfo(item.worker_name, item.weight_count);
+                const cleanRemarks = (item.remarks || "").replace(/"/g, '""');
+                const cleanWeight = (item.weight_count || parsed.displayWeight || "");
+                csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        });
 
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
