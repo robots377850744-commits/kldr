@@ -122,7 +122,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 1100px; 
+            max-width: 1150px; /* 🚀 微調寬度以容納新增的獨立表格列 */
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -219,22 +219,22 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 border-t border-zinc-200/60 pt-3">
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
-                    <input type="number" id="inputPieces" min="0" placeholder="4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputPieces" min="0" placeholder="例如：4" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重 (kg)</label>
-                    <input type="number" id="inputWeight" min="0" placeholder="1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputWeight" min="0" placeholder="例如：1560" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 主機台最大重量及尺寸</label>
-                    <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">最大重量及最大尺寸</label>
+                    <input type="text" id="inputMainSpec" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-bold text-sm">
                 </div>
                 <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
-                    <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
+                    <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
@@ -400,7 +400,7 @@
             let displayPo = e.po || "";
             let displayWeight = e.weight_count || "";
             let displayRemarks = e.remarks || "";
-            let displayMainSpec = e.main_spec || ""; // 🚀 讀取獨立欄位
+            let displayMainSpec = e.main_spec || ""; // 🚀 唯讀與映射定義
             
             if (e.worker_name && e.worker_name.includes(" [PO:")) {
                 const match = e.worker_name.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
@@ -422,8 +422,6 @@
                 // 日期總覽大彈窗 (多開一欄獨立規格列)
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
-                    
-                    // 🛡️ 日期模糊過濾安全閘，相容斜線與減號格式
                     const dayEvents = localSchedules.filter(item => {
                         if (!item.date) return false;
                         return item.date.toString().replace(/\//g, '-') === targetDate;
@@ -445,23 +443,23 @@
                             const deptColor = getDeptColor(e.department);
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department}</span>`;
                             
-                            // 🚀 新格子包裹獨立 Scroll 容器限制行高，保障排版完美整齊
-                            const mainSpecScrollBox = parsed.displayMainSpec 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/50 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
+                            // 🚀 欄位多開：加開最大重量及最大尺寸列
+                            const mainSpecScrollContainer = parsed.displayMainSpec 
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-blue-50/60 p-1.5 rounded border border-blue-200/50 text-blue-900 text-xs font-bold break-words whitespace-pre-line text-left scrollbar-thin">${parsed.displayMainSpec}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
-                            const remarksScrollBox = (e.remarks || parsed.displayRemarks)
+                            const remarksScrollContainer = (e.remarks || parsed.displayRemarks)
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200/60 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks || parsed.displayRemarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
                                 <td class="p-3 font-bold">${e.time} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
-                                <td class="p-3 text-zinc-900 text-xs">${e.machine || '未填'}</td>
-                                <td class="p-3 text-xs text-zinc-700">${parsed.displayName}</td>
-                                <td class="p-3 text-emerald-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
-                                <td class="p-3 max-w-[180px]">${mainSpecScrollBox}</td>
-                                <td class="p-3 max-w-[220px]">${remarksScrollBox}</td>
+                                <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
+                                <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
+                                <td class="p-3 text-blue-800 font-extrabold text-xs">${e.weight_count || parsed.displayWeight || '(未填)'}</td>
+                                <td class="p-3 max-w-[180px]">${mainSpecScrollContainer}</td>
+                                <td class="p-3 max-w-[220px]">${remarksScrollContainer}</td>
                             </tr>`;
                         });
                     } else {
@@ -472,17 +470,19 @@
                         <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide">
-                                        <th class="p-3 w-[100px]">時段 / 項目</th>
-                                        <th class="p-3 w-[110px]">樓層站點</th>
-                                        <th class="p-3">預約機台</th>
-                                        <th class="p-3">現場負責</th>
-                                        <th class="p-3 w-[110px]">件數 / 總重</th>
-                                        <th class="p-3 max-w-[180px] text-blue-800 font-black">⚙️ 主機台最大重量及尺寸</th>
-                                        <th class="p-3 max-w-[220px]">詳細備註事項說明</th>
+                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-sm tracking-wide">
+                                        <th class="p-3 w-[110px]">時段 / 項目</th>
+                                        <th class="p-3 w-[120px]">樓層站點</th>
+                                        <th class="p-3">預約機台名稱</th>
+                                        <th class="p-3">現場負責人</th>
+                                        <th class="p-3 w-[140px]">件數 / 總重</th>
+                                        <th class="p-3 max-w-[180px] text-blue-800 font-black">⚙️ 最大重量及最大尺寸</th>
+                                        <th class="p-3 max-w-[290px]">詳細備註事項說明 (支援下拉滑動)</th>
                                     </tr>
                                 </thead>
-                                <tbody>${tableRowsHtml}</tbody>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
                             </table>
                         </div>`;
                     
@@ -496,7 +496,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 點選單筆詳細大彈窗 (內頁也一併支援就地手動編輯與儲存)
+                // 點選單筆詳細大彈窗 (支援就地手動編輯與儲存)
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -532,7 +532,7 @@
                         const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) weightVal = wMatch[1];
                     }
                     let remarksVal = props.remarks || parsed.displayRemarks || "";
-                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || "";
+                    let mainSpecVal = props.main_spec || parsed.displayMainSpec || ""; // 🚀 讀取最新獨立欄位數據
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "";
 
@@ -542,14 +542,14 @@
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
                             </div>`;
-                        // 🚀 內頁修改區：同步追加主機規格手動編輯格
-                        mainSpecRowHtml = `• <b class="text-blue-800">主機台最大重量及尺寸：</b><br>
+                        // 🚀 就地編輯區：新增手動填寫黏貼大絕招
+                        mainSpecRowHtml = `• <b class="text-blue-800">最大重量及最大尺寸：</b><br>
                             <input type="text" id="modalMainSpecInput" value="${mainSpecVal}" placeholder="例如：(主機台2937kg)-205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>`;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
                             <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>`;
                     } else {
                         weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
-                        mainSpecRowHtml = mainSpecVal ? `• <b class="text-blue-800">主機台最大重量及尺寸：</b><span class="text-blue-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSpecVal}</span><br>` : "";
+                        mainSpecRowHtml = mainSpecVal ? `• <b class="text-blue-800">最大重量及最大尺寸：</b><span class="text-blue-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSpecVal}</span><br>` : "";
                         remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[120px] scrollbar-thin">${remarksVal}</div>` : "";
                     }
 
@@ -560,7 +560,7 @@
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
                         `• <b>負責人員：</b><span class="text-zinc-900 font-bold">${parsed.displayName}</span><br>` +
-                        `• <b>物件重量欄位：</b>${weightContentHtml}<br>` +
+                        `• <b>物件重量欄位修改：</b>${weightContentHtml}<br>` +
                         mainSpecRowHtml +
                         remarksBlock +
                         `</div>`;
@@ -585,7 +585,7 @@
             });
             calendar.render();
 
-            // 💾 儲存變更 (同步寫入 main_spec 與 date 轉移)
+            // 💾 儲存與更新覆蓋
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -593,7 +593,7 @@
                 let p = document.getElementById('modalPiecesInput').value.trim();
                 let w = document.getElementById('modalWeightInput').value.trim();
                 let r = document.getElementById('modalRemarksInput').value.trim();
-                let ms = document.getElementById('modalMainSpecInput') ? document.getElementById('modalMainSpecInput').value.trim() : "";
+                let ms = document.getElementById('modalMainSpecInput') ? document.getElementById('modalMainSpecInput').value.trim() : ""; // 🚀 抓取獨立欄
                 
                 let weightCountStr = "";
                 if (p || w) { weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`; }
@@ -604,7 +604,7 @@
                     if (dStr) updatePayload.date = dStr;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！已同步至雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！已無痛同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！"); }
             });
 
@@ -639,7 +639,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,主機台最大規格,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量及最大尺寸,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -697,7 +697,7 @@
                             const deleteBatch = writeBatch(db);
                             querySnapshot.forEach((s) => deleteBatch.delete(s.ref));
                             await deleteBatch.commit();
-                            alert("💥 資料庫已彻底清空！");
+                            alert("💥 資料庫已成功抹除！");
                         } catch (error) { alert("🚨 抹除失敗！"); }
                     }
                 }
@@ -712,7 +712,7 @@
                         const importedSchedules = JSON.parse(sanitizedText);
                         if (!Array.isArray(importedSchedules)) { alert("🚨 非 JSON 陣列！"); return; }
                         
-                        if (confirm(`📋 偵測到 [ ${importedSchedules.length} ] 筆排程，是否執行注入？`)) {
+                        if (confirm(`📋 偵測到備份檔中含有 [ ${importedSchedules.length} ] 筆排程數據。是否進行注入？`)) {
                             let successCount = 0; let batch = writeBatch(db); let count = 0;
                             for (const item of importedSchedules) {
                                 if (item.date && item.time && item.department) {
@@ -746,7 +746,7 @@
                 let totalSchedulesCount = 0;
 
                 snapshot.forEach((doc) => {
-                    // 🛡️ 沙盒防禦盾，徹底排除因為部分空數據造成執行緒全卡死的慘劇
+                    // 🛡️ 嚴格沙盒容錯阻斷器：防止任何單一筆空資料造成迴圈中斷，此處絕對維持原創不變
                     try {
                         const data = doc.data();
                         if (data && data.date && data.time && data.department) {
@@ -758,7 +758,7 @@
                             const typeEmoji = data.workType === "電梯" ? "🟡" : "🔴";
                             const typeText  = data.workType || "吊運";
                             
-                            // 🛡️ 日期格式寬容清洗相容：動態將所有斜線 / 換成減號 -，讓 FullCalendar 正常識別並解開隱形
+                            // 🛡️ 安全化解析字串對齊：將斜線轉為標準 ISO 減號，防止卡死
                             let cleanEventDate = data.date.toString().replace(/\//g, '-');
                             let rawWorkerName = data.worker_name ? data.worker_name.toString() : "未填";
 
@@ -769,7 +769,7 @@
                             });
                         }
                     } catch (singleErr) {
-                        console.error("⚠️ 偵測到一筆不完整測試數據，已在前端沙盒安全跳過，防卡死全網頁：", singleErr);
+                        console.error("⚠️ 隔離破損測試數據：", singleErr);
                     }
                 });
                 document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
