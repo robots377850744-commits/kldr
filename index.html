@@ -240,8 +240,8 @@
                 </div>
 
                 <div class="md:col-span-2 lg:col-span-2">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項 (尺寸規格/箱數明細)</label>
-                    <textarea id="inputRemarks" rows="1" placeholder="請填寫詳細規格，例如：箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
+                    <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
                 <div class="flex items-end md:col-span-4 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
@@ -287,13 +287,16 @@
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 w-full xl:w-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
                 <div class="text-sm text-zinc-500 font-medium shrink-0">
                     🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
                 </div>
                 <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-4 py-1.5 rounded-xl tracking-wide shadow-xs shrink-0">
                     🔥 雲端全歷史總計 ➔ 排程預約總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
                 </div>
+                <button type="button" id="publicExportCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-sm px-4 py-1.5 rounded-xl transition shadow font-bold cursor-pointer shrink-0">
+                    📥 匯出雲端全資料庫總報表 (CSV)
+                </button>
             </div>
             
             <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full xl:w-auto justify-start xl:justify-end">
@@ -403,8 +406,10 @@
         });
 
         function getDeptColor(deptName) {
+            if (!deptName) return "#4b5563";
             const fixedColors = {
                 "BE/Recon": "#1d4ed8",  
+                "BE-Recon": "#1d4ed8",
                 "RDL": "#c2410c",       
                 "FC": "#047857"         
             };
@@ -464,7 +469,7 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 🚀 總覽彈窗表格化改造：精準擴充最大重量與最大尺寸列
+                // 🚀 總覽彈窗表格化
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -639,7 +644,7 @@
             });
             calendar.render();
 
-            // 解除非即時刷新隱形限制
+            // 🚀 關鍵安全修正：行事曆建立完成後，強迫刷新渲染卡片！
             applyLiveFilters();
 
             // 💾 儲存與手動變更寫入邏輯
@@ -688,6 +693,47 @@
                         await deleteDoc(docRef);
                         alert("🎉 刪除成功！"); closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
+                }
+            });
+
+            // 🚀 免登入公開「一鍵匯出雲端全資料庫總報表 (CSV)」點擊邏輯 (選項 1 + 選項 B)
+            document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
+                if (!localSchedules || localSchedules.length === 0) {
+                    alert("目前雲端沒有任何排程數據可供導出！");
+                    return;
+                }
+                if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
+
+                try {
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
+                    const sortedRecords = [...localSchedules].sort((a, b) => {
+                        const dateCmp = (a.date || "").localeCompare(b.date || "");
+                        if (dateCmp !== 0) return dateCmp;
+                        return (a.time || "").localeCompare(b.time || "");
+                    });
+
+                    sortedRecords.forEach((d) => {
+                        const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const parsed = parseWorkerInfo(d.worker_name, d.weight_count);
+                        const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                        const cleanWeight = (d.weight_count || parsed.displayWeight || "");
+                        const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
+                        const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        
+                        csvContent += `"${d.date || ''}","${d.time || ''}","${d.workType || '吊運'}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `全雲端排程總報表_${new Date().toISOString().slice(0,10)}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (err) {
+                    alert("🚨 導出失敗！請檢查網路連線。");
+                    console.error(err);
                 }
             });
 
@@ -802,7 +848,7 @@
             });
         }
 
-        // 🛡️ 關鍵修正：將 onSnapshot 移到全域最頂層，確保網頁一開啟就能立刻連線拉取資料
+        // 🛡️ 關鍵修正：將 onSnapshot 放在全域最頂層，確保網頁開啟時即時載入 Firestore 資料
         onSnapshot(scheduleRef, (snapshot) => {
             globalEventsArray = []; localSchedules = [];
             let totalSchedulesCount = 0;
