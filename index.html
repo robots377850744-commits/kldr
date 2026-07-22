@@ -31,13 +31,13 @@
             min-height: 105px !important;
         }
         
-        /* 🎨 強制卡片變長條狀、填滿顏色、字體改為有感 14px */
+        /* 🎨 卡片雙行美化：容納雙行資訊，適度調窄邊距 */
         .fc-event { 
             cursor: pointer; 
-            padding: 6px 10px !important; 
-            font-size: 14px !important;   
+            padding: 3px 6px !important; 
+            font-size: 13px !important;   
             border-radius: 6px !important; 
-            margin-bottom: 5px !important; 
+            margin-bottom: 4px !important; 
             border: none !important;
             display: block !important; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.07);
@@ -49,13 +49,7 @@
         }
         .fc-event-title { 
             font-weight: 600 !important; 
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
-            overflow: hidden; 
             color: #ffffff !important; 
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
         .fc-daygrid-event-dot { display: none !important; }
         .fc-event-time { display: none !important; }
@@ -469,7 +463,46 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 🚀 總覽彈窗表格化
+                // 🚀 討論 2：雙行卡片結構 + 移機圖示
+                eventContent: function(arg) {
+                    const props = arg.event.extendedProps;
+                    const isRelocateStr = props.is_relocate ? "🚚 " : "";
+                    const typeEmoji = props.workType === "電梯" ? "🟡" : "🔴";
+                    const floorStr = props.floor ? `[${props.floor}]` : "";
+                    const deptStr = props.department || "";
+                    const machineStr = props.machine ? `${props.machine}` : "未填機台";
+                    const timeStr = props.timePeriod || "";
+                    const workerStr = props.worker_name ? props.worker_name.split(' ')[0] : "未填";
+
+                    // 第一行：🚚 🔴 [6F]BE/Recon ➔ 1號機
+                    // 第二行：上午場 ｜ 張三
+                    const line1 = `${isRelocateStr}${typeEmoji} ${floorStr}${deptStr} ➔ ${machineStr}`;
+                    const line2 = `${timeStr} ｜ ${workerStr}`;
+
+                    return {
+                        html: `<div class="flex flex-col text-xs leading-tight py-0.5 px-0.5 overflow-hidden">
+                            <div class="font-black truncate text-white tracking-tight">${line1}</div>
+                            <div class="text-[11px] font-semibold opacity-90 truncate text-zinc-100">${line2}</div>
+                        </div>`
+                    };
+                },
+
+                // 🚀 討論 3：滑動懸停（Hover）自動顯示完整提示框
+                eventDidMount: function(info) {
+                    const props = info.event.extendedProps;
+                    const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
+                    const weightStr = props.weight_count || parsed.displayWeight || '未填';
+                    const mainW = props.main_weight ? `\n⚙️ 最大重量: ${props.main_weight}` : '';
+                    const mainS = props.main_size ? `\n📏 最大尺寸: ${props.main_size}` : '';
+                    const rem = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
+                    const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
+                    
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n⏰ 預約時段: ${props.timePeriod || '未填'} (${props.workType || '吊運'})\n🏢 樓層站點: ${props.floor || ''}-${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數總重: ${weightStr}${mainW}${mainS}${rem}`;
+                    
+                    info.el.setAttribute('title', tooltipText);
+                },
+
+                // 總覽彈窗表格
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -498,12 +531,14 @@
                             const deptColor = getDeptColor(e.department || "");
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department || '未填'}</span>`;
                             
+                            const relocateBadge = e.is_relocate ? `<span class="bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded text-[10px] mr-1">🚚 移機</span>` : '';
+
                             const remarksScrollBox = e.remarks 
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold">${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
+                                <td class="p-3 font-bold">${relocateBadge}${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
                                 <td class="p-3 font-bold text-zinc-700">${e.worker_name || '未填'}</td>
@@ -557,6 +592,7 @@
                     const activeFloor = props.floor || "1F";
 
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
+                    // 🚀 討論 1：各部門管理者（BE/RDL/FC及SUPER）均可進入勾選變更「🚚 移機」
                     const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
                     let dateContentHtml = "", floorContentHtml = "";
@@ -586,10 +622,19 @@
                     let remarksVal = props.remarks || "";
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
+                    let isRelocateChecked = props.is_relocate ? true : false;
 
-                    let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "";
+                    let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
 
                     if (hasPermission) {
+                        // 🚀 討論 1：移機標註手動勾選開關
+                        relocateBlock = `
+                            <div class="mt-2 p-2 bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-2">
+                                <input type="checkbox" id="modalRelocateInput" ${isRelocateChecked ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 cursor-pointer">
+                                <label for="modalRelocateInput" class="text-xs font-black text-amber-900 cursor-pointer">🚚 標註此筆作業為【移機排程】(月曆將顯示 🚚 圖標)</label>
+                            </div>
+                        `;
+
                         weightContentHtml = `
                             <div class="flex flex-wrap items-center gap-2 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-sm">
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
@@ -604,6 +649,7 @@
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
                             <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>`;
                     } else {
+                        relocateBlock = isRelocateChecked ? `<span class="bg-amber-500 text-white font-black text-xs px-2 py-0.5 rounded shadow-xs mb-2 inline-block">🚚 移機作業</span><br>` : "";
                         weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
                         mainSpecRowHtml = `
                             ${mainWeightVal ? `• <b class="text-blue-800">最大重量：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainWeightVal}</span><br>` : ''}
@@ -613,6 +659,7 @@
                     }
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
+                        relocateBlock +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
                         `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
@@ -644,10 +691,9 @@
             });
             calendar.render();
 
-            // 🚀 關鍵安全修正：行事曆建立完成後，強迫刷新渲染卡片！
             applyLiveFilters();
 
-            // 💾 儲存與手動變更寫入邏輯
+            // 💾 儲存與手動變更寫入邏輯（包含 🚚 移機勾選狀態）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -657,18 +703,25 @@
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
+                let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
                 if (p || w) { weightCountStr = `${p ? p + '件' : ''}${p && w ? '/' : ''}${w ? '總重 ' + w + 'kg' : ''}`; }
                 
                 try {
                     const docRef = doc(db, "kldr", activeSelectedDocId);
-                    let updatePayload = { weight_count: weightCountStr, remarks: r, main_weight: mw, main_size: ms };
+                    let updatePayload = { 
+                        weight_count: weightCountStr, 
+                        remarks: r, 
+                        main_weight: mw, 
+                        main_size: ms,
+                        is_relocate: isRelocateVal
+                    };
                     if (dStr) updatePayload.date = dStr;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！已無痛同步雲端。"); closeCustomModal();
-                } catch (error) { alert("🚨 儲存變更失敗！"); }
+                    alert("🎉 變更儲存成功！移機註記與規格數據已即時同步雲端。"); closeCustomModal();
+                } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
@@ -696,7 +749,7 @@
                 }
             });
 
-            // 🚀 免登入公開「一鍵匯出雲端全資料庫總報表 (CSV)」點擊邏輯 (選項 1 + 選項 B)
+            // 免登入公開「一鍵匯出雲端全資料庫總報表 (CSV)」
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -705,7 +758,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -719,8 +772,9 @@
                         const cleanWeight = (d.weight_count || parsed.displayWeight || "");
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        const relocateTag = d.is_relocate ? "是" : "否";
                         
-                        csvContent += `"${d.date || ''}","${d.time || ''}","${d.workType || '吊運'}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date || ''}","${d.time || ''}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -733,7 +787,6 @@
                     document.body.removeChild(link);
                 } catch (err) {
                     alert("🚨 導出失敗！請檢查網路連線。");
-                    console.error(err);
                 }
             });
 
@@ -743,7 +796,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -755,8 +808,9 @@
                         const cleanWeight = (d.weight_count || parsed.displayWeight || "");
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        const relocateTag = d.is_relocate ? "是" : "否";
                         
-                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -779,7 +833,7 @@
                         allDataArray.push({
                             date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F",
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
-                            weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
+                            weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", is_relocate: d.is_relocate || false, remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
                         });
                     });
                     const blob = new Blob([JSON.stringify(allDataArray, null, 2)], { type: 'application/json;charset=utf-8;' });
@@ -832,6 +886,7 @@
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
                                         main_weight: item.main_weight || "",
                                         main_size: item.main_size || "",
+                                        is_relocate: item.is_relocate || false,
                                         remarks: item.remarks || "",
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
                                     });
@@ -848,7 +903,7 @@
             });
         }
 
-        // 🛡️ 關鍵修正：將 onSnapshot 放在全域最頂層，確保網頁開啟時即時載入 Firestore 資料
+        // 🛡️ 即時聆聽與計數器
         onSnapshot(scheduleRef, (snapshot) => {
             globalEventsArray = []; localSchedules = [];
             let totalSchedulesCount = 0;
@@ -859,14 +914,26 @@
                     localSchedules.push(data); totalSchedulesCount++;
 
                     const colorValue = getDeptColor(data.department);
-                    const showTime = data.time.includes("上午") ? "上午" : "下午";
-                    const floorPrefix = data.floor ? `[${data.floor}]` : "";
-                    const typePrefix = data.workType ? `[${data.workType}]` : "[吊運]"; 
 
                     globalEventsArray.push({
-                        id: doc.id, title: `${typePrefix} ${showTime}: ${floorPrefix}${data.department} 人員: ${data.worker_name} (${data.machine || '未填'})`, 
-                        start: data.date, allDay: true, backgroundColor: colorValue, borderColor: colorValue,
-                        extendedProps: { floor: data.floor || "", department: data.department, machine: data.machine, timePeriod: data.time, worker_name: data.worker_name, workType: data.workType || "吊運", weight_count: data.weight_count || "", main_weight: data.main_weight || "", main_size: data.main_size || "", remarks: data.remarks || "" }
+                        id: doc.id, 
+                        start: data.date, 
+                        allDay: true, 
+                        backgroundColor: colorValue, 
+                        borderColor: colorValue,
+                        extendedProps: { 
+                            floor: data.floor || "", 
+                            department: data.department, 
+                            machine: data.machine, 
+                            timePeriod: data.time, 
+                            worker_name: data.worker_name, 
+                            workType: data.workType || "吊運", 
+                            weight_count: data.weight_count || "", 
+                            main_weight: data.main_weight || "", 
+                            main_size: data.main_size || "", 
+                            is_relocate: data.is_relocate || false,
+                            remarks: data.remarks || "" 
+                        }
                     });
                 }
             });
@@ -930,6 +997,7 @@
                 weight_count: weightCountStr,
                 main_weight: mainWeight,
                 main_size: mainSize,
+                is_relocate: false, // 預設新增非移機
                 remarks: remarks,
                 secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
             };
