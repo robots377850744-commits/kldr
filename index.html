@@ -456,7 +456,7 @@
             return { displayName, displayPo, displayWeight };
         }
 
-        // 🧠 舊資料自動轉換：將歷史的「上午場/下午場」相容顯示為「需要卸櫃」
+        // 🧠 舊資料相容：將歷史「上午場/下午場」顯示為「需要卸櫃」
         function getUnloadStatus(timeVal) {
             if (!timeVal) return "需要卸櫃";
             if (timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
@@ -472,7 +472,7 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 🚀 雙行卡片結構：第二行呈現「需要卸櫃 ｜ 負責人」
+                // 雙行卡片結構：第二行呈現「需要卸櫃 ｜ 負責人」
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -499,7 +499,7 @@
                     const props = info.event.extendedProps;
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     const weightStr = props.weight_count || parsed.displayWeight || '未填';
-                    const mainW = props.main_weight ? `\n⚙️ 最大重量: ${props.main_weight}` : '';
+                    const mainW = props.main_weight ? `\n⚙️ 機台淨重: ${props.main_weight}` : '';
                     const mainS = props.main_size ? `\n📏 最大尺寸: ${props.main_size}` : '';
                     const craneNoStr = props.crane_no ? `\n🏷️ 吊運單號: ${props.crane_no}` : '';
                     const rem = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
@@ -511,7 +511,9 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格化：第一欄表頭改為「是否卸櫃 / 項目」
+                // 🚀 總覽彈窗表格標題更名對齊：
+                // 1. 件數 / 總重 (含木箱毛重)
+                // 2. ⚙️ 機台淨重
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -572,8 +574,8 @@
                                         <th class="p-3 w-[120px]">樓層站點</th>
                                         <th class="p-3">預約機台名稱</th>
                                         <th class="p-3">現場負責人</th>
-                                        <th class="p-3 w-[120px]">件數 / 總重</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 最大重量</th>
+                                        <th class="p-3 w-[140px]">件數 / 總重 (含木箱毛重)</th>
+                                        <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台淨重</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
                                         <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
                                         <th class="p-3 max-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
@@ -595,7 +597,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗：支援「是否卸櫃」手動下拉修改與儲存
+                // 單筆卡片點擊詳細彈窗（支援是否卸櫃選單、機台淨重、最大尺寸、吊運單號與移機手動編修）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -621,7 +623,6 @@
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
                         </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
 
-                        // 🚀 內頁修改：允許切換 [需要卸櫃] 與 [不需卸櫃]
                         unloadContentHtml = `<select id="modalTimeSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
                             <option value="需要卸櫃" ${currentUnload === '需要卸櫃' ? 'selected' : ''}>需要卸櫃</option>
                             <option value="不需卸櫃" ${currentUnload === '不需卸櫃' ? 'selected' : ''}>不需卸櫃</option>
@@ -663,7 +664,7 @@
                             </div>`;
                         
                         mainSpecRowHtml = `
-                            • <b class="text-blue-800">⚙️ 最大重量手動修改：</b><br>
+                            • <b class="text-blue-800">⚙️ 機台淨重手動修改：</b><br>
                             <input type="text" id="modalMainWeightInput" value="${mainWeightVal}" placeholder="例如：(主機台2937kg)" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
                             • <b class="text-blue-800">📏 最大尺寸手動修改：</b><br>
                             <input type="text" id="modalMainSizeInput" value="${mainSizeVal}" placeholder="例如：205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
@@ -676,7 +677,7 @@
                         relocateBlock = isRelocateChecked ? `<span class="bg-amber-500 text-white font-black text-xs px-2 py-0.5 rounded shadow-xs mb-2 inline-block">🚚 移機作業</span><br>` : "";
                         weightContentHtml = `<span class="text-emerald-700 font-extrabold">${currentWeightCount || '未填'}</span>`;
                         mainSpecRowHtml = `
-                            ${mainWeightVal ? `• <b class="text-blue-800">最大重量：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainWeightVal}</span><br>` : ''}
+                            ${mainWeightVal ? `• <b class="text-blue-800">機台淨重：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainWeightVal}</span><br>` : ''}
                             ${mainSizeVal ? `• <b class="text-blue-800">最大尺寸：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSizeVal}</span><br>` : ''}
                             ${craneNoVal ? `• <b class="text-emerald-800">吊運單號：</b><span class="text-emerald-900 font-extrabold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${craneNoVal}</span><br>` : ''}
                         `;
@@ -718,7 +719,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯（包含是否卸櫃選單 time 欄位更新）
+            // 💾 儲存寫入邏輯
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -778,7 +779,7 @@
                 }
             });
 
-            // 免登入公開 CSV 導出（表頭更新為：是否卸櫃）
+            // 免登入公開 CSV 導出（表頭更名對齊：件數 / 總重 (含木箱毛重)、機台淨重）
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -787,7 +788,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 總重 (含木箱毛重),機台淨重,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -827,7 +828,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 總重 (含木箱毛重),機台淨重,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -993,7 +994,7 @@
             const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
             document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
 
-            let csvContent = "\uFEFF日期,是否卸櫃,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
+            let csvContent = "\uFEFF日期,是否卸櫃,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數 / 總重 (含木箱毛重),備註說明,建立時間(台灣時區)\n";
             const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
             sortedSchedules.forEach(item => {
                 const parsed = parseWorkerInfo(item.worker_name, item.weight_count);
