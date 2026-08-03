@@ -456,7 +456,7 @@
             return { displayName, displayPo, displayWeight };
         }
 
-        // 🧠 舊資料自動轉換：將歷史的「上午場/下午場」相容轉為「需要卸櫃」
+        // 🧠 舊資料自動轉換：將歷史的「上午場/下午場」相容顯示為「需要卸櫃」
         function getUnloadStatus(timeVal) {
             if (!timeVal) return "需要卸櫃";
             if (timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
@@ -472,7 +472,7 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 🚀 選項 A 雙行卡片結構：第二行直接顯示「需要卸櫃 ｜ 負責人」
+                // 🚀 雙行卡片結構：第二行呈現「需要卸櫃 ｜ 負責人」
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -511,7 +511,7 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格化：表頭第一欄改為「是否卸櫃 / 項目」
+                // 🚀 總覽彈窗表格化：第一欄表頭改為「是否卸櫃 / 項目」
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -595,7 +595,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆卡片點擊詳細彈窗手動快速編輯（包含是否卸櫃選單）
+                // 🚀 單筆卡片點擊詳細彈窗：支援「是否卸櫃」手動下拉修改與儲存
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -621,6 +621,7 @@
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
                         </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
 
+                        // 🚀 內頁修改：允許切換 [需要卸櫃] 與 [不需卸櫃]
                         unloadContentHtml = `<select id="modalTimeSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
                             <option value="需要卸櫃" ${currentUnload === '需要卸櫃' ? 'selected' : ''}>需要卸櫃</option>
                             <option value="不需卸櫃" ${currentUnload === '不需卸櫃' ? 'selected' : ''}>不需卸櫃</option>
@@ -717,7 +718,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存與手動寫入
+            // 💾 儲存寫入邏輯（包含是否卸櫃選單 time 欄位更新）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -777,7 +778,7 @@
                 }
             });
 
-            // 🚀 免登入公開 CSV 導出（標頭改為：是否卸櫃）
+            // 免登入公開 CSV 導出（表頭更新為：是否卸櫃）
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1007,7 +1008,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（「是否卸櫃」選單值存入 time 欄位）
+        // 🚀 新增表單送出（「是否卸櫃」選項值寫入）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
