@@ -31,7 +31,7 @@
             min-height: 105px !important;
         }
         
-        /* 🎨 強制卡片變長條狀、填滿顏色、字體改為有感 14px */
+        /* 🎨 卡片雙行美化 */
         .fc-event { 
             cursor: pointer; 
             padding: 3px 6px !important; 
@@ -169,10 +169,10 @@
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">時間時段</label>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">是否卸櫃</label>
                     <select id="timePeriod" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
-                        <option value="上午場">上午場</option>
-                        <option value="下午場">下午場</option>
+                        <option value="需要卸櫃">需要卸櫃</option>
+                        <option value="不需卸櫃">不需卸櫃</option>
                     </select>
                 </div>
                 <div>
@@ -456,6 +456,15 @@
             return { displayName, displayPo, displayWeight };
         }
 
+        // 🧠 舊資料自動轉換：將歷史的「上午場/下午場」相容轉為「需要卸櫃」
+        function getUnloadStatus(timeVal) {
+            if (!timeVal) return "需要卸櫃";
+            if (timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
+                return "需要卸櫃";
+            }
+            return timeVal;
+        }
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -463,7 +472,7 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 雙行卡片結構 + 移機圖示
+                // 🚀 選項 A 雙行卡片結構：第二行直接顯示「需要卸櫃 ｜ 負責人」
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -471,11 +480,11 @@
                     const floorStr = props.floor ? `[${props.floor}]` : "";
                     const deptStr = props.department || "";
                     const machineStr = props.machine ? `${props.machine}` : "未填機台";
-                    const timeStr = props.timePeriod || "";
+                    const unloadStr = getUnloadStatus(props.timePeriod);
                     const workerStr = props.worker_name ? props.worker_name.split(' ')[0] : "未填";
 
                     const line1 = `${isRelocateStr}${typeEmoji} ${floorStr}${deptStr} ➔ ${machineStr}`;
-                    const line2 = `${timeStr} ｜ ${workerStr}`;
+                    const line2 = `${unloadStr} ｜ ${workerStr}`;
 
                     return {
                         html: `<div class="flex flex-col text-xs leading-tight py-0.5 px-0.5 overflow-hidden">
@@ -495,13 +504,14 @@
                     const craneNoStr = props.crane_no ? `\n🏷️ 吊運單號: ${props.crane_no}` : '';
                     const rem = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
                     const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
+                    const unloadStr = getUnloadStatus(props.timePeriod);
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n⏰ 預約時段: ${props.timePeriod || '未填'} (${props.workType || '吊運'})\n🏢 樓層站點: ${props.floor || ''}-${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數總重: ${weightStr}${mainW}${mainS}${craneNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層站點: ${props.floor || ''}-${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數總重: ${weightStr}${mainW}${mainS}${craneNoStr}${rem}`;
                     
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格化：在「最大尺寸」後方、在「詳細備註」前方，多開一欄「🏷️ 吊運單號」
+                // 🚀 總覽彈窗表格化：表頭第一欄改為「是否卸櫃 / 項目」
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -531,14 +541,14 @@
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.floor || '未填'}-${e.department || '未填'}</span>`;
                             
                             const relocateBadge = e.is_relocate ? `<span class="bg-amber-500 text-white font-extrabold px-1.5 py-0.5 rounded text-[10px] mr-1">🚚 移機</span>` : '';
+                            const unloadStr = getUnloadStatus(e.time);
 
                             const remarksScrollBox = e.remarks 
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
-                            // 🚀 數據列：增加吊運單號數據顯示
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold">${relocateBadge}${e.time || '未填'} <div class="mt-1">${typeBadge}</div></td>
+                                <td class="p-3 font-bold">${relocateBadge}${unloadStr} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900">${e.machine || '未填'}</td>
                                 <td class="p-3 font-bold text-zinc-700">${parsed.displayName}</td>
@@ -553,13 +563,12 @@
                         tableRowsHtml = `<tr><td colspan="9" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
                     }
 
-                    // 🚀 表格標頭：精準多開「🏷️ 吊運單號」標題列
                     const tableContainerHtml = `
                         <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide">
-                                        <th class="p-3 w-[110px]">時段 / 項目</th>
+                                        <th class="p-3 w-[110px]">是否卸櫃 / 項目</th>
                                         <th class="p-3 w-[120px]">樓層站點</th>
                                         <th class="p-3">預約機台名稱</th>
                                         <th class="p-3">現場負責人</th>
@@ -586,7 +595,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗手動快速編輯：加入吊運單號手動輸入格
+                // 單筆卡片點擊詳細彈窗手動快速編輯（包含是否卸櫃選單）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -597,9 +606,12 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "";
+                    let dateContentHtml = "", floorContentHtml = "", unloadContentHtml = "";
+                    const currentUnload = getUnloadStatus(props.timePeriod);
+
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        
                         floorContentHtml = `<select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
                             <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
                             <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
@@ -608,9 +620,15 @@
                             <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
                             <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
                         </select> <span class="text-xs text-blue-600 font-bold">(自動同步)</span>`;
+
+                        unloadContentHtml = `<select id="modalTimeSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                            <option value="需要卸櫃" ${currentUnload === '需要卸櫃' ? 'selected' : ''}>需要卸櫃</option>
+                            <option value="不需卸櫃" ${currentUnload === '不需卸櫃' ? 'selected' : ''}>不需卸櫃</option>
+                        </select>`;
                     } else {
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor}</span>`;
+                        unloadContentHtml = `<span class="text-zinc-900 font-bold">${currentUnload}</span>`;
                     }
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
@@ -624,7 +642,7 @@
                     let remarksVal = props.remarks || "";
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
-                    let craneNoVal = props.crane_no || ""; // 🚀 讀取單號
+                    let craneNoVal = props.crane_no || "";
                     let isRelocateChecked = props.is_relocate ? true : false;
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
@@ -643,7 +661,6 @@
                                 <input type="number" id="modalWeightInput" value="${weightVal}" placeholder="總重" class="w-18 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg</span>
                             </div>`;
                         
-                        // 🚀 單筆編輯加開：吊運單號手動輸入框
                         mainSpecRowHtml = `
                             • <b class="text-blue-800">⚙️ 最大重量手動修改：</b><br>
                             <input type="text" id="modalMainWeightInput" value="${mainWeightVal}" placeholder="例如：(主機台2937kg)" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
@@ -668,7 +685,7 @@
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
                         relocateBlock +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
-                        `• <b>預約時段：</b>${props.timePeriod || '未填'}<br>` +
+                        `• <b>是否卸櫃：</b>${unloadContentHtml}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層站點：</b>[${floorContentHtml}] ${props.department || '未填'}<br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
@@ -700,17 +717,18 @@
 
             applyLiveFilters();
 
-            // 💾 儲存與手動寫入（一併寫入吊運單號 crane_no）
+            // 💾 儲存與手動寫入
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
+                let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let w = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
-                let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : ""; // 🚀 抓取單號
+                let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
@@ -727,9 +745,10 @@
                         is_relocate: isRelocateVal
                     };
                     if (dStr) updatePayload.date = dStr;
+                    if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！吊運單號與數據已即時同步雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！內容已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
@@ -758,7 +777,7 @@
                 }
             });
 
-            // 免登入公開「一鍵匯出雲端全資料庫總報表 (CSV)」
+            // 🚀 免登入公開 CSV 導出（標頭改為：是否卸櫃）
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -767,7 +786,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -783,8 +802,9 @@
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const cleanCraneNo = (d.crane_no || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
+                        const unloadStr = getUnloadStatus(d.time);
                         
-                        csvContent += `"${d.date || ''}","${d.time || ''}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date || ''}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -806,7 +826,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,預約時段,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數重量,最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -820,8 +840,9 @@
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const cleanCraneNo = (d.crane_no || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
+                        const unloadStr = getUnloadStatus(d.time);
                         
-                        csvContent += `"${d.date}","${d.time}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -915,7 +936,7 @@
             });
         }
 
-        // 🛡️ 即時聆聽與計數器（載入 crane_no 欄位數據）
+        // 🛡️ 即時聆聽與計數器
         onSnapshot(scheduleRef, (snapshot) => {
             globalEventsArray = []; localSchedules = [];
             let totalSchedulesCount = 0;
@@ -971,13 +992,14 @@
             const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
             document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
 
-            let csvContent = "\uFEFF日期,時段,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
+            let csvContent = "\uFEFF日期,是否卸櫃,作業項目,樓層,部門/站點,機台名稱,負責人姓名,件數重量,備註說明,建立時間(台灣時區)\n";
             const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
             sortedSchedules.forEach(item => {
                 const parsed = parseWorkerInfo(item.worker_name, item.weight_count);
                 const cleanRemarks = (item.remarks || "").replace(/"/g, '""');
                 const cleanWeight = (item.weight_count || parsed.displayWeight || "");
-                csvContent += `"${item.date}","${item.time}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
+                const unloadStr = getUnloadStatus(item.time);
+                csvContent += `"${item.date}","${unloadStr}","${item.workType || '吊運'}","${item.floor || '未填'}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -985,7 +1007,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（選項 B：保持頂部表單原本結構，crane_no 預設空字串）
+        // 🚀 新增表單送出（「是否卸櫃」選單值存入 time 欄位）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1004,17 +1026,21 @@
             }
 
             const payload = {
-                date: document.getElementById('date').value, time: document.getElementById('timePeriod').value,
-                workType: document.getElementById('workType').value, floor: document.getElementById('floor').value,
-                department: document.getElementById('department').value, machine: document.getElementById('machine').value.trim(), 
+                date: document.getElementById('date').value, 
+                time: document.getElementById('timePeriod').value, // '需要卸櫃' 或 '不需卸櫃'
+                workType: document.getElementById('workType').value, 
+                floor: document.getElementById('floor').value,
+                department: document.getElementById('department').value, 
+                machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
                 weight_count: weightCountStr,
                 main_weight: mainWeight,
                 main_size: mainSize,
-                crane_no: "", // 預設留空，供管理者內頁手動填寫
+                crane_no: "", 
                 is_relocate: false,
                 remarks: remarks,
-                secret_key: BACKEND_SECRET, created_at: new Date().toISOString()
+                secret_key: BACKEND_SECRET, 
+                created_at: new Date().toISOString()
             };
             try {
                 const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
