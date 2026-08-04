@@ -100,7 +100,7 @@
             border-color: #d4d4d8 !important;
         }
 
-        /* 🚀 內嵌自訂彈窗樣式：視窗加大至 1450px 方便滿版檢視 */
+        /* 🚀 內嵌自訂彈窗樣式：視窗加大至 1450px */
         #customAlertModal {
             display: none;
             position: fixed;
@@ -162,7 +162,6 @@
             🏗️ 吊運排程管理系統
         </h1>
 
-        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -214,7 +213,6 @@
                 </div>
             </div>
 
-            <!-- 第二層表單：包含毛重與淨重手動欄位 -->
             <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-9 gap-3 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
@@ -229,7 +227,6 @@
                     <input type="number" id="inputNetWeight" min="0" placeholder="例如：50" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 
-                <!-- 🚀 標題更名：⚙️ 機台最大重量 -->
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 機台最大重量</label>
                     <input type="text" id="inputMainWeight" placeholder="主機台750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
@@ -287,7 +284,6 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <!-- 免登入公開 CSV 按鈕列 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
                 <div class="text-sm text-zinc-500 font-medium shrink-0">
@@ -501,7 +497,7 @@
                     };
                 },
 
-                // 滑動懸停提示（更名：⚙️ 機台最大重量）
+                // 滑動懸停提示
                 eventDidMount: function(info) {
                     const props = info.event.extendedProps;
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
@@ -604,7 +600,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗手動編修：支援件數/毛重/淨重三欄手動修改 (格式: 1件/100kg/50kg)
+                // 🚀 單筆卡片點擊詳細彈窗手動編修：支援樓層切換與三格重量（格式: 1件/100kg/50kg）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -642,7 +638,7 @@
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     
-                    // 🚀 解析 件數 / 毛重總重 / 淨重總重
+                    // 解析 件數 / 毛重總重 / 淨重總重
                     let piecesVal = "", grossVal = "", netVal = "";
                     let currentWeightCount = props.weight_count || parsed.displayWeight || "";
                     if (currentWeightCount) {
@@ -674,7 +670,6 @@
                             </div>
                         `;
 
-                        // 🚀 編輯區：件數 / 毛重總重 / 淨重總重 三格手動輸入
                         weightContentHtml = `
                             <div class="flex flex-wrap items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-md">
                                 <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
@@ -740,12 +735,14 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯：自動組合 1件/100kg/50kg 格式
+            // 🚀 💾 儲存寫入邏輯（精準補上樓層 modalFloorSelect 修改同步指令）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null; // 🚀 補漏指令1
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
+                
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
@@ -771,10 +768,11 @@
                         is_relocate: isRelocateVal
                     };
                     if (dStr) updatePayload.date = dStr;
+                    if (floorVal) updatePayload.floor = floorVal; // 🚀 補漏指令2：寫入最新選擇樓層
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！內容已即時同步雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！樓層與最新內容已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
@@ -803,7 +801,7 @@
                 }
             });
 
-            // 免登入公開 CSV 導出（表頭：件數 / 毛重總重/淨重總重、機台最大重量）
+            // 免登入公開 CSV 導出
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1033,7 +1031,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（組合 1件/100kg/50kg 格式）
+        // 🚀 新增表單送出
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
