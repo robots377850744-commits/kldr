@@ -150,6 +150,7 @@
             </div>
             <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
+                <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
                 <button id="modalToggleWorkTypeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔄 變更作業項目</button>
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
@@ -353,6 +354,7 @@
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
         let activeSelectedDocType = null; 
+        let activeSelectedProps = null; // 🚀 用於複製功能的完整屬性備份
         let calendar; 
 
         const now = new Date();
@@ -364,6 +366,7 @@
             activeSelectedDocId = null;
             activeSelectedDocDept = null;
             activeSelectedDocType = null;
+            activeSelectedProps = null;
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
@@ -514,9 +517,7 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格標題更名：
-                // 1. 件數 / 毛重總重/淨重總重
-                // 2. ⚙️ 機台最大重量
+                // 總覽彈窗表格
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -597,15 +598,17 @@
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
+                    document.getElementById('modalCopyBtn').classList.add('hidden'); // 隱藏複製按鈕
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗手動編修：支援樓層切換與三格重量（格式: 1件/100kg/50kg）
+                // 單筆卡片點擊詳細彈窗手動編修
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
                     activeSelectedDocDept = props.department;
                     activeSelectedDocType = props.workType || "吊運";
+                    activeSelectedProps = props; // 🚀 備份當前點擊物件的全部資料以備複製使用
                     const activeFloor = props.floor || "1F";
 
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
@@ -720,12 +723,14 @@
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
+                        document.getElementById('modalCopyBtn').classList.remove('hidden'); // 🚀 顯現「📋 複製並新增為新排程」按鈕
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
+                        document.getElementById('modalCopyBtn').classList.add('hidden');
                         document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
                     }
                     document.getElementById('customAlertModal').style.display = 'flex';
@@ -735,12 +740,12 @@
 
             applyLiveFilters();
 
-            // 🚀 💾 儲存寫入邏輯（精準補上樓層 modalFloorSelect 修改同步指令）
+            // 💾 儲存修改內容（修改原本這筆）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
-                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null; // 🚀 補漏指令1
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
@@ -768,12 +773,87 @@
                         is_relocate: isRelocateVal
                     };
                     if (dStr) updatePayload.date = dStr;
-                    if (floorVal) updatePayload.floor = floorVal; // 🚀 補漏指令2：寫入最新選擇樓層
+                    if (floorVal) updatePayload.floor = floorVal;
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！樓層與最新內容已即時同步雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！樓層與內容已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
+            });
+
+            // 🚀 📋 方案 A：複製按鈕觸發事件（直接建立獨立新檔案，舊檔案不動）
+            document.getElementById('modalCopyBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
+                
+                const copyBtn = document.getElementById('modalCopyBtn');
+                
+                // 讀取當前彈窗內輸入/調整後的資料（包含使用者修改後的新日期、新樓層等）
+                let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
+                let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
+                
+                let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
+                let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
+                let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
+                let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
+                let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
+                let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
+                let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
+                let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
+
+                if (!targetDate) {
+                    alert("🚨 請選擇複製排程的目标日期！");
+                    return;
+                }
+
+                const confirmMsg = `📋 您確定要將這筆機台資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？\n\n(注意：原本這筆舊排程資料會完好保留於原日期，不會被修改或覆蓋)`;
+                if (!confirm(confirmMsg)) return;
+
+                // 防連續雙擊點擊防護
+                copyBtn.disabled = true;
+                copyBtn.innerText = "複製寫入中...";
+
+                let weightCountStr = "";
+                if (p || gw || nw) {
+                    weightCountStr = `${p ? p + '件' : ''}${gw || nw ? '/' + (gw ? gw + 'kg' : '') + (nw ? '/' + nw + 'kg' : '') : ''}`;
+                } else {
+                    weightCountStr = activeSelectedProps.weight_count || "";
+                }
+
+                const payload = {
+                    date: targetDate,
+                    time: unloadSelectVal,
+                    workType: activeSelectedDocType || "吊運",
+                    floor: floorVal,
+                    department: activeSelectedDocDept || activeSelectedProps.department,
+                    machine: activeSelectedProps.machine || "未填",
+                    worker_name: activeSelectedProps.worker_name || "未填",
+                    weight_count: weightCountStr,
+                    main_weight: mw,
+                    main_size: ms,
+                    crane_no: cNo,
+                    is_relocate: isRelocateVal,
+                    remarks: r,
+                    secret_key: BACKEND_SECRET,
+                    created_at: new Date().toISOString()
+                };
+
+                try {
+                    const uniqueId = Date.now() % 100000;
+                    const safeDeptName = payload.department ? payload.department.replace('/', '-') : '未知';
+                    const safeWorkerName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
+                    const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerName.substring(0,20)}_${uniqueId}`;
+
+                    await setDoc(doc(db, "kldr", customDocName), payload);
+                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的排程資料。`);
+                    closeCustomModal();
+                } catch (error) {
+                    alert("🚨 複製新增失敗！請檢查雲端權限與網路連線。");
+                    console.error(error);
+                } finally {
+                    copyBtn.disabled = false;
+                    copyBtn.innerText = "📋 複製並新增為新排程";
+                }
             });
 
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
@@ -1031,7 +1111,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出
+        // 新增表單送出
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
