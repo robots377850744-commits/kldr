@@ -163,6 +163,7 @@
             🏗️ 吊運排程管理系統
         </h1>
 
+        <!-- 快速新增表單區（選項 B：保持頂部表單原本結構） -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -214,6 +215,7 @@
                 </div>
             </div>
 
+            <!-- 第二層表單 -->
             <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-9 gap-3 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
@@ -285,6 +287,7 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
+        <!-- 免登入公開 CSV 按鈕列 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
                 <div class="text-sm text-zinc-500 font-medium shrink-0">
@@ -354,7 +357,7 @@
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
         let activeSelectedDocType = null; 
-        let activeSelectedProps = null; // 🚀 用於複製功能的完整屬性備份
+        let activeSelectedProps = null; 
         let calendar; 
 
         const now = new Date();
@@ -508,16 +511,17 @@
                     const mainW = props.main_weight ? `\n⚙️ 機台最大重量: ${props.main_weight}` : '';
                     const mainS = props.main_size ? `\n📏 最大尺寸: ${props.main_size}` : '';
                     const craneNoStr = props.crane_no ? `\n🏷️ 吊運單號: ${props.crane_no}` : '';
+                    const poNoStr = props.po_no ? `\n📋 PO號碼: ${props.po_no}` : '';
                     const rem = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
                     const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
                     const unloadStr = getUnloadStatus(props.timePeriod);
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層站點: ${props.floor || ''}-${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層站點: ${props.floor || ''}-${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${poNoStr}${rem}`;
                     
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 總覽彈窗表格
+                // 🚀 總覽彈窗表格對齊（方案 1：吊運單號右側加入 📋 PO號碼 列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -562,11 +566,12 @@
                                 <td class="p-3 text-zinc-900 text-xs font-bold">${e.main_weight || '-'}</td>
                                 <td class="p-3 text-zinc-900 text-xs font-bold">${e.main_size || '-'}</td>
                                 <td class="p-3 text-emerald-800 text-xs font-extrabold">${e.crane_no || '-'}</td>
+                                <td class="p-3 text-indigo-800 text-xs font-extrabold">${e.po_no || '-'}</td>
                                 <td class="p-3 max-w-[250px]">${remarksScrollBox}</td>
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="9" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="10" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
@@ -582,6 +587,7 @@
                                         <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
                                         <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
+                                        <th class="p-3 w-[130px] text-indigo-800 font-black">📋 PO號碼</th>
                                         <th class="p-3 max-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
                                     </tr>
                                 </thead>
@@ -598,17 +604,17 @@
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
                     document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
-                    document.getElementById('modalCopyBtn').classList.add('hidden'); // 隱藏複製按鈕
+                    document.getElementById('modalCopyBtn').classList.add('hidden'); 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆卡片點擊詳細彈窗手動編修
+                // 🚀 單筆卡片點擊詳細彈窗手動編修：加入 PO號碼 手動填寫格
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
                     activeSelectedDocDept = props.department;
                     activeSelectedDocType = props.workType || "吊運";
-                    activeSelectedProps = props; // 🚀 備份當前點擊物件的全部資料以備複製使用
+                    activeSelectedProps = props; 
                     const activeFloor = props.floor || "1F";
 
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
@@ -641,7 +647,6 @@
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     
-                    // 解析 件數 / 毛重總重 / 淨重總重
                     let piecesVal = "", grossVal = "", netVal = "";
                     let currentWeightCount = props.weight_count || parsed.displayWeight || "";
                     if (currentWeightCount) {
@@ -661,6 +666,7 @@
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
                     let craneNoVal = props.crane_no || "";
+                    let poNoVal = props.po_no || parsed.displayPo || ""; // 🚀 讀取 PO號碼
                     let isRelocateChecked = props.is_relocate ? true : false;
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
@@ -689,6 +695,8 @@
                             <input type="text" id="modalMainSizeInput" value="${mainSizeVal}" placeholder="例如：205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"><br>
                             • <b class="text-emerald-800">🏷️ 吊運單號手動填寫/修飾：</b><br>
                             <input type="text" id="modalCraneNoInput" value="${craneNoVal}" placeholder="例如：CR-20260801-01" class="w-full bg-white border border-emerald-300 text-emerald-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"><br>
+                            • <b class="text-indigo-800">📋 PO號碼手動填寫/修飾：</b><br>
+                            <input type="text" id="modalPoNoInput" value="${poNoVal}" placeholder="例如：PO-20268899" class="w-full bg-white border border-indigo-300 text-indigo-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"><br>
                         `;
                         remarksBlock = `• <b>詳細備註內容修飾：</b><br>
                             <textarea id="modalRemarksInput" rows="3" placeholder="請在此直接修改備註明細..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 scrollbar-thin">${remarksVal}</textarea>`;
@@ -699,6 +707,7 @@
                             ${mainWeightVal ? `• <b class="text-blue-800">機台最大重量：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainWeightVal}</span><br>` : ''}
                             ${mainSizeVal ? `• <b class="text-blue-800">最大尺寸：</b><span class="text-zinc-900 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">${mainSizeVal}</span><br>` : ''}
                             ${craneNoVal ? `• <b class="text-emerald-800">吊運單號：</b><span class="text-emerald-900 font-extrabold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${craneNoVal}</span><br>` : ''}
+                            ${poNoVal ? `• <b class="text-indigo-800">PO號碼：</b><span class="text-indigo-900 font-extrabold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">${poNoVal}</span><br>` : ''}
                         `;
                         remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[120px] scrollbar-thin">${remarksVal}</div>` : "";
                     }
@@ -723,7 +732,7 @@
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
-                        document.getElementById('modalCopyBtn').classList.remove('hidden'); // 🚀 顯現「📋 複製並新增為新排程」按鈕
+                        document.getElementById('modalCopyBtn').classList.remove('hidden'); 
                         const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
@@ -740,7 +749,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存修改內容（修改原本這筆）
+            // 💾 儲存寫入邏輯（包含 PO號碼 po_no 寫入）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -755,6 +764,7 @@
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
+                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : ""; // 🚀 讀取 PO號碼
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
@@ -770,6 +780,7 @@
                         main_weight: mw, 
                         main_size: ms,
                         crane_no: cNo,
+                        po_no: poNo,
                         is_relocate: isRelocateVal
                     };
                     if (dStr) updatePayload.date = dStr;
@@ -777,17 +788,16 @@
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！樓層與內容已即時同步雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！內容與 PO 號碼已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 🚀 📋 方案 A：複製按鈕觸發事件（直接建立獨立新檔案，舊檔案不動）
+            // 📋 複製邏輯（含 PO 號碼複製）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
                 const copyBtn = document.getElementById('modalCopyBtn');
                 
-                // 讀取當前彈窗內輸入/調整後的資料（包含使用者修改後的新日期、新樓層等）
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
@@ -799,6 +809,7 @@
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
+                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
 
                 if (!targetDate) {
@@ -809,7 +820,6 @@
                 const confirmMsg = `📋 您確定要將這筆機台資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？\n\n(注意：原本這筆舊排程資料會完好保留於原日期，不會被修改或覆蓋)`;
                 if (!confirm(confirmMsg)) return;
 
-                // 防連續雙擊點擊防護
                 copyBtn.disabled = true;
                 copyBtn.innerText = "複製寫入中...";
 
@@ -832,6 +842,7 @@
                     main_weight: mw,
                     main_size: ms,
                     crane_no: cNo,
+                    po_no: poNo,
                     is_relocate: isRelocateVal,
                     remarks: r,
                     secret_key: BACKEND_SECRET,
@@ -881,7 +892,7 @@
                 }
             });
 
-            // 免登入公開 CSV 導出
+            // 免登入公開 CSV 導出（含 PO 號碼）
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -890,7 +901,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -905,10 +916,11 @@
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const cleanCraneNo = (d.crane_no || "").replace(/"/g, '""');
+                        const cleanPoNo = (d.po_no || parsed.displayPo || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const unloadStr = getUnloadStatus(d.time);
                         
-                        csvContent += `"${d.date || ''}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date || ''}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '未填'}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanPoNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -930,7 +942,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -943,10 +955,11 @@
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const cleanCraneNo = (d.crane_no || "").replace(/"/g, '""');
+                        const cleanPoNo = (d.po_no || parsed.displayPo || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const unloadStr = getUnloadStatus(d.time);
                         
-                        csvContent += `"${d.date}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanRemarks}","${localTimeStr}"\n`;
+                        csvContent += `"${d.date}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${d.floor || '1F'}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanPoNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -969,7 +982,7 @@
                         allDataArray.push({
                             date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F",
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
-                            weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", crane_no: d.crane_no || "", is_relocate: d.is_relocate || false, remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
+                            weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", crane_no: d.crane_no || "", po_no: d.po_no || "", is_relocate: d.is_relocate || false, remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
                         });
                     });
                     const blob = new Blob([JSON.stringify(allDataArray, null, 2)], { type: 'application/json;charset=utf-8;' });
@@ -1023,6 +1036,7 @@
                                         main_weight: item.main_weight || "",
                                         main_size: item.main_size || "",
                                         crane_no: item.crane_no || "",
+                                        po_no: item.po_no || "",
                                         is_relocate: item.is_relocate || false,
                                         remarks: item.remarks || "",
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
@@ -1069,6 +1083,7 @@
                             main_weight: data.main_weight || "", 
                             main_size: data.main_size || "", 
                             crane_no: data.crane_no || "",
+                            po_no: data.po_no || "",
                             is_relocate: data.is_relocate || false,
                             remarks: data.remarks || "" 
                         }
@@ -1111,7 +1126,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 新增表單送出
+        // 🚀 新增表單送出（選項 B：頂部表單 po_no 預設寫入留空）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1142,6 +1157,7 @@
                 main_weight: mainWeight,
                 main_size: mainSize,
                 crane_no: "", 
+                po_no: "", 
                 is_relocate: false,
                 remarks: remarks,
                 secret_key: BACKEND_SECRET, 
