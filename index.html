@@ -377,34 +377,50 @@
             return cleanTarget < todayStr;
         }
 
-        // 🧠 疑慮一 Option C：週五 15:00 後鎖定當週五至下週日（即當前週五至下週日全部範圍）
+        // 🧠 雙層防禦鎖定引擎：當週工作日全程鎖定 + 下週工作日（週一至週五）週五 15:00 後鎖定
         function isDateLockedByFriday(targetDateStr) {
             if (!targetDateStr) return false;
+            const cleanTarget = targetDateStr.replace(/\//g, '-');
             const currentDate = new Date();
             const day = currentDate.getDay(); // 0: Sun, 1: Mon, ..., 5: Fri, 6: Sat
             const diffToMon = (day === 0 ? -6 : 1 - day);
             
-            const monday = new Date(currentDate);
-            monday.setDate(currentDate.getDate() + diffToMon);
-            monday.setHours(0, 0, 0, 0);
+            // 當週週一 00:00:00
+            const curMonday = new Date(currentDate);
+            curMonday.setDate(currentDate.getDate() + diffToMon);
+            curMonday.setHours(0, 0, 0, 0);
 
-            const fridayThreshold = new Date(monday);
-            fridayThreshold.setDate(monday.getDate() + 4);
-            fridayThreshold.setHours(15, 0, 0, 0);
+            // 當週週五 15:00:00
+            const curFridayThreshold = new Date(curMonday);
+            curFridayThreshold.setDate(curMonday.getDate() + 4);
+            curFridayThreshold.setHours(15, 0, 0, 0);
 
-            // 若尚未到週五 15:00，則未觸發鎖定
-            if (currentDate < fridayThreshold) {
-                return false;
+            // 當週週一與週五日期字串 (例如：8/24 ~ 8/28)
+            const curMonStr = `${curMonday.getFullYear()}-${String(curMonday.getMonth() + 1).padStart(2, '0')}-${String(curMonday.getDate()).padStart(2, '0')}`;
+            const curFriStr = `${curFridayThreshold.getFullYear()}-${String(curFridayThreshold.getMonth() + 1).padStart(2, '0')}-${String(curFridayThreshold.getDate()).padStart(2, '0')}`;
+
+            // 🚀 防禦 1：當前正在發生的「當週工作日 (週一至週五)」，因為已於上週五結單確定，非 SUPER 人員全程無法編輯！
+            if (cleanTarget >= curMonStr && cleanTarget <= curFriStr) {
+                return true;
             }
 
-            const friDateStr = `${fridayThreshold.getFullYear()}-${String(fridayThreshold.getMonth() + 1).padStart(2, '0')}-${String(fridayThreshold.getDate()).padStart(2, '0')}`;
-            
-            const nextSunday = new Date(monday);
-            nextSunday.setDate(monday.getDate() + 13);
-            const nextSunStr = `${nextSunday.getFullYear()}-${String(nextSunday.getMonth() + 1).padStart(2, '0')}-${String(nextSunday.getDate()).padStart(2, '0')}`;
+            // 下週週一與下週週五日期字串 (例如：8/31 ~ 9/4)
+            const nextMonday = new Date(curMonday);
+            nextMonday.setDate(curMonday.getDate() + 7);
+            const nextMonStr = `${nextMonday.getFullYear()}-${String(nextMonday.getMonth() + 1).padStart(2, '0')}-${String(nextMonday.getDate()).padStart(2, '0')}`;
 
-            const cleanTarget = targetDateStr.replace(/\//g, '-');
-            return (cleanTarget >= friDateStr && cleanTarget <= nextSunStr);
+            const nextFriday = new Date(curMonday);
+            nextFriday.setDate(curMonday.getDate() + 11);
+            const nextFriStr = `${nextFriday.getFullYear()}-${String(nextFriday.getMonth() + 1).padStart(2, '0')}-${String(nextFriday.getDate()).padStart(2, '0')}`;
+
+            // 🚀 防禦 2：當前時間一旦到達或超過「當週五 15:00」，正式鎖定下週工作日 (週一至週五)，排除週末六日
+            if (cleanTarget >= nextMonStr && cleanTarget <= nextFriStr) {
+                if (currentDate >= curFridayThreshold) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // 檢查週五 12:00~15:00 主動提醒
@@ -413,7 +429,7 @@
             if (currentDate.getDay() === 5) { // 週五
                 const h = currentDate.getHours();
                 if (h >= 12 && h < 15) {
-                    alert("⚠️ 提醒：每週五下午 3 點後將鎖定進機流程，屆時下週排程將無法編輯與新增，請儘快確認排程更新，謝謝！");
+                    alert("⚠️ 提醒：每週五下午 3 點後將鎖定下週進機流程，屆時下週工作日排程將無法編輯與新增，請儘快確認排程更新，謝謝！");
                 }
             }
         }
@@ -813,9 +829,9 @@
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
                 let checkDate = dStr || activeSelectedProps.date;
-                // 🔒 週五 15:00 下週排程結單鎖定阻斷
+                // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
                 if (isDateLockedByFriday(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，該期間排程僅開放 SUPER 管理員修改！");
+                    alert("🔒 已超過週五 15:00 結單時限，該期間工作日排程僅開放 SUPER 管理員修改！");
                     return;
                 }
 
@@ -869,9 +885,9 @@
                     return;
                 }
 
-                // 🔒 週五 15:00 下週排程結單鎖定阻斷
+                // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
                 if (isDateLockedByFriday(targetDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，無法複製排程至鎖定期間！");
+                    alert("🔒 已超過週五 15:00 結單時限，無法複製排程至下週工作日鎖定期間！");
                     return;
                 }
 
@@ -955,7 +971,7 @@
                 }
             });
 
-            // 🚀 刪除按鈕（疑慮二 Option A：歷史排程僅供 SUPER 刪除；週五結單鎖定期非 SUPER 不可刪除）
+            // 刪除按鈕（疑慮二 Option A：歷史排程僅供 SUPER 刪除；週五結單鎖定期非 SUPER 不可刪除）
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1218,15 +1234,15 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（疑慮三 Option A：套用週五 15:00 結單鎖定阻斷，非 SUPER 不可新增鎖定期間排程）
+        // 🚀 新增表單送出（套用週五 15:00 下週工作日結單鎖定阻斷，非 SUPER 不可新增鎖定期間排程）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
             
             const targetDate = document.getElementById('date').value;
-            // 🔒 週五 15:00 下週排程結單鎖定阻斷
+            // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
             if (isDateLockedByFriday(targetDate) && currentAdminDept !== "SUPER_ADMIN") {
-                alert("🔒 已超過週五 15:00 結單時限，該期間排程僅開放 SUPER 管理員新增！");
+                alert("🔒 已超過週五 15:00 結單時限，該期間工作日排程僅開放 SUPER 管理員新增！");
                 return;
             }
 
