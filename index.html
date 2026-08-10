@@ -163,7 +163,7 @@
             🏗️ 吊運排程管理系統
         </h1>
 
-        <!-- 快速新增表單區（選項 B：保持頂部表單原本結構） -->
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -364,6 +364,37 @@
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
 
+        // 🔒 週末鎖定判斷機制 (從 2026-08-10 開始，週五 15:00 至 週一 08:00)
+        function isWeekendLocked() {
+            const nowTime = new Date();
+            const startDate = new Date(2026, 7, 10, 0, 0, 0); // 2026-08-10 00:00:00
+            if (nowTime < startDate) return false;
+
+            const day = nowTime.getDay(); // 0:週日, 1:週一, 5:週五, 6:週六
+            const hour = nowTime.getHours();
+
+            if (day === 5 && hour >= 15) return true; // 週五 15:00 後
+            if (day === 6) return true;               // 週六全天
+            if (day === 0) return true;               // 週日全天
+            if (day === 1 && hour < 8) return true;   // 週一 08:00 前
+
+            return false;
+        }
+
+        // ⚠️ 週五 12:00 後提醒彈窗機制
+        function checkFridayWarning() {
+            const nowTime = new Date();
+            const startDate = new Date(2026, 7, 10, 0, 0, 0);
+            if (nowTime < startDate) return;
+
+            const day = nowTime.getDay();
+            const hour = nowTime.getHours();
+
+            if (day === 5 && hour >= 12) {
+                alert("每周五下午3點後無法編輯，直至周一早上8點，請盡快確認排程更新，謝謝。");
+            }
+        }
+
         window.closeCustomModal = function() {
             document.getElementById('customAlertModal').style.display = 'none';
             activeSelectedDocId = null;
@@ -382,6 +413,7 @@
                 document.getElementById('passwordOverlay').style.display = 'none';
                 document.getElementById('mainSystem').classList.remove('hidden');
                 initSystem();
+                checkFridayWarning(); // 🚀 觸發週五 12:00 提醒檢查
             } else { document.getElementById('loginError').classList.remove('hidden'); }
         });
 
@@ -394,13 +426,18 @@
             if (ADMIN_PASSWORDS[input]) {
                 currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
                 if (currentAdminDept === "SUPER_ADMIN") {
-                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
+                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通 (🔓 不受週末鎖定限制)`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
                     document.getElementById('superAdminWrapper').classList.remove('hidden'); 
                     document.getElementById('exportWrapper').classList.remove('hidden'); 
                 } else {
-                    document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬港口快速編輯功能)`;
-                    document.getElementById('currentRole').className = "font-bold text-emerald-700";
+                    if (isWeekendLocked()) {
+                        document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (🔒 目前為週末鎖定時段，僅供查看)`;
+                        document.getElementById('currentRole').className = "font-bold text-amber-700";
+                    } else {
+                        document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬港口快速編輯功能)`;
+                        document.getElementById('currentRole').className = "font-bold text-emerald-700";
+                    }
                     document.getElementById('exportWrapper').classList.remove('hidden');
                 }
                 document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
@@ -521,7 +558,7 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格對齊（方案 1：吊運單號右側加入 📋 PO號碼 列）
+                // 總覽彈窗表格
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -608,7 +645,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗手動編修：加入 PO號碼 手動填寫格
+                // 單筆卡片點擊詳細彈窗手動編修 (🚀 結合週末鎖定機制)
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -618,7 +655,10 @@
                     const activeFloor = props.floor || "1F";
 
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
-                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
+                    
+                    // 🚀 權限鎖定控制：若處於週末鎖定時間且非 SUPER_ADMIN，則無編輯權限
+                    const locked = isWeekendLocked();
+                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (!locked && currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
                     let dateContentHtml = "", floorContentHtml = "", unloadContentHtml = "";
                     const currentUnload = getUnloadStatus(props.timePeriod);
@@ -666,7 +706,7 @@
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
                     let craneNoVal = props.crane_no || "";
-                    let poNoVal = props.po_no || parsed.displayPo || ""; // 🚀 讀取 PO號碼
+                    let poNoVal = props.po_no || parsed.displayPo || "";
                     let isRelocateChecked = props.is_relocate ? true : false;
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
@@ -712,7 +752,12 @@
                         remarksBlock = remarksVal ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line overflow-y-auto max-h-[120px] scrollbar-thin">${remarksVal}</div>` : "";
                     }
 
+                    let lockNotice = (locked && currentAdminDept !== "SUPER_ADMIN") 
+                        ? `<div class="bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold p-2 rounded-lg mb-3">🔒 目前處於週末鎖定時間（每週五 15:00 至 週一 08:00），僅供檢視無法編輯。</div>` 
+                        : '';
+
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base">` +
+                        lockNotice +
                         relocateBlock +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
                         `• <b>是否卸櫃：</b>${unloadContentHtml}<br>` +
@@ -749,10 +794,16 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯（包含 PO號碼 po_no 寫入）
+            // 💾 儲存寫入邏輯
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
+                // 🔒 雙重安全閥：週末鎖定攔截
+                if (isWeekendLocked() && currentAdminDept !== "SUPER_ADMIN") {
+                    alert("⚠️ 目前為週末鎖定時間（每週五 15:00 至 週一 08:00），除了 SUPERkldr 外無法修改！");
+                    return;
+                }
+
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
@@ -764,7 +815,7 @@
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
-                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : ""; // 🚀 讀取 PO號碼
+                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
@@ -792,10 +843,16 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（含 PO 號碼複製）
+            // 📋 複製邏輯
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
+                // 🔒 雙重安全閥：週末鎖定攔截
+                if (isWeekendLocked() && currentAdminDept !== "SUPER_ADMIN") {
+                    alert("⚠️ 目前為週末鎖定時間（每週五 15:00 至 週一 08:00），除了 SUPERkldr 外無法複製排程！");
+                    return;
+                }
+
                 const copyBtn = document.getElementById('modalCopyBtn');
                 
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
@@ -869,6 +926,13 @@
 
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
+                
+                // 🔒 雙重安全閥：週末鎖定攔截
+                if (isWeekendLocked() && currentAdminDept !== "SUPER_ADMIN") {
+                    alert("⚠️ 目前為週末鎖定時間（每週五 15:00 至 週一 08:00），除了 SUPERkldr 外無法變更！");
+                    return;
+                }
+
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                 if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？`)) {
                     try {
@@ -881,6 +945,13 @@
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
+
+                // 🔒 雙重安全閥：週末鎖定攔截
+                if (isWeekendLocked() && currentAdminDept !== "SUPER_ADMIN") {
+                    alert("⚠️ 目前為週末鎖定時間（每週五 15:00 至 週一 08:00），除了 SUPERkldr 外無法刪除！");
+                    return;
+                }
+
                 if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
@@ -892,7 +963,7 @@
                 }
             });
 
-            // 免登入公開 CSV 導出（含 PO 號碼）
+            // 免登入公開 CSV 導出
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1126,10 +1197,17 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（選項 B：頂部表單 po_no 預設寫入留空）
+        // 🚀 新增表單送出（🚀 結合週末鎖定判定）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
+
+            // 🔒 雙重安全閥：週末鎖定攔截
+            if (isWeekendLocked() && currentAdminDept !== "SUPER_ADMIN") {
+                alert("⚠️ 目前為週末鎖定時間（每週五 15:00 至 週一 08:00），除了 SUPERkldr 外無法新增排程！");
+                return;
+            }
+
             const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
             
             let pieces = document.getElementById('inputPieces').value.trim();
