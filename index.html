@@ -163,7 +163,7 @@
             🏗️ 吊運排程管理系統
         </h1>
 
-        <!-- 快速新增表單區 -->
+        <!-- 快速新增表單區（選項 B：保持頂部表單原本結構） -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -364,76 +364,6 @@
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
 
-        // 🧠 鎖定與日期判定邏輯引擎
-        function getTodayYMD() {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-
-        function isPastDate(targetDateStr) {
-            if (!targetDateStr) return false;
-            const todayStr = getTodayYMD();
-            const cleanTarget = targetDateStr.replace(/\//g, '-');
-            return cleanTarget < todayStr;
-        }
-
-        // 🧠 雙層防禦鎖定引擎：當週工作日全程鎖定 + 下週工作日（週一至週五）週五 15:00 後鎖定
-        function isDateLockedByFriday(targetDateStr) {
-            if (!targetDateStr) return false;
-            const cleanTarget = targetDateStr.replace(/\//g, '-');
-            const currentDate = new Date();
-            const day = currentDate.getDay(); // 0: Sun, 1: Mon, ..., 5: Fri, 6: Sat
-            const diffToMon = (day === 0 ? -6 : 1 - day);
-            
-            // 當週週一 00:00:00
-            const curMonday = new Date(currentDate);
-            curMonday.setDate(currentDate.getDate() + diffToMon);
-            curMonday.setHours(0, 0, 0, 0);
-
-            // 當週週五 15:00:00
-            const curFridayThreshold = new Date(curMonday);
-            curFridayThreshold.setDate(curMonday.getDate() + 4);
-            curFridayThreshold.setHours(15, 0, 0, 0);
-
-            // 當週週一與週五日期字串 (例如：8/24 ~ 8/28)
-            const curMonStr = `${curMonday.getFullYear()}-${String(curMonday.getMonth() + 1).padStart(2, '0')}-${String(curMonday.getDate()).padStart(2, '0')}`;
-            const curFriStr = `${curFridayThreshold.getFullYear()}-${String(curFridayThreshold.getMonth() + 1).padStart(2, '0')}-${String(curFridayThreshold.getDate()).padStart(2, '0')}`;
-
-            // 🚀 防禦 1：當前正在發生的「當週工作日 (週一至週五)」，因為已於上週五結單確定，非 SUPER 人員全程無法編輯！
-            if (cleanTarget >= curMonStr && cleanTarget <= curFriStr) {
-                return true;
-            }
-
-            // 下週週一與下週週五日期字串 (例如：8/31 ~ 9/4)
-            const nextMonday = new Date(curMonday);
-            nextMonday.setDate(curMonday.getDate() + 7);
-            const nextMonStr = `${nextMonday.getFullYear()}-${String(nextMonday.getMonth() + 1).padStart(2, '0')}-${String(nextMonday.getDate()).padStart(2, '0')}`;
-
-            const nextFriday = new Date(curMonday);
-            nextFriday.setDate(curMonday.getDate() + 11);
-            const nextFriStr = `${nextFriday.getFullYear()}-${String(nextFriday.getMonth() + 1).padStart(2, '0')}-${String(nextFriday.getDate()).padStart(2, '0')}`;
-
-            // 🚀 防禦 2：當前時間一旦到達或超過「當週五 15:00」，正式鎖定下週工作日 (週一至週五)，排除週末六日
-            if (cleanTarget >= nextMonStr && cleanTarget <= nextFriStr) {
-                if (currentDate >= curFridayThreshold) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        // 檢查週五 12:00~15:00 主動提醒
-        function checkFridayNotice() {
-            const currentDate = new Date();
-            if (currentDate.getDay() === 5) { // 週五
-                const h = currentDate.getHours();
-                if (h >= 12 && h < 15) {
-                    alert("⚠️ 提醒：每週五下午 3 點後將鎖定下週進機流程，屆時下週工作日排程將無法編輯與新增，請儘快確認排程更新，謝謝！");
-                }
-            }
-        }
-
         window.closeCustomModal = function() {
             document.getElementById('customAlertModal').style.display = 'none';
             activeSelectedDocId = null;
@@ -452,7 +382,6 @@
                 document.getElementById('passwordOverlay').style.display = 'none';
                 document.getElementById('mainSystem').classList.remove('hidden');
                 initSystem();
-                checkFridayNotice();
             } else { document.getElementById('loginError').classList.remove('hidden'); }
         });
 
@@ -592,7 +521,7 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 總覽彈窗表格
+                // 🚀 總覽彈窗表格對齊（方案 1：吊運單號右側加入 📋 PO號碼 列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -679,7 +608,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆卡片點擊詳細彈窗手動編修
+                // 🚀 單筆卡片點擊詳細彈窗手動編修：加入 PO號碼 手動填寫格
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -737,7 +666,7 @@
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
                     let craneNoVal = props.crane_no || "";
-                    let poNoVal = props.po_no || parsed.displayPo || ""; 
+                    let poNoVal = props.po_no || parsed.displayPo || ""; // 🚀 讀取 PO號碼
                     let isRelocateChecked = props.is_relocate ? true : false;
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
@@ -820,7 +749,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯（套用週五 15:00 結單鎖定限制，SUPER 管理員不受限）
+            // 💾 儲存寫入邏輯（包含 PO號碼 po_no 寫入）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -828,13 +757,6 @@
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
-                let checkDate = dStr || activeSelectedProps.date;
-                // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
-                if (isDateLockedByFriday(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，該期間工作日排程僅開放 SUPER 管理員修改！");
-                    return;
-                }
-
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
@@ -842,7 +764,7 @@
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
-                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
+                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : ""; // 🚀 讀取 PO號碼
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
@@ -870,7 +792,7 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（套用週五 15:00 結單鎖定限制）
+            // 📋 複製邏輯（含 PO 號碼複製）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -880,17 +802,6 @@
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
                 
-                if (!targetDate) {
-                    alert("🚨 請選擇複製排程的目标日期！");
-                    return;
-                }
-
-                // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
-                if (isDateLockedByFriday(targetDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，無法複製排程至下週工作日鎖定期間！");
-                    return;
-                }
-
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
@@ -900,6 +811,11 @@
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
                 let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
+
+                if (!targetDate) {
+                    alert("🚨 請選擇複製排程的目标日期！");
+                    return;
+                }
 
                 const confirmMsg = `📋 您確定要將這筆機台資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？\n\n(注意：原本這筆舊排程資料會完好保留於原日期，不會被修改或覆蓋)`;
                 if (!confirm(confirmMsg)) return;
@@ -951,16 +867,8 @@
                 }
             });
 
-            // 切換作業項目（套用週五 15:00 結單鎖定限制）
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                
-                let checkDate = activeSelectedProps ? activeSelectedProps.date : null;
-                if (checkDate && isDateLockedByFriday(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，無法變更該期間作業項目！");
-                    return;
-                }
-
                 const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
                 if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？`)) {
                     try {
@@ -971,24 +879,8 @@
                 }
             });
 
-            // 刪除按鈕（疑慮二 Option A：歷史排程僅供 SUPER 刪除；週五結單鎖定期非 SUPER 不可刪除）
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                
-                let checkDate = activeSelectedProps ? activeSelectedProps.date : null;
-                
-                // 🔒 疑慮二 Option A：歷史排程（< 今天日期）僅供 SUPER 刪除
-                if (checkDate && isPastDate(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 當前日期之前的歷史排程僅供 SUPER 管理員刪除，其餘權限無刪除權限！");
-                    return;
-                }
-
-                // 🔒 週五 15:00 結單鎖定防護
-                if (checkDate && isDateLockedByFriday(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
-                    alert("🔒 已超過週五 15:00 結單時限，該期間排程僅供 SUPER 管理員刪除！");
-                    return;
-                }
-
                 if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
@@ -1000,7 +892,7 @@
                 }
             });
 
-            // 免登入公開 CSV 導出
+            // 免登入公開 CSV 導出（含 PO 號碼）
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1234,18 +1126,10 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（套用週五 15:00 下週工作日結單鎖定阻斷，非 SUPER 不可新增鎖定期間排程）
+        // 🚀 新增表單送出（選項 B：頂部表單 po_no 預設寫入留空）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
-            
-            const targetDate = document.getElementById('date').value;
-            // 🔒 週五 15:00 下週工作日排程結單鎖定阻斷
-            if (isDateLockedByFriday(targetDate) && currentAdminDept !== "SUPER_ADMIN") {
-                alert("🔒 已超過週五 15:00 結單時限，該期間工作日排程僅開放 SUPER 管理員新增！");
-                return;
-            }
-
             const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
             
             let pieces = document.getElementById('inputPieces').value.trim();
@@ -1262,7 +1146,7 @@
             }
 
             const payload = {
-                date: targetDate, 
+                date: document.getElementById('date').value, 
                 time: document.getElementById('timePeriod').value, 
                 workType: document.getElementById('workType').value, 
                 floor: document.getElementById('floor').value,
