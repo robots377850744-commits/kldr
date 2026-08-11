@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>KL 新廠設備裝機暨六大驗收指標動態儀表板</title>
+    <title>KL 新廠設備裝機暨四大驗收指標動態儀表板</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body {
@@ -58,7 +58,7 @@
                     <span class="text-xs text-zinc-500 font-medium">Project: KL New M/C Phase 1-3 (2026-2028)</span>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-zinc-800 mt-1">
-                    📊 KL 新廠設備裝機暨六大驗收指標動態儀表板
+                    📊 KL 新廠設備裝機暨四大驗收指標動態儀表板
                 </h1>
             </div>
 
@@ -83,11 +83,11 @@
             </div>
         </header>
 
-        <!-- KPI 數據卡片區（已移除「吊掛負荷」與「工程風險」，保留 2 個核心概覽） -->
+        <!-- KPI 數據卡片區 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-zinc-500 font-bold" id="kpi-machines-title">當前週期進機機台</p>
+                    <p class="text-xs text-zinc-500 font-bold" id="kpi-machines-title">當前週期進機總台數</p>
                     <p class="text-3xl font-black text-zinc-800 mt-1" id="kpi-total-machines">0 <span class="text-xs text-zinc-400">台</span></p>
                 </div>
                 <div class="p-3 bg-blue-100 text-blue-700 rounded-xl font-black text-xl">🚚</div>
@@ -95,22 +95,38 @@
 
             <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-zinc-500 font-bold">全廠設備綜合驗收率</p>
+                    <p class="text-xs text-zinc-500 font-bold">全廠設備綜合驗收率 (四大指標)</p>
                     <p class="text-3xl font-black text-emerald-700 mt-1" id="kpi-overall-completion">0.0%</p>
                 </div>
                 <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xl">✅</div>
             </div>
         </div>
 
-        <!-- 數據表格區：動態連結行事曆資料 (kldr) -->
+        <!-- 數據表格區：手動獨立新增 + 站點顏色網底 + 搜尋過濾 -->
         <div class="bg-zinc-50 p-6 rounded-2xl border border-zinc-200 shadow-xs mb-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 pb-4 border-b border-zinc-200">
                 <div>
                     <h3 class="text-base font-extrabold text-zinc-800 flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
-                        六大指標動態驗收進度管控表 (自動帶入行事曆清單)
+                        四大指標動態驗收進度管控表 (獨立手動維護)
                     </h3>
-                    <p class="text-xs text-zinc-500 mt-1">自動讀取行事曆中該月份的進機機台。點擊「進度」可即時調校 6 大驗收關卡進度。</p>
+                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。具備站點專屬顏色標記（BE藍/RDL紅/FC綠），點擊「進度」可按 20% 階梯調整進度並註記。</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" id="searchInput" placeholder="🔍 搜尋機台、負責人、進度註記..." class="w-full bg-white border border-zinc-300 rounded-xl px-3 py-1.5 text-xs text-zinc-800 font-bold focus:outline-none focus:ring-2 focus:ring-zinc-400 shadow-xs">
+                    </div>
+                    <select id="deptFilter" class="bg-white border border-zinc-300 rounded-xl px-3 py-1.5 text-xs text-zinc-800 font-extrabold focus:outline-none focus:ring-2 focus:ring-zinc-400 shadow-xs">
+                        <option value="ALL">全部站點</option>
+                        <option value="BE/Recon">BE/Recon (藍)</option>
+                        <option value="RDL">RDL (紅)</option>
+                        <option value="FC">FC (綠)</option>
+                    </select>
+                    <button onclick="openAddMachineModal()" class="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1 shrink-0">
+                        ➕ 手動新增進機設備
+                    </button>
                 </div>
             </div>
 
@@ -120,10 +136,11 @@
                         <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold tracking-wide">
                             <th class="py-3.5 px-4 w-1/5">機台名稱 / 負責人</th>
                             <th class="py-3.5 px-4">排定吊掛日</th>
-                            <th class="py-3.5 px-4">樓層-站點</th>
-                            <th class="py-3.5 px-4">作業項目</th>
-                            <th class="py-3.5 px-4 w-1/3">六大指標驗收進度 (%)</th>
+                            <th class="py-3.5 px-4">目前樓層</th>
+                            <th class="py-3.5 px-4">站點</th>
+                            <th class="py-3.5 px-4 w-1/4">四大指標驗收進度 (%)</th>
                             <th class="py-3.5 px-4 text-center">綜合驗收率</th>
+                            <th class="py-3.5 px-4 max-w-[200px]">進度註記 / 備註</th>
                             <th class="py-3.5 px-4 text-center">功能操作</th>
                         </tr>
                     </thead>
@@ -145,12 +162,12 @@
         </div>
     </div>
 
-    <!-- 六大指標進度調校彈窗 -->
+    <!-- 四大指標進度調校彈窗 (階梯：0%, 20%, 40%, 60%, 80%, 100% + 備註欄) -->
     <div id="progress-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white border-2 border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl p-6 text-zinc-800">
             <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
                 <div>
-                    <h3 class="text-base font-extrabold text-zinc-900">⚙️ 驗收指標進度調校 (六大項目)</h3>
+                    <h3 class="text-base font-extrabold text-zinc-900">⚙️ 驗收指標進度調校 (四大項目)</h3>
                     <p id="progress-modal-machine-name" class="text-xs text-emerald-800 font-bold mt-1"></p>
                 </div>
                 <button onclick="closeProgressModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold">&times;</button>
@@ -164,7 +181,7 @@
                         <span class="text-zinc-700">1. 吊掛進機 (Crane Move-In)</span>
                         <span id="label-val-crane" class="font-mono text-emerald-800">0%</span>
                     </div>
-                    <input type="range" id="input-val-crane" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('crane')">
+                    <input type="range" id="input-val-crane" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('crane')">
                 </div>
 
                 <div>
@@ -172,7 +189,7 @@
                         <span class="text-zinc-700">2. 二次配 (Hook-Up / FAC)</span>
                         <span id="label-val-hookup" class="font-mono text-emerald-800">0%</span>
                     </div>
-                    <input type="range" id="input-val-hookup" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('hookup')">
+                    <input type="range" id="input-val-hookup" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('hookup')">
                 </div>
 
                 <div>
@@ -180,7 +197,7 @@
                         <span class="text-zinc-700">3. MBO (Machine Buy-Off)</span>
                         <span id="label-val-mbo" class="font-mono text-emerald-800">0%</span>
                     </div>
-                    <input type="range" id="input-val-mbo" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('mbo')">
+                    <input type="range" id="input-val-mbo" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('mbo')">
                 </div>
 
                 <div>
@@ -188,23 +205,12 @@
                         <span class="text-zinc-700">4. EE Training (設備工程培訓)</span>
                         <span id="label-val-training" class="font-mono text-emerald-800">0%</span>
                     </div>
-                    <input type="range" id="input-val-training" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('training')">
+                    <input type="range" id="input-val-training" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('training')">
                 </div>
 
                 <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">5. PBO (Process Buy-Off)</span>
-                        <span id="label-val-pbo" class="font-mono text-emerald-800">0%</span>
-                    </div>
-                    <input type="range" id="input-val-pbo" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('pbo')">
-                </div>
-
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">6. QA Buy-Off (品保驗收簽核)</span>
-                        <span id="label-val-qa" class="font-mono text-emerald-800">0%</span>
-                    </div>
-                    <input type="range" id="input-val-qa" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('qa')">
+                    <label class="block text-zinc-700 mb-1">📝 進度註記 / 備註說明：</label>
+                    <textarea id="progress-modal-note" rows="2" placeholder="請在此輸入該機台的最新進度註記..." class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-xs font-semibold"></textarea>
                 </div>
             </div>
 
@@ -215,9 +221,70 @@
         </div>
     </div>
 
+    <!-- 編輯/新增機台彈窗 -->
+    <div id="machine-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-zinc-800">
+            <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
+                <h3 id="modal-title" class="text-base font-extrabold text-zinc-900">手動新增進機設備</h3>
+                <button onclick="closeMachineModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="space-y-4 py-4 text-xs font-bold">
+                <input type="hidden" id="modal-id">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-500 mb-1">機台名稱</label>
+                        <input type="text" id="modal-name" placeholder="例如：1號機" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">機台負責人</label>
+                        <input type="text" id="modal-owner" placeholder="例如：張三" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-zinc-500 mb-1">站點</label>
+                        <select id="modal-dept" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                            <option value="BE/Recon">BE/Recon</option>
+                            <option value="RDL">RDL</option>
+                            <option value="FC">FC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">排定吊掛日期</label>
+                        <input type="text" id="modal-adjustedDate" placeholder="YYYY/MM/DD" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">目前樓層</label>
+                        <select id="modal-floor" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                            <option value="1F">1F</option>
+                            <option value="2F">2F</option>
+                            <option value="3F">3F</option>
+                            <option value="4F">4F</option>
+                            <option value="5F">5F</option>
+                            <option value="6F">6F</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-zinc-500 mb-1">進度註記 / 備註說明</label>
+                    <textarea id="modal-note" rows="2" placeholder="請填寫進度備註..." class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+                <button onclick="closeMachineModal()" class="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded-xl font-bold text-xs">取消</button>
+                <button onclick="saveMachineData()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md">確認保存</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD = "klee"; 
 
@@ -239,11 +306,9 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const scheduleRef = collection(db, "kldr");
         const acceptanceRef = collection(db, "kldr_acceptance");
 
-        let scheduleList = [];
-        let acceptanceProgressMap = {};
+        let rawMachinesData = [];
         let currentAdminDept = null;
         let currentYear = 2026;
         let currentMonth = 8;
@@ -300,62 +365,66 @@
                 updateDashboardAndTable();
             });
 
-            // 1. 監聽主行事曆 (kldr)
-            onSnapshot(scheduleRef, (snapshot) => {
-                scheduleList = [];
-                snapshot.forEach((doc) => {
-                    const d = doc.data();
-                    if (d.date && d.machine) {
-                        scheduleList.push({ id: doc.id, ...d });
-                    }
-                });
-                updateDashboardAndTable();
-            });
+            document.getElementById('searchInput').addEventListener('input', updateDashboardAndTable);
+            document.getElementById('deptFilter').addEventListener('change', updateDashboardAndTable);
 
-            // 2. 監聽六大驗收進度 (kldr_acceptance)
+            // 監聽獨立儀表板資料庫 (kldr_acceptance)
             onSnapshot(acceptanceRef, (snapshot) => {
-                acceptanceProgressMap = {};
+                rawMachinesData = [];
                 snapshot.forEach((doc) => {
-                    acceptanceProgressMap[doc.id] = doc.data();
+                    rawMachinesData.push({ id: doc.id, ...doc.data() });
                 });
                 updateDashboardAndTable();
             });
         }
 
         function updateDashboardAndTable() {
-            const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-            const monthStrAlt = `${currentYear}/${String(currentMonth).padStart(2, '0')}`;
+            const monthStr = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
+            const monthStrAlt = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
             
-            // 篩選屬於選定年份月份的主排程資料
-            const targetMachines = scheduleList.filter(m => {
-                if (!m.date) return false;
-                const d = m.date.toString().replace(/\//g, '-');
-                return d.startsWith(monthStr) || d.startsWith(monthStrAlt.replace(/\//g, '-'));
+            // 篩選當月資料
+            const targetMachines = rawMachinesData.filter(m => {
+                if (!m.adjustedDate) return false;
+                const d = m.adjustedDate.toString().replace(/-/g, '/');
+                return d.startsWith(monthStr);
             });
 
-            let totalQty = targetMachines.length;
+            const totalQty = targetMachines.length;
             let sumReadyRate = 0;
 
             targetMachines.forEach(m => {
-                const prog = acceptanceProgressMap[m.id] || {};
-                const c = parseInt(prog.crane || 100); // 預設進機完成 100%
-                const h = parseInt(prog.hookup || 0);
-                const mb = parseInt(prog.mbo || 0);
-                const t = parseInt(prog.training || 0);
-                const p = parseInt(prog.pbo || 0);
-                const q = parseInt(prog.qa || 0);
+                const c = parseInt(m.crane || 0);
+                const h = parseInt(m.hookup || 0);
+                const mb = parseInt(m.mbo || 0);
+                const t = parseInt(m.training || 0);
 
-                const readiness = (c + h + mb + t + p + q) / 6;
+                const readiness = (c + h + mb + t) / 4;
                 sumReadyRate += readiness;
             });
 
             const overallCompletion = totalQty > 0 ? (sumReadyRate / totalQty).toFixed(1) : "0.0";
 
-            document.getElementById('kpi-machines-title').innerText = `${currentMonth}月份 預定進機機台`;
+            document.getElementById('kpi-machines-title').innerText = `${currentMonth}月份 進機設備總台數`;
             document.getElementById('kpi-total-machines').innerHTML = `${totalQty} <span class="text-xs text-zinc-400">台</span>`;
             document.getElementById('kpi-overall-completion').innerText = `${overallCompletion}%`;
 
-            renderTable(targetMachines);
+            // 搜尋與選單過濾
+            const searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            const selectedDeptFilter = document.getElementById('deptFilter').value;
+
+            const filteredData = targetMachines.filter(m => {
+                const matchDept = (selectedDeptFilter === "ALL") || (m.dept === selectedDeptFilter || (selectedDeptFilter === "BE/Recon" && m.dept === "BE-Recon"));
+                
+                const matchSearch = !searchKeyword || 
+                    (m.name && m.name.toLowerCase().includes(searchKeyword)) ||
+                    (m.owner && m.owner.toLowerCase().includes(searchKeyword)) ||
+                    (m.note && m.note.toLowerCase().includes(searchKeyword)) ||
+                    (m.floor && m.floor.toLowerCase().includes(searchKeyword));
+
+                return matchDept && matchSearch;
+            });
+
+            renderTable(filteredData);
         }
 
         function renderTable(data) {
@@ -363,51 +432,56 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-zinc-400 font-medium">此月份行事曆中尚無 any 進機紀錄。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-zinc-400 font-medium">尚無符合篩選條件的進機紀錄。</td></tr>`;
                 return;
             }
 
             data.forEach((item) => {
                 const cleanD = (str) => str ? str.replace('-', '/') : '';
-                const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(item.department)));
+                const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(item.dept)));
 
-                const prog = acceptanceProgressMap[item.id] || {};
-                const c = parseInt(prog.crane || 100);
-                const h = parseInt(prog.hookup || 0);
-                const mb = parseInt(prog.mbo || 0);
-                const t = parseInt(prog.training || 0);
-                const p = parseInt(prog.pbo || 0);
-                const q = parseInt(prog.qa || 0);
-                const readiness = Math.round((c + h + mb + t + p + q) / 6);
+                const c = parseInt(item.crane || 0);
+                const h = parseInt(item.hookup || 0);
+                const mb = parseInt(item.mbo || 0);
+                const t = parseInt(item.training || 0);
+                const readiness = Math.round((c + h + mb + t) / 4);
 
-                const typeBadge = item.workType === "電梯" 
-                    ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded text-[10px] font-black">🟡 電梯</span>`
-                    : `<span class="bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded text-[10px] font-black">🔴 吊運</span>`;
+                // 🎨 站點專屬底色標記
+                let rowBgClass = "bg-white border-l-4 border-l-zinc-300";
+                const cleanDept = item.dept || "";
+                
+                if (cleanDept === "BE/Recon" || cleanDept === "BE-Recon") {
+                    rowBgClass = "bg-blue-50/70 border-l-4 border-l-blue-600";
+                } else if (cleanDept === "RDL") {
+                    rowBgClass = "bg-red-50/70 border-l-4 border-l-red-600";
+                } else if (cleanDept === "FC") {
+                    rowBgClass = "bg-emerald-50/70 border-l-4 border-l-emerald-600";
+                }
+
+                const remarksScrollBox = item.note 
+                    ? `<div class="max-h-[70px] overflow-y-auto pr-1 text-zinc-600 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${item.note}</div>`
+                    : `<span class="text-zinc-400 font-normal">-</span>`;
 
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-zinc-50 transition border-b border-zinc-200';
+                tr.className = `${rowBgClass} hover:opacity-90 transition border-b border-zinc-200`;
 
                 tr.innerHTML = `
                     <td class="py-3.5 px-4 font-bold text-zinc-900">
                         <div class="flex flex-col">
-                            <span class="text-xs font-black text-zinc-800">${item.machine || '未填機台'}</span>
-                            <span class="text-[11px] text-zinc-400 mt-0.5 font-semibold">負責人: ${item.worker_name || '未填'}</span>
+                            <span class="text-xs font-black text-zinc-800">${item.name || '未填機台'}</span>
+                            <span class="text-[11px] text-zinc-500 mt-0.5 font-semibold">負責人: ${item.owner || '未填'}</span>
                         </div>
                     </td>
-                    <td class="py-3.5 px-4 text-zinc-700 font-mono text-xs font-bold">${item.date || '-'}</td>
-                    <td class="py-3.5 px-4 font-bold text-xs">
-                        [${item.floor || '1F'}] <span class="text-blue-700">${item.department || '-'}</span>
-                    </td>
-                    <td class="py-3.5 px-4">${typeBadge}</td>
+                    <td class="py-3.5 px-4 text-zinc-700 font-mono text-xs font-bold">${item.adjustedDate || '-'}</td>
+                    <td class="py-3.5 px-4 font-extrabold text-xs text-blue-900">${item.floor || '1F'}</td>
+                    <td class="py-3.5 px-4 font-extrabold text-xs">${item.dept || '-'}</td>
                     
                     <td class="py-3.5 px-4">
-                        <div class="grid grid-cols-3 gap-x-3 gap-y-1 text-[10px] text-zinc-500 font-mono">
-                            <div class="flex items-center justify-between"><span>吊掛:</span> <span class="text-emerald-800 font-bold">${c}%</span></div>
-                            <div class="flex items-center justify-between"><span>二次配:</span> <span class="text-emerald-800 font-bold">${h}%</span></div>
-                            <div class="flex items-center justify-between"><span>MBO:</span> <span class="text-emerald-800 font-bold">${mb}%</span></div>
-                            <div class="flex items-center justify-between"><span>EE培訓:</span> <span class="text-emerald-800 font-bold">${t}%</span></div>
-                            <div class="flex items-center justify-between"><span>PBO:</span> <span class="text-emerald-800 font-bold">${p}%</span></div>
-                            <div class="flex items-center justify-between"><span>QA:</span> <span class="text-emerald-800 font-bold">${q}%</span></div>
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-zinc-600 font-mono font-bold">
+                            <div class="flex items-center justify-between"><span>吊掛進機:</span> <span class="text-emerald-800">${c}%</span></div>
+                            <div class="flex items-center justify-between"><span>二次配:</span> <span class="text-emerald-800">${h}%</span></div>
+                            <div class="flex items-center justify-between"><span>MBO:</span> <span class="text-emerald-800">${mb}%</span></div>
+                            <div class="flex items-center justify-between"><span>EE培訓:</span> <span class="text-emerald-800">${t}%</span></div>
                         </div>
                     </td>
 
@@ -420,9 +494,15 @@
                         </div>
                     </td>
 
+                    <td class="py-3.5 px-4 max-w-[200px]">${remarksScrollBox}</td>
+
                     <td class="py-3.5 px-4 text-center">
                         ${hasPermission ? `
-                            <button onclick="openProgressModal('${item.id}')" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white transition rounded-lg text-[11px] font-bold shadow-xs">⚙️ 調校進度</button>
+                            <div class="flex justify-center gap-1.5">
+                                <button onclick="openProgressModal('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white transition rounded-lg text-[10px] font-bold shadow-xs">⚙️ 進度</button>
+                                <button onclick="openEditMachineModal('${item.id}')" class="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 transition rounded-lg text-[10px] font-bold">編輯</button>
+                                <button onclick="deleteMachine('${item.id}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 transition rounded-lg text-[10px] font-bold">刪除</button>
+                            </div>
                         ` : `<span class="text-zinc-400 text-[10px]">唯讀</span>`}
                     </td>
                 `;
@@ -431,23 +511,20 @@
         }
 
         window.openProgressModal = function(id) {
-            const item = scheduleList.find(m => m.id === id);
+            const item = rawMachinesData.find(m => m.id === id);
             if (!item) return;
 
-            const prog = acceptanceProgressMap[id] || {};
-
             document.getElementById('progress-modal-id').value = id;
-            document.getElementById('progress-modal-machine-name').innerText = `${item.machine} (${item.date} - ${item.department})`;
+            document.getElementById('progress-modal-machine-name').innerText = `${item.name} (${item.adjustedDate} - ${item.dept})`;
 
-            document.getElementById('input-val-crane').value = prog.crane !== undefined ? prog.crane : 100;
-            document.getElementById('input-val-hookup').value = prog.hookup || 0;
-            document.getElementById('input-val-mbo').value = prog.mbo || 0;
-            document.getElementById('input-val-training').value = prog.training || 0;
-            document.getElementById('input-val-pbo').value = prog.pbo || 0;
-            document.getElementById('input-val-qa').value = prog.qa || 0;
+            document.getElementById('input-val-crane').value = item.crane !== undefined ? item.crane : 0;
+            document.getElementById('input-val-hookup').value = item.hookup || 0;
+            document.getElementById('input-val-mbo').value = item.mbo || 0;
+            document.getElementById('input-val-training').value = item.training || 0;
+            document.getElementById('progress-modal-note').value = item.note || "";
 
-            updateRangeLabel('crane'); updateRangeLabel('hookup'); updateRangeLabel('mbo');
-            updateRangeLabel('training'); updateRangeLabel('pbo'); updateRangeLabel('qa');
+            updateRangeLabel('crane'); updateRangeLabel('hookup');
+            updateRangeLabel('mbo'); updateRangeLabel('training');
 
             document.getElementById('progress-modal').classList.remove('hidden');
         };
@@ -463,27 +540,97 @@
 
         window.saveProgressData = async function() {
             const id = document.getElementById('progress-modal-id').value;
-            const item = scheduleList.find(m => m.id === id);
-            
             try {
                 const docRef = doc(db, "kldr_acceptance", id);
-                await setDoc(docRef, {
-                    department: item ? item.department : "BE/Recon",
-                    machine_name: item ? item.machine : "",
+                await updateDoc(docRef, {
                     crane: parseInt(document.getElementById('input-val-crane').value),
                     hookup: parseInt(document.getElementById('input-val-hookup').value),
                     mbo: parseInt(document.getElementById('input-val-mbo').value),
                     training: parseInt(document.getElementById('input-val-training').value),
-                    pbo: parseInt(document.getElementById('input-val-pbo').value),
-                    qa: parseInt(document.getElementById('input-val-qa').value),
+                    note: document.getElementById('progress-modal-note').value.trim(),
                     updated_at: new Date().toISOString()
-                }, { merge: true });
-                
-                alert("🎉 六大驗收進度已成功儲存至雲端！");
+                });
+                alert("🎉 四大驗收指標進度已成功儲存！");
                 closeProgressModal();
-            } catch (err) { 
-                alert("🚨 更新失敗！請確認權限與網路。"); 
+            } catch (err) { alert("🚨 更新失敗！請確認權限。"); }
+        };
+
+        window.openEditMachineModal = function(id) {
+            const item = rawMachinesData.find(m => m.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-title').innerText = "編輯機台安裝參數";
+            document.getElementById('modal-id').value = id;
+            document.getElementById('modal-name').value = item.name || "";
+            document.getElementById('modal-owner').value = item.owner || "";
+            document.getElementById('modal-adjustedDate').value = item.adjustedDate || "";
+            document.getElementById('modal-dept').value = item.dept || "BE/Recon";
+            document.getElementById('modal-floor').value = item.floor || "1F";
+            document.getElementById('modal-note').value = item.note || "";
+
+            document.getElementById('machine-modal').classList.remove('hidden');
+        };
+
+        window.openAddMachineModal = function() {
+            document.getElementById('modal-title').innerText = "手動新增進機設備";
+            document.getElementById('modal-id').value = "NEW";
+            document.getElementById('modal-name').value = "";
+            document.getElementById('modal-owner').value = "";
+            document.getElementById('modal-adjustedDate').value = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}/06`;
+            document.getElementById('modal-dept').value = (currentAdminDept && currentAdminDept !== "SUPER_ADMIN") ? currentAdminDept : "BE/Recon";
+            document.getElementById('modal-floor').value = "1F";
+            document.getElementById('modal-note').value = "";
+
+            document.getElementById('machine-modal').classList.remove('hidden');
+        };
+
+        window.closeMachineModal = function() {
+            document.getElementById('machine-modal').classList.add('hidden');
+        };
+
+        window.saveMachineData = async function() {
+            const id = document.getElementById('modal-id').value;
+            const name = document.getElementById('modal-name').value.trim();
+            const adjustedDate = document.getElementById('modal-adjustedDate').value.trim();
+
+            if (!name || !adjustedDate) {
+                alert("機台名稱與排定吊掛日期皆為必填項目！");
+                return;
             }
+
+            const payload = {
+                name,
+                owner: document.getElementById('modal-owner').value.trim(),
+                adjustedDate,
+                dept: document.getElementById('modal-dept').value,
+                floor: document.getElementById('modal-floor').value,
+                note: document.getElementById('modal-note').value.trim(),
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                if (id === "NEW") {
+                    payload.crane = 0; payload.hookup = 0; payload.mbo = 0; payload.training = 0;
+                    const newDocRef = doc(acceptanceRef);
+                    await setDoc(newDocRef, payload);
+                } else {
+                    const docRef = doc(db, "kldr_acceptance", id);
+                    await updateDoc(docRef, payload);
+                }
+                alert("🎉 設備機台資料保存成功！");
+                closeMachineModal();
+            } catch (err) { alert("🚨 保存失敗！請檢查權限。"); }
+        };
+
+        window.deleteMachine = async function(id) {
+            if (!confirm("⚠️ 是否確認刪除此筆儀表板設備資料？")) return;
+            try {
+                const docRef = doc(db, "kldr_acceptance", id);
+                const deleteToken = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : (document.getElementById('adminPassword') ? document.getElementById('adminPassword').value.trim() : "");
+                await setDoc(docRef, { request_delete_pass: deleteToken }, { merge: true });
+                await deleteDoc(docRef);
+                alert("🎉 已成功刪除！");
+            } catch (err) { alert("🚨 刪除失敗！請檢查權限。"); }
         };
     </script>
 </body>
