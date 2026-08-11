@@ -380,7 +380,6 @@
 
         function updateDashboardAndTable() {
             const monthStr = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
-            const monthStrAlt = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
             
             // 篩選當月資料
             const targetMachines = rawMachinesData.filter(m => {
