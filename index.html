@@ -12,14 +12,12 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 🎨 全域藝術配色配置 - 核心萊姆底色 */
         body {
             background-color: #F5FFCD !important;
             color: #27272a !important;
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
         }
 
-        /* 📅 FullCalendar 螢幕自適應優化與縮放調整 */
         .fc {
             --fc-border-color: #e4e4e7 !important;
             --fc-page-bg-color: #ffffff !important;
@@ -31,7 +29,6 @@
             min-height: 105px !important;
         }
         
-        /* 🎨 卡片雙行美化 */
         .fc-event { 
             cursor: pointer; 
             padding: 3px 6px !important; 
@@ -54,7 +51,6 @@
         .fc-daygrid-event-dot { display: none !important; }
         .fc-event-time { display: none !important; }
         
-        /* 🔒 密碼遮罩 */
         #passwordOverlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #F5FFCD; z-index: 9999; display: flex; justify-content: center; align-items: center; 
@@ -100,7 +96,6 @@
             border-color: #d4d4d8 !important;
         }
 
-        /* 🚀 內嵌自訂彈窗樣式：視窗加大至 1450px */
         #customAlertModal {
             display: none;
             position: fixed;
@@ -131,7 +126,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-100">
             <h2 class="text-2xl font-bold text-gray-800 mb-2">🏗️ 內部系統限制存取</h2>
             <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖排程管理系統</p>
-            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition">
+            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
             <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button></div>
             <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
         </div>
@@ -159,11 +154,18 @@
     </div>
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
-        <h1 class="text-2xl font-extrabold text-zinc-800 mb-6 text-center tracking-wide">
-            🏗️ 吊運排程管理系統
-        </h1>
+        <!-- 頁首標題區與轉頁按鈕 -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
+            <div></div>
+            <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center">
+                🏗️ 吊運排程管理系統
+            </h1>
+            <a href="dashboard.html" class="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
+                📊 轉至：設備驗收動態儀表板 ➔
+            </a>
+        </div>
 
-        <!-- 快速新增表單區（選項 B：保持頂部表單原本結構） -->
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -349,6 +351,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const scheduleRef = collection(db, "kldr");
+        const acceptanceRef = collection(db, "kldr_acceptance");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -363,6 +366,96 @@
         const now = new Date();
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
+
+        function getUnloadStatus(timeVal) {
+            if (!timeVal) return "需要卸櫃";
+            if (timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
+                return "需要卸櫃";
+            }
+            return timeVal;
+        }
+
+        function parseWorkerInfo(workerName, weightCount) {
+            let displayName = workerName || "未填";
+            let displayPo = "";
+            let displayWeight = weightCount || "";
+            
+            if (workerName && workerName.includes(" [PO:")) {
+                const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
+                if (match) {
+                    displayName = match[1]; displayPo = match[2];
+                    if (!displayWeight) displayWeight = match[3];
+                }
+            }
+            return { displayName, displayPo, displayWeight };
+        }
+
+        function getDeptColor(deptName) {
+            if (!deptName) return "#4b5563";
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "BE-Recon": "#1d4ed8",
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            let hash = 0;
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
+        }
+
+        function formatToTaiwanTime(isoString) {
+            if (!isoString) return "";
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+            } catch (e) { return isoString; }
+        }
+
+        // 🚀 自動連動寫入儀表板 kldr_acceptance 集合
+        async function syncAcceptanceData(docId, payload, isDelete = false) {
+            try {
+                const accDocRef = doc(db, "kldr_acceptance", docId);
+                if (isDelete) {
+                    const deleteToken = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : (document.getElementById('adminPassword') ? document.getElementById('adminPassword').value.trim() : "");
+                    await setDoc(accDocRef, { request_delete_pass: deleteToken }, { merge: true });
+                    await deleteDoc(accDocRef);
+                } else {
+                    let todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    let formattedDate = (payload.date || todayStr).replace(/-/g, '/');
+                    let piecesVal = 1;
+                    if (payload.weight_count) {
+                        const pMatch = payload.weight_count.match(/(\d+)件/);
+                        if (pMatch) piecesVal = parseInt(pMatch[1]);
+                    }
+
+                    const accData = {
+                        name: payload.machine || "未填機台",
+                        qty: piecesVal,
+                        adjustedDate: formattedDate,
+                        originalEtd: formattedDate.substring(5),
+                        weight: "Medium",
+                        dept: payload.department || "BE/Recon",
+                        status: "Staged",
+                        note: payload.remarks || "",
+                        crane: 100,
+                        hookup: 0,
+                        mbo: 0,
+                        training: 0,
+                        pbo: 0,
+                        qa: 0,
+                        updated_at: new Date().toISOString()
+                    };
+                    await setDoc(accDocRef, accData, { merge: true });
+                }
+            } catch (err) {
+                console.error("驗收儀表板連動寫入錯誤:", err);
+            }
+        }
 
         window.closeCustomModal = function() {
             document.getElementById('customAlertModal').style.display = 'none';
@@ -409,32 +502,6 @@
             } else { alert("特權金鑰錯誤！權限驗證失敗。"); }
         });
 
-        function getDeptColor(deptName) {
-            if (!deptName) return "#4b5563";
-            const fixedColors = {
-                "BE/Recon": "#1d4ed8",  
-                "BE-Recon": "#1d4ed8",
-                "RDL": "#c2410c",       
-                "FC": "#047857"         
-            };
-            if (fixedColors[deptName]) return fixedColors[deptName];
-            let hash = 0;
-            for (let i = 0; i < deptName.length; i++) {
-                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const h = Math.abs(hash % 360);
-            return `hsl(${h}, 75%, 40%)`; 
-        }
-
-        function formatToTaiwanTime(isoString) {
-            if (!isoString) return "";
-            try {
-                const date = new Date(isoString);
-                if (isNaN(date.getTime())) return isoString;
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-            } catch (e) { return isoString; }
-        }
-
         function applyLiveFilters() {
             const selectedFloor = document.getElementById('filterFloor').value;
             const selectedDept = document.getElementById('filterDept').value;
@@ -451,29 +518,6 @@
             }
         }
 
-        function parseWorkerInfo(workerName, weightCount) {
-            let displayName = workerName || "未填";
-            let displayPo = "";
-            let displayWeight = weightCount || "";
-            
-            if (workerName && workerName.includes(" [PO:")) {
-                const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
-                if (match) {
-                    displayName = match[1]; displayPo = match[2];
-                    if (!displayWeight) displayWeight = match[3];
-                }
-            }
-            return { displayName, displayPo, displayWeight };
-        }
-
-        function getUnloadStatus(timeVal) {
-            if (!timeVal) return "需要卸櫃";
-            if (timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
-                return "需要卸櫃";
-            }
-            return timeVal;
-        }
-
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
@@ -481,7 +525,6 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
-                // 雙行卡片結構
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -503,7 +546,6 @@
                     };
                 },
 
-                // 滑動懸停提示
                 eventDidMount: function(info) {
                     const props = info.event.extendedProps;
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
@@ -521,7 +563,6 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗表格對齊（方案 1：吊運單號右側加入 📋 PO號碼 列）
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -608,7 +649,6 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 🚀 單筆卡片點擊詳細彈窗手動編修：加入 PO號碼 手動填寫格
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -666,7 +706,7 @@
                     let mainWeightVal = props.main_weight || "";
                     let mainSizeVal = props.main_size || "";
                     let craneNoVal = props.crane_no || "";
-                    let poNoVal = props.po_no || parsed.displayPo || ""; // 🚀 讀取 PO號碼
+                    let poNoVal = props.po_no || parsed.displayPo || ""; 
                     let isRelocateChecked = props.is_relocate ? true : false;
 
                     let weightContentHtml = "", mainSpecRowHtml = "", remarksBlock = "", relocateBlock = "";
@@ -749,7 +789,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯（包含 PO號碼 po_no 寫入）
+            // 💾 儲存寫入（連動同步至驗收儀表板）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -764,7 +804,7 @@
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
-                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : ""; // 🚀 讀取 PO號碼
+                let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
@@ -788,11 +828,16 @@
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！內容與 PO 號碼已即時同步雲端。"); closeCustomModal();
+                    
+                    // 🚀 連動同步更新儀表板 kldr_acceptance
+                    let fullPayload = { ...activeSelectedProps, ...updatePayload };
+                    await syncAcceptanceData(activeSelectedDocId, fullPayload);
+
+                    alert("🎉 變更儲存成功！內容與 PO 號碼已即時同步雲端與驗收儀表板。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（含 PO 號碼複製）
+            // 📋 複製邏輯（連動同步至驗收儀表板）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -856,7 +901,11 @@
                     const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerName.substring(0,20)}_${uniqueId}`;
 
                     await setDoc(doc(db, "kldr", customDocName), payload);
-                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的排程資料。`);
+                    
+                    // 🚀 連動寫入儀表板 kldr_acceptance
+                    await syncAcceptanceData(customDocName, payload);
+
+                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的排程資料，並連動至驗收儀表板。`);
                     closeCustomModal();
                 } catch (error) {
                     alert("🚨 複製新增失敗！請檢查雲端權限與網路連線。");
@@ -887,7 +936,11 @@
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！"); closeCustomModal();
+                        
+                        // 🚀 連動刪除儀表板資料
+                        await syncAcceptanceData(activeSelectedDocId, {}, true);
+
+                        alert("🎉 刪除成功！儀表板亦同步刪除。"); closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
             });
@@ -1029,7 +1082,7 @@
                                     const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
                                     const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,20)}_${uniqueId}`;
                                     
-                                    batch.set(doc(db, "kldr", customDocName), {
+                                    const docPayload = {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
                                         floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
@@ -1040,7 +1093,11 @@
                                         is_relocate: item.is_relocate || false,
                                         remarks: item.remarks || "",
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
-                                    });
+                                    };
+
+                                    batch.set(doc(db, "kldr", customDocName), docPayload);
+                                    await syncAcceptanceData(customDocName, docPayload);
+
                                     count++; successCount++;
                                     if (count === 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
                                 }
@@ -1054,7 +1111,6 @@
             });
         }
 
-        // 🛡️ 即時聆聽與計數器
         onSnapshot(scheduleRef, (snapshot) => {
             globalEventsArray = []; localSchedules = [];
             let totalSchedulesCount = 0;
@@ -1126,7 +1182,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
-        // 🚀 新增表單送出（選項 B：頂部表單 po_no 預設寫入留空）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1169,7 +1224,11 @@
                 const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
                 
                 await setDoc(doc(db, "kldr", customDocName), payload);
-                alert('🎉 排程已成功同步至雲端資料庫！');
+                
+                // 🚀 自動連動寫入驗收儀表板
+                await syncAcceptanceData(customDocName, payload);
+
+                alert('🎉 排程已成功同步至雲端資料庫與驗收儀表板！');
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
                 document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
                 if (document.getElementById('inputNetWeight')) document.getElementById('inputNetWeight').value = '';
