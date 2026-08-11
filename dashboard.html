@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>KL 新廠設備裝機暨六大驗收指標動態儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            background-color: #F5FFCD !important;
+            color: #27272a !important;
+            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+        }
+
+        #passwordOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #F5FFCD; z-index: 9999; display: flex; justify-content: center; align-items: center; 
+        }
+
+        .scroll-custom::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .scroll-custom::-webkit-scrollbar-track {
+            background: #f4f4f5;
+        }
+        .scroll-custom::-webkit-scrollbar-thumb {
+            background: #a1a1aa;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 lg:p-8">
+
+    <!-- 第一層解鎖密碼遮罩：klee -->
+    <div id="passwordOverlay">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-200">
+            <h2 class="text-2xl font-bold text-zinc-800 mb-2">📊 設備驗收儀表板存取</h2>
+            <p class="text-sm text-zinc-400 mb-6">請輸入解鎖密碼解鎖儀表板</p>
+            <input type="password" id="gatePassword" placeholder="請輸入儀表板解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+            <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並進入</button></div>
+            <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
+        </div>
+    </div>
+
+    <div id="mainDashboard" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-200 pb-4 mb-6">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full">CONFIDENTIAL & REAL-TIME</span>
+                    <span class="text-xs text-zinc-500 font-medium">Project: KL New M/C Phase 1-3 (2026-2028)</span>
+                </div>
+                <h1 class="text-2xl font-black tracking-tight text-zinc-800 mt-1">
+                    📊 KL 新廠設備裝機暨六大驗收指標動態儀表板
+                </h1>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2 bg-zinc-100 p-2 rounded-xl border border-zinc-200 shadow-xs">
+                    <span class="text-xs text-zinc-500 font-bold">切換管控週期：</span>
+                    <select id="nav-year" class="bg-white border border-zinc-300 rounded-lg px-2.5 py-1 text-xs text-zinc-800 font-extrabold focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                        <option value="2026">2026 年</option>
+                        <option value="2027">2027 年</option>
+                        <option value="2028">2028 年</option>
+                    </select>
+                    <select id="nav-month" class="bg-white border border-zinc-300 rounded-lg px-2.5 py-1 text-xs text-zinc-800 font-extrabold focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                        <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option><option value="4">4 月</option>
+                        <option value="5">5 月</option><option value="6">6 月</option><option value="7">7 月</option><option value="8">8 月</option>
+                        <option value="9">9 月</option><option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+                    </select>
+                </div>
+
+                <a href="index.html" class="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-black text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition">
+                    🏗️ 返回：吊運排程管理系統
+                </a>
+            </div>
+        </header>
+
+        <!-- KPI 數據卡片區 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-zinc-500 font-bold" id="kpi-machines-title">當前週期進機機台</p>
+                    <p class="text-3xl font-black text-zinc-800 mt-1" id="kpi-total-machines">0 <span class="text-xs text-zinc-400">台</span></p>
+                </div>
+                <div class="p-3 bg-blue-100 text-blue-700 rounded-xl font-black text-xl">🚚</div>
+            </div>
+
+            <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-zinc-500 font-bold">全廠設備綜合驗收率</p>
+                    <p class="text-3xl font-black text-emerald-700 mt-1" id="kpi-overall-completion">0.0%</p>
+                </div>
+                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xl">✅</div>
+            </div>
+
+            <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-zinc-500 font-bold">當前月份吊掛負荷 (安全值 ≤ 5台/日)</p>
+                    <p class="text-3xl font-black text-teal-700 mt-1" id="kpi-avg-cranes">0.0 <span class="text-xs text-zinc-400">台/日</span></p>
+                </div>
+                <div class="p-3 bg-teal-100 text-teal-700 rounded-xl font-black text-xl">🏗️</div>
+            </div>
+
+            <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-zinc-500 font-bold">現場綜合工程風險</p>
+                    <p class="text-xl font-black mt-1 text-emerald-700" id="kpi-risk-evaluation">NORMAL</p>
+                </div>
+                <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl font-black text-xl">🛡️</div>
+            </div>
+        </div>
+
+        <!-- 數據表格區 -->
+        <div class="bg-zinc-50 p-6 rounded-2xl border border-zinc-200 shadow-xs mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                    <h3 class="text-base font-extrabold text-zinc-800 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
+                        六大指標動態驗收進度管控表 (連動雲端)
+                    </h3>
+                    <p class="text-xs text-zinc-500 mt-1">追蹤各機台 <strong>吊裝、Hook-up、MBO、EE Training、PBO、QA Buy-off</strong> 動態進度。權限使用者點擊「進度」可即時調校。</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openAddMachineModal()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1">
+                        ➕ 手動加開設備機台
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto scroll-custom rounded-xl border border-zinc-200 bg-white">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold tracking-wide">
+                            <th class="py-3.5 px-4 w-1/5">機台名稱 / 數量</th>
+                            <th class="py-3.5 px-4">排定吊掛日</th>
+                            <th class="py-3.5 px-4">重量等級</th>
+                            <th class="py-3.5 px-4">對接單位</th>
+                            <th class="py-3.5 px-4 w-1/3">六大指標驗收進度 (%)</th>
+                            <th class="py-3.5 px-4 text-center">綜合驗收率</th>
+                            <th class="py-3.5 px-4 text-center">功能操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="machine-table-body" class="divide-y divide-zinc-200 font-semibold text-zinc-800">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 底部特權密碼認證列 -->
+        <div class="p-4 bg-zinc-100 rounded-xl border border-zinc-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-xs text-zinc-500 font-bold">
+                🔑 儀表板維護權限身分：<span id="currentRole" class="font-extrabold text-zinc-800">一般同仁 (僅能檢視進度)</span>
+            </div>
+            <div id="adminLoginArea" class="flex items-center gap-2">
+                <input type="password" id="adminPassword" placeholder="輸入站點特權金鑰" class="bg-white border border-zinc-300 text-zinc-800 rounded-lg px-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-xs px-4 py-1.5 rounded-lg transition font-bold">認證特權暗號</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 六大指標進度調校彈窗 -->
+    <div id="progress-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl p-6 text-zinc-800">
+            <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
+                <div>
+                    <h3 class="text-base font-extrabold text-zinc-900">⚙️ 驗收指標進度調校 (六大項目)</h3>
+                    <p id="progress-modal-machine-name" class="text-xs text-emerald-800 font-bold mt-1"></p>
+                </div>
+                <button onclick="closeProgressModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="space-y-4 py-4 text-xs font-bold">
+                <input type="hidden" id="progress-modal-id">
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">1. 吊掛進機 (Crane Move-In)</span>
+                        <span id="label-val-crane" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-crane" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('crane')">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">2. 二次配 (Hook-Up / FAC)</span>
+                        <span id="label-val-hookup" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-hookup" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('hookup')">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">3. MBO (Machine Buy-Off)</span>
+                        <span id="label-val-mbo" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-mbo" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('mbo')">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">4. EE Training (設備工程培訓)</span>
+                        <span id="label-val-training" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-training" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('training')">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">5. PBO (Process Buy-Off)</span>
+                        <span id="label-val-pbo" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-pbo" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('pbo')">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-zinc-700">6. QA Buy-Off (品保驗收簽核)</span>
+                        <span id="label-val-qa" class="font-mono text-emerald-800">0%</span>
+                    </div>
+                    <input type="range" id="input-val-qa" min="0" max="100" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('qa')">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+                <button onclick="closeProgressModal()" class="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded-xl font-bold text-xs">取消</button>
+                <button onclick="saveProgressData()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md">確認更新</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯/新增機台彈窗 -->
+    <div id="machine-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-zinc-800">
+            <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
+                <h3 id="modal-title" class="text-base font-extrabold text-zinc-900">編輯機台安裝參數</h3>
+                <button onclick="closeMachineModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="space-y-4 py-4 text-xs font-bold">
+                <input type="hidden" id="modal-id">
+                <div>
+                    <label class="block text-zinc-500 mb-1">機台名稱</label>
+                    <input type="text" id="modal-name" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-500 mb-1">原始 ETD</label>
+                        <input type="text" id="modal-originalEtd" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">調整後吊掛日 (YYYY/MM/DD)</label>
+                        <input type="text" id="modal-adjustedDate" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-500 mb-1">重量等級</label>
+                        <select id="modal-weight" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                            <option value="Heavy">Heavy (重型)</option>
+                            <option value="Medium">Medium (中型)</option>
+                            <option value="Light">Light (輕型)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">對接單位</label>
+                        <select id="modal-dept" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                            <option value="BE/Recon">BE/Recon</option>
+                            <option value="RDL">RDL</option>
+                            <option value="FC">FC</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-500 mb-1">就緒度初始狀態</label>
+                        <select id="modal-status" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                            <option value="Staged">已就緒 (Staged)</option>
+                            <option value="Pending">待現場認證 (Pending)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-zinc-500 mb-1">機台數量</label>
+                        <input type="number" id="modal-qty" min="1" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-zinc-500 mb-1">現場處置對策 (Note)</label>
+                    <textarea id="modal-note" rows="2" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-zinc-200">
+                <button onclick="closeMachineModal()" class="px-4 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 rounded-xl font-bold text-xs">取消</button>
+                <button onclick="saveMachineData()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-md">確認保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const GATE_PASSWORD = "klee"; 
+
+        const ADMIN_PASSWORDS = {
+            "BEkldr": "BE/Recon",
+            "RDLkldr": "RDL",
+            "FCkldr": "FC",
+            "SUPERkldr": "SUPER_ADMIN" 
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
+            authDomain: "kldriver.firebaseapp.com",
+            projectId: "kldriver",
+            storageBucket: "kldriver.firebasestorage.app",
+            messagingSenderId: "773359626716",
+            appId: "1:773359626716:web:bd627c9d5f464f658e0719"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const acceptanceRef = collection(db, "kldr_acceptance");
+
+        let rawMachinesData = [];
+        let currentAdminDept = null;
+        let currentYear = 2026;
+        let currentMonth = 8;
+
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
+
+        document.getElementById('nav-year').value = currentYear;
+        document.getElementById('nav-month').value = currentMonth;
+
+        document.getElementById('gatePassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { document.getElementById('unlockBtn').click(); }
+        });
+
+        document.getElementById('unlockBtn').addEventListener('click', () => {
+            const input = document.getElementById('gatePassword').value;
+            if (input === GATE_PASSWORD) {
+                document.getElementById('passwordOverlay').style.display = 'none';
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                initDashboard();
+            } else { document.getElementById('loginError').classList.remove('hidden'); }
+        });
+
+        document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { document.getElementById('adminLoginBtn').click(); }
+        });
+
+        document.getElementById('adminLoginBtn').addEventListener('click', () => {
+            const input = document.getElementById('adminPassword').value.trim();
+            if (ADMIN_PASSWORDS[input]) {
+                currentAdminDept = ADMIN_PASSWORDS[input];
+                if (currentAdminDept === "SUPER_ADMIN") {
+                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 驗證完全權限通暢`;
+                    document.getElementById('currentRole').className = "font-extrabold text-red-600";
+                } else {
+                    document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員`;
+                    document.getElementById('currentRole').className = "font-extrabold text-emerald-800";
+                }
+                document.getElementById('adminPassword').style.display = "none";
+                document.getElementById('adminLoginBtn').style.display = "none";
+                alert(`權限驗證成功！您現在具備調校 ${currentAdminDept} 機台驗收進度的權限。`);
+                updateDashboardAndTable();
+            } else { alert("特權金鑰錯誤！"); }
+        });
+
+        function initDashboard() {
+            document.getElementById('nav-year').addEventListener('change', () => {
+                currentYear = parseInt(document.getElementById('nav-year').value);
+                updateDashboardAndTable();
+            });
+            document.getElementById('nav-month').addEventListener('change', () => {
+                currentMonth = parseInt(document.getElementById('nav-month').value);
+                updateDashboardAndTable();
+            });
+
+            onSnapshot(acceptanceRef, (snapshot) => {
+                rawMachinesData = [];
+                snapshot.forEach((doc) => {
+                    rawMachinesData.push({ id: doc.id, ...doc.data() });
+                });
+                updateDashboardAndTable();
+            });
+        }
+
+        function updateDashboardAndTable() {
+            const currentMonthStr = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
+            const targetMachines = rawMachinesData.filter(m => m.adjustedDate && m.adjustedDate.startsWith(currentMonthStr));
+
+            let totalQty = 0;
+            let sumReadyRate = 0;
+
+            targetMachines.forEach(m => {
+                const qty = parseInt(m.qty || 1);
+                totalQty += qty;
+
+                const c = parseInt(m.crane || 0);
+                const h = parseInt(m.hookup || 0);
+                const mb = parseInt(m.mbo || 0);
+                const t = parseInt(m.training || 0);
+                const p = parseInt(m.pbo || 0);
+                const q = parseInt(m.qa || 0);
+
+                const readiness = (c + h + mb + t + p + q) / 6;
+                sumReadyRate += (readiness * qty);
+            });
+
+            const overallCompletion = totalQty > 0 ? (sumReadyRate / totalQty).toFixed(1) : "0.0";
+
+            document.getElementById('kpi-machines-title').innerText = `${currentMonth}月份 預定進機機台`;
+            document.getElementById('kpi-total-machines').innerHTML = `${totalQty} <span class="text-xs text-zinc-400">台</span>`;
+            document.getElementById('kpi-overall-completion').innerText = `${overallCompletion}%`;
+
+            const numCraneDays = 8; 
+            const avgCranes = numCraneDays > 0 ? (totalQty / numCraneDays).toFixed(2) : "0.00";
+            document.getElementById('kpi-avg-cranes').innerHTML = `${avgCranes} <span class="text-xs text-zinc-400">台/日</span>`;
+
+            renderTable(targetMachines);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('machine-table-body');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-zinc-400 font-medium">此管控週期內無預定進機機台資料。</td></tr>`;
+                return;
+            }
+
+            data.forEach((item) => {
+                const cleanD = (str) => str ? str.replace('-', '/') : '';
+                const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(item.dept)));
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-zinc-50 transition border-b border-zinc-200';
+
+                const weightColor = item.weight === 'Heavy' ? 'text-red-700 bg-red-50 border-red-200' :
+                    item.weight === 'Medium' ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+
+                const c = parseInt(item.crane || 0);
+                const h = parseInt(item.hookup || 0);
+                const mb = parseInt(item.mbo || 0);
+                const t = parseInt(item.training || 0);
+                const p = parseInt(item.pbo || 0);
+                const q = parseInt(item.qa || 0);
+                const readiness = Math.round((c + h + mb + t + p + q) / 6);
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-bold text-zinc-900">
+                        <div class="flex flex-col">
+                            <span class="text-xs">${item.name}</span>
+                            <span class="text-[11px] text-zinc-400 mt-0.5 font-mono">數量: ${item.qty || 1} 台</span>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 text-zinc-700 font-mono text-xs">${item.adjustedDate || '-'}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded border ${weightColor}">${item.weight || 'Medium'}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-zinc-700 font-bold text-xs">${item.dept || '-'}</td>
+                    
+                    <td class="py-3.5 px-4">
+                        <div class="grid grid-cols-3 gap-x-3 gap-y-1 text-[10px] text-zinc-500 font-mono">
+                            <div class="flex items-center justify-between"><span>吊掛:</span> <span class="text-emerald-800 font-bold">${c}%</span></div>
+                            <div class="flex items-center justify-between"><span>二次配:</span> <span class="text-emerald-800 font-bold">${h}%</span></div>
+                            <div class="flex items-center justify-between"><span>MBO:</span> <span class="text-emerald-800 font-bold">${mb}%</span></div>
+                            <div class="flex items-center justify-between"><span>EE培訓:</span> <span class="text-emerald-800 font-bold">${t}%</span></div>
+                            <div class="flex items-center justify-between"><span>PBO:</span> <span class="text-emerald-800 font-bold">${p}%</span></div>
+                            <div class="flex items-center justify-between"><span>QA:</span> <span class="text-emerald-800 font-bold">${q}%</span></div>
+                        </div>
+                    </td>
+
+                    <td class="py-3.5 px-4 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="text-xs font-black font-mono text-emerald-800">${readiness}%</span>
+                            <div class="w-16 bg-zinc-200 h-1.5 rounded-full mt-1 overflow-hidden">
+                                <div class="bg-emerald-600 h-full" style="width: ${readiness}%"></div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="py-3.5 px-4 text-center">
+                        ${hasPermission ? `
+                            <div class="flex justify-center gap-1.5">
+                                <button onclick="openProgressModal('${item.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white transition rounded-lg text-[10px] font-bold shadow-xs">進度</button>
+                                <button onclick="openEditMachineModal('${item.id}')" class="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 transition rounded-lg text-[10px] font-bold">編輯</button>
+                                <button onclick="deleteMachine('${item.id}', '${item.dept}')" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 transition rounded-lg text-[10px] font-bold">刪除</button>
+                            </div>
+                        ` : `<span class="text-zinc-400 text-[10px]">唯讀</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.openProgressModal = function(id) {
+            const item = rawMachinesData.find(m => m.id === id);
+            if (!item) return;
+
+            document.getElementById('progress-modal-id').value = id;
+            document.getElementById('progress-modal-machine-name').innerText = `${item.name} (${item.adjustedDate})`;
+
+            document.getElementById('input-val-crane').value = item.crane || 0;
+            document.getElementById('input-val-hookup').value = item.hookup || 0;
+            document.getElementById('input-val-mbo').value = item.mbo || 0;
+            document.getElementById('input-val-training').value = item.training || 0;
+            document.getElementById('input-val-pbo').value = item.pbo || 0;
+            document.getElementById('input-val-qa').value = item.qa || 0;
+
+            updateRangeLabel('crane'); updateRangeLabel('hookup'); updateRangeLabel('mbo');
+            updateRangeLabel('training'); updateRangeLabel('pbo'); updateRangeLabel('qa');
+
+            document.getElementById('progress-modal').classList.remove('hidden');
+        };
+
+        window.updateRangeLabel = function(metric) {
+            const val = document.getElementById(`input-val-${metric}`).value;
+            document.getElementById(`label-val-${metric}`).innerText = `${val}%`;
+        };
+
+        window.closeProgressModal = function() {
+            document.getElementById('progress-modal').classList.add('hidden');
+        };
+
+        window.saveProgressData = async function() {
+            const id = document.getElementById('progress-modal-id').value;
+            try {
+                const docRef = doc(db, "kldr_acceptance", id);
+                await updateDoc(docRef, {
+                    crane: parseInt(document.getElementById('input-val-crane').value),
+                    hookup: parseInt(document.getElementById('input-val-hookup').value),
+                    mbo: parseInt(document.getElementById('input-val-mbo').value),
+                    training: parseInt(document.getElementById('input-val-training').value),
+                    pbo: parseInt(document.getElementById('input-val-pbo').value),
+                    qa: parseInt(document.getElementById('input-val-qa').value),
+                    updated_at: new Date().toISOString()
+                });
+                alert("🎉 驗收指標進度更動成功！");
+                closeProgressModal();
+            } catch (err) { alert("🚨 更新失敗！請檢查權限。"); }
+        };
+
+        window.openEditMachineModal = function(id) {
+            const item = rawMachinesData.find(m => m.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-title').innerText = "編輯機台安裝參數";
+            document.getElementById('modal-id').value = id;
+            document.getElementById('modal-name').value = item.name || "";
+            document.getElementById('modal-originalEtd').value = item.originalEtd || "";
+            document.getElementById('modal-adjustedDate').value = item.adjustedDate || "";
+            document.getElementById('modal-weight').value = item.weight || "Medium";
+            document.getElementById('modal-dept').value = item.dept || "BE/Recon";
+            document.getElementById('modal-status').value = item.status || "Staged";
+            document.getElementById('modal-qty').value = item.qty || 1;
+            document.getElementById('modal-note').value = item.note || "";
+
+            document.getElementById('machine-modal').classList.remove('hidden');
+        };
+
+        window.openAddMachineModal = function() {
+            document.getElementById('modal-title').innerText = "手動新增進機設備";
+            document.getElementById('modal-id').value = "NEW";
+            document.getElementById('modal-name').value = "";
+            document.getElementById('modal-originalEtd').value = `${currentMonth}/15`;
+            document.getElementById('modal-adjustedDate').value = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}/06`;
+            document.getElementById('modal-weight').value = "Medium";
+            document.getElementById('modal-dept').value = currentAdminDept && currentAdminDept !== "SUPER_ADMIN" ? currentAdminDept : "BE/Recon";
+            document.getElementById('modal-status').value = "Pending";
+            document.getElementById('modal-qty').value = 1;
+            document.getElementById('modal-note').value = "";
+
+            document.getElementById('machine-modal').classList.remove('hidden');
+        };
+
+        window.closeMachineModal = function() {
+            document.getElementById('machine-modal').classList.add('hidden');
+        };
+
+        window.saveMachineData = async function() {
+            const id = document.getElementById('modal-id').value;
+            const name = document.getElementById('modal-name').value.trim();
+            const adjustedDate = document.getElementById('modal-adjustedDate').value.trim();
+
+            if (!name || !adjustedDate) {
+                alert("機台名稱與調掛日期皆為必填項目！");
+                return;
+            }
+
+            const payload = {
+                name,
+                originalEtd: document.getElementById('modal-originalEtd').value.trim(),
+                adjustedDate,
+                weight: document.getElementById('modal-weight').value,
+                dept: document.getElementById('modal-dept').value,
+                status: document.getElementById('modal-status').value,
+                qty: parseInt(document.getElementById('modal-qty').value) || 1,
+                note: document.getElementById('modal-note').value.trim(),
+                updated_at: new Date().toISOString()
+            };
+
+            try {
+                if (id === "NEW") {
+                    payload.crane = 0; payload.hookup = 0; payload.mbo = 0;
+                    payload.training = 0; payload.pbo = 0; payload.qa = 0;
+                    const newDocRef = doc(acceptanceRef);
+                    await setDoc(newDocRef, payload);
+                } else {
+                    const docRef = doc(db, "kldr_acceptance", id);
+                    await updateDoc(docRef, payload);
+                }
+                alert("🎉 設備機台資料保存成功！");
+                closeMachineModal();
+            } catch (err) { alert("🚨 保存失敗！請檢查權限。"); }
+        };
+
+        window.deleteMachine = async function(id, dept) {
+            if (!confirm("⚠️ 是否確認刪除此筆儀表板設備資料？")) return;
+            try {
+                const docRef = doc(db, "kldr_acceptance", id);
+                const deleteToken = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : (document.getElementById('adminPassword') ? document.getElementById('adminPassword').value.trim() : "");
+                await setDoc(docRef, { request_delete_pass: deleteToken }, { merge: true });
+                await deleteDoc(docRef);
+                alert("🎉 已成功刪除！");
+            } catch (err) { alert("🚨 刪除失敗！請檢查權限。"); }
+        };
+    </script>
+</body>
+</html>
