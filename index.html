@@ -217,7 +217,6 @@
                 </div>
             </div>
 
-            <!-- 第二層表單 -->
             <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-9 gap-3 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
@@ -289,7 +288,6 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <!-- 免登入公開 CSV 按鈕列 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
                 <div class="text-sm text-zinc-500 font-medium shrink-0">
@@ -351,7 +349,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const scheduleRef = collection(db, "kldr");
-        const acceptanceRef = collection(db, "kldr_acceptance");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -414,47 +411,6 @@
                 if (isNaN(date.getTime())) return isoString;
                 return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
             } catch (e) { return isoString; }
-        }
-
-        // 🚀 自動連動寫入儀表板 kldr_acceptance 集合
-        async function syncAcceptanceData(docId, payload, isDelete = false) {
-            try {
-                const accDocRef = doc(db, "kldr_acceptance", docId);
-                if (isDelete) {
-                    const deleteToken = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : (document.getElementById('adminPassword') ? document.getElementById('adminPassword').value.trim() : "");
-                    await setDoc(accDocRef, { request_delete_pass: deleteToken }, { merge: true });
-                    await deleteDoc(accDocRef);
-                } else {
-                    let todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                    let formattedDate = (payload.date || todayStr).replace(/-/g, '/');
-                    let piecesVal = 1;
-                    if (payload.weight_count) {
-                        const pMatch = payload.weight_count.match(/(\d+)件/);
-                        if (pMatch) piecesVal = parseInt(pMatch[1]);
-                    }
-
-                    const accData = {
-                        name: payload.machine || "未填機台",
-                        qty: piecesVal,
-                        adjustedDate: formattedDate,
-                        originalEtd: formattedDate.substring(5),
-                        weight: "Medium",
-                        dept: payload.department || "BE/Recon",
-                        status: "Staged",
-                        note: payload.remarks || "",
-                        crane: 100,
-                        hookup: 0,
-                        mbo: 0,
-                        training: 0,
-                        pbo: 0,
-                        qa: 0,
-                        updated_at: new Date().toISOString()
-                    };
-                    await setDoc(accDocRef, accData, { merge: true });
-                }
-            } catch (err) {
-                console.error("驗收儀表板連動寫入錯誤:", err);
-            }
         }
 
         window.closeCustomModal = function() {
@@ -789,7 +745,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入（連動同步至驗收儀表板）
+            // 💾 儲存寫入邏輯
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -828,16 +784,11 @@
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    
-                    // 🚀 連動同步更新儀表板 kldr_acceptance
-                    let fullPayload = { ...activeSelectedProps, ...updatePayload };
-                    await syncAcceptanceData(activeSelectedDocId, fullPayload);
-
-                    alert("🎉 變更儲存成功！內容與 PO 號碼已即時同步雲端與驗收儀表板。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！內容與 PO 號碼已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（連動同步至驗收儀表板）
+            // 📋 複製邏輯
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -901,11 +852,7 @@
                     const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerName.substring(0,20)}_${uniqueId}`;
 
                     await setDoc(doc(db, "kldr", customDocName), payload);
-                    
-                    // 🚀 連動寫入儀表板 kldr_acceptance
-                    await syncAcceptanceData(customDocName, payload);
-
-                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的排程資料，並連動至驗收儀表板。`);
+                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的排程資料。`);
                     closeCustomModal();
                 } catch (error) {
                     alert("🚨 複製新增失敗！請檢查雲端權限與網路連線。");
@@ -936,16 +883,12 @@
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        
-                        // 🚀 連動刪除儀表板資料
-                        await syncAcceptanceData(activeSelectedDocId, {}, true);
-
-                        alert("🎉 刪除成功！儀表板亦同步刪除。"); closeCustomModal();
+                        alert("🎉 刪除成功！"); closeCustomModal();
                     } catch (error) { alert("🚨 刪除失敗！"); }
                 }
             });
 
-            // 免登入公開 CSV 導出（含 PO 號碼）
+            // 免登入公開 CSV 導出
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1082,7 +1025,7 @@
                                     const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
                                     const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,20)}_${uniqueId}`;
                                     
-                                    const docPayload = {
+                                    batch.set(doc(db, "kldr", customDocName), {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
                                         floor: item.floor || "1F", department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
@@ -1093,11 +1036,7 @@
                                         is_relocate: item.is_relocate || false,
                                         remarks: item.remarks || "",
                                         secret_key: BACKEND_SECRET, created_at: item.created_at || new Date().toISOString()
-                                    };
-
-                                    batch.set(doc(db, "kldr", customDocName), docPayload);
-                                    await syncAcceptanceData(customDocName, docPayload);
-
+                                    });
                                     count++; successCount++;
                                     if (count === 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
                                 }
@@ -1224,11 +1163,8 @@
                 const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
                 
                 await setDoc(doc(db, "kldr", customDocName), payload);
-                
-                // 🚀 自動連動寫入驗收儀表板
-                await syncAcceptanceData(customDocName, payload);
 
-                alert('🎉 排程已成功同步至雲端資料庫與驗收儀表板！');
+                alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = ''; document.getElementById('machine').value = ''; 
                 document.getElementById('inputPieces').value = ''; document.getElementById('inputWeight').value = ''; 
                 if (document.getElementById('inputNetWeight')) document.getElementById('inputNetWeight').value = '';
