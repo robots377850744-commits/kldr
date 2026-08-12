@@ -106,7 +106,7 @@
                         <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
                         四大指標動態驗收進度管控表 (獨立手動維護)
                     </h3>
-                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。標題文字全數置中加粗，機台欄位適度縮小（w-[170px]），刪除需二次密碼驗證。</p>
+                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。字體層級全面升級，支援水平滾動保護，高舒適視覺閱讀與直覺操作。</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -125,19 +125,19 @@
                 </div>
             </div>
 
-            <!-- UI/UX 改善：標題列全數置中加粗對齊，機台欄位由 220px 縮小至 170px -->
+            <!-- UI/UX 升級：固定 min-w-[1250px] 與標題置中對齊，放大文字層級，完全防止跑版 -->
             <div class="overflow-x-auto scroll-custom rounded-xl border border-zinc-200 bg-white shadow-xs">
-                <table class="w-full min-w-[1150px] text-left border-collapse text-sm">
+                <table class="w-full min-w-[1250px] text-left border-collapse text-sm">
                     <thead>
-                        <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-800 font-black text-xs tracking-wide whitespace-nowrap">
+                        <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-800 font-black text-sm tracking-wide whitespace-nowrap">
                             <th class="py-3.5 px-2 w-[55px] text-center"></th>
-                            <th class="py-3.5 px-3 w-[170px] text-center font-black">機台名稱 / 負責人</th>
+                            <th class="py-3.5 px-3 w-[180px] text-center font-black">機台名稱 / 負責人</th>
                             <th class="py-3.5 px-3 w-[110px] text-center font-black">排定吊掛日</th>
                             <th class="py-3.5 px-3 w-[90px] text-center font-black">目前樓層</th>
                             <th class="py-3.5 px-3 w-[90px] text-center font-black">站點</th>
-                            <th class="py-3.5 px-3 w-[300px] text-center font-black">四大指標驗收進度 (%)</th>
+                            <th class="py-3.5 px-3 w-[280px] text-center font-black">四大指標驗收進度 (%)</th>
                             <th class="py-3.5 px-3 w-[110px] text-center font-black">綜合驗收率</th>
-                            <th class="py-3.5 px-3 min-w-[200px] text-center font-black">進度註記 / 備註</th>
+                            <th class="py-3.5 px-3 min-w-[220px] text-center font-black">進度註記 / 備註</th>
                         </tr>
                     </thead>
                     <tbody id="machine-table-body" class="divide-y divide-zinc-200 font-semibold text-zinc-800">
@@ -433,7 +433,7 @@
             renderTable(filteredData);
         }
 
-        // 🎨 表格與標題全數置中對齊，機台欄位寬度收窄至 170px
+        // 🎨 UI/UX 升級：標題列加粗置中對齊，機台名稱欄適度縮小（170px），全內容對齊不變形
         function renderTable(data) {
             const tbody = document.getElementById('machine-table-body');
             tbody.innerHTML = '';
