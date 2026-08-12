@@ -155,7 +155,7 @@
         </div>
     </div>
 
-    <!-- 🚀 需求三：四大指標進度調校彈窗 (加入 [已完成] 勾選框與項目獨立備註) -->
+    <!-- 🚀 需求三：四大指標進度調校彈窗 (含已完成勾選框與項目獨立備註) -->
     <div id="progress-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white border-2 border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-zinc-800">
             <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
@@ -174,7 +174,7 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
                             <input type="checkbox" id="chk-done-crane" onchange="toggleMetricDone('crane')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
-                            <span>1. 吊掛進機 (Crane Move-In)</span>
+                            <span>已完成 - 1. 吊掛進機 (Crane Move-In)</span>
                         </label>
                         <span id="label-val-crane" class="font-mono text-emerald-800">0%</span>
                     </div>
@@ -187,7 +187,7 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
                             <input type="checkbox" id="chk-done-hookup" onchange="toggleMetricDone('hookup')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
-                            <span>2. 二次配 (Hook-Up / FAC)</span>
+                            <span>已完成 - 2. 二次配 (Hook-Up / FAC)</span>
                         </label>
                         <span id="label-val-hookup" class="font-mono text-emerald-800">0%</span>
                     </div>
@@ -200,7 +200,7 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
                             <input type="checkbox" id="chk-done-mbo" onchange="toggleMetricDone('mbo')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
-                            <span>3. MBO (Machine Buy-Off)</span>
+                            <span>已完成 - 3. MBO (Machine Buy-Off)</span>
                         </label>
                         <span id="label-val-mbo" class="font-mono text-emerald-800">0%</span>
                     </div>
@@ -213,7 +213,7 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
                             <input type="checkbox" id="chk-done-training" onchange="toggleMetricDone('training')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
-                            <span>4. EE Training (設備工程培訓)</span>
+                            <span>已完成 - 4. EE Training (設備工程培訓)</span>
                         </label>
                         <span id="label-val-training" class="font-mono text-emerald-800">0%</span>
                     </div>
