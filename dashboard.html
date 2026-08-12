@@ -37,7 +37,6 @@
 </head>
 <body class="min-h-screen p-3 md:p-6 lg:p-8">
 
-    <!-- 第一層解鎖密碼遮罩：klee -->
     <div id="passwordOverlay">
         <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-200">
             <h2 class="text-2xl font-bold text-zinc-800 mb-2">📊 設備驗收儀表板存取</h2>
@@ -50,7 +49,6 @@
 
     <div id="mainDashboard" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
         
-        <!-- HEADER -->
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-200 pb-4 mb-6">
             <div>
                 <div class="flex items-center gap-2">
@@ -83,7 +81,6 @@
             </div>
         </header>
 
-        <!-- KPI 數據卡片區 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 shadow-xs flex items-center justify-between">
                 <div>
@@ -102,16 +99,14 @@
             </div>
         </div>
 
-        <!-- 數據表格區：手動獨立新增 + 站點顏色網底 + 搜尋過濾 -->
         <div class="bg-zinc-50 p-6 rounded-2xl border border-zinc-200 shadow-xs mb-6">
-            
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 pb-4 border-b border-zinc-200">
                 <div>
                     <h3 class="text-base font-extrabold text-zinc-800 flex items-center gap-2">
                         <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
                         四大指標動態驗收進度管控表 (獨立手動維護)
                     </h3>
-                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。具備站點專屬顏色標記（BE藍/RDL紅/FC綠），點擊「進度」可按 20% 階梯調整進度並註記。</p>
+                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。具備站點專屬顏色標記（BE藍/RDL紅/FC綠），點擊「進度」可進行勾選與獨立備註。</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -138,9 +133,8 @@
                             <th class="py-3.5 px-4">排定吊掛日</th>
                             <th class="py-3.5 px-4">目前樓層</th>
                             <th class="py-3.5 px-4">站點</th>
-                            <th class="py-3.5 px-4 w-1/4">四大指標驗收進度 (%)</th>
+                            <th class="py-3.5 px-4 w-1/3">四大指標驗收進度 (%) / 備註</th>
                             <th class="py-3.5 px-4 text-center">綜合驗收率</th>
-                            <th class="py-3.5 px-4 max-w-[200px]">進度註記 / 備註</th>
                             <th class="py-3.5 px-4 text-center">功能操作</th>
                         </tr>
                     </thead>
@@ -150,7 +144,6 @@
             </div>
         </div>
 
-        <!-- 底部特權密碼認證列 -->
         <div class="p-4 bg-zinc-100 rounded-xl border border-zinc-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="text-xs text-zinc-500 font-bold">
                 🔑 儀表板維護權限身分：<span id="currentRole" class="font-extrabold text-zinc-800">一般同仁 (僅能檢視進度)</span>
@@ -162,9 +155,9 @@
         </div>
     </div>
 
-    <!-- 四大指標進度調校彈窗 (階梯：0%, 20%, 40%, 60%, 80%, 100% + 備註欄) -->
+    <!-- 🚀 需求三：四大指標進度調校彈窗 (加入 [已完成] 勾選框與項目獨立備註) -->
     <div id="progress-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white border-2 border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl p-6 text-zinc-800">
+        <div class="bg-white border-2 border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 text-zinc-800">
             <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
                 <div>
                     <h3 class="text-base font-extrabold text-zinc-900">⚙️ 驗收指標進度調校 (四大項目)</h3>
@@ -176,41 +169,56 @@
             <div class="space-y-4 py-4 text-xs font-bold">
                 <input type="hidden" id="progress-modal-id">
 
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">1. 吊掛進機 (Crane Move-In)</span>
+                <!-- 1. Crane -->
+                <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-200 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
+                            <input type="checkbox" id="chk-done-crane" onchange="toggleMetricDone('crane')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                            <span>1. 吊掛進機 (Crane Move-In)</span>
+                        </label>
                         <span id="label-val-crane" class="font-mono text-emerald-800">0%</span>
                     </div>
                     <input type="range" id="input-val-crane" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('crane')">
+                    <input type="text" id="note-crane" placeholder="項目備註說明..." class="w-full bg-white border border-zinc-300 rounded px-2 py-1 text-xs text-zinc-800 focus:outline-none">
                 </div>
 
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">2. 二次配 (Hook-Up / FAC)</span>
+                <!-- 2. Hookup -->
+                <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-200 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
+                            <input type="checkbox" id="chk-done-hookup" onchange="toggleMetricDone('hookup')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                            <span>2. 二次配 (Hook-Up / FAC)</span>
+                        </label>
                         <span id="label-val-hookup" class="font-mono text-emerald-800">0%</span>
                     </div>
                     <input type="range" id="input-val-hookup" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('hookup')">
+                    <input type="text" id="note-hookup" placeholder="項目備註說明..." class="w-full bg-white border border-zinc-300 rounded px-2 py-1 text-xs text-zinc-800 focus:outline-none">
                 </div>
 
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">3. MBO (Machine Buy-Off)</span>
+                <!-- 3. MBO -->
+                <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-200 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
+                            <input type="checkbox" id="chk-done-mbo" onchange="toggleMetricDone('mbo')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                            <span>3. MBO (Machine Buy-Off)</span>
+                        </label>
                         <span id="label-val-mbo" class="font-mono text-emerald-800">0%</span>
                     </div>
                     <input type="range" id="input-val-mbo" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('mbo')">
+                    <input type="text" id="note-mbo" placeholder="項目備註說明..." class="w-full bg-white border border-zinc-300 rounded px-2 py-1 text-xs text-zinc-800 focus:outline-none">
                 </div>
 
-                <div>
-                    <div class="flex justify-between mb-1">
-                        <span class="text-zinc-700">4. EE Training (設備工程培訓)</span>
+                <!-- 4. EE Training -->
+                <div class="bg-zinc-50 p-2.5 rounded-xl border border-zinc-200 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-zinc-800">
+                            <input type="checkbox" id="chk-done-training" onchange="toggleMetricDone('training')" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500">
+                            <span>4. EE Training (設備工程培訓)</span>
+                        </label>
                         <span id="label-val-training" class="font-mono text-emerald-800">0%</span>
                     </div>
                     <input type="range" id="input-val-training" min="0" max="100" step="20" class="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-emerald-700" oninput="updateRangeLabel('training')">
-                </div>
-
-                <div>
-                    <label class="block text-zinc-700 mb-1">📝 進度註記 / 備註說明：</label>
-                    <textarea id="progress-modal-note" rows="2" placeholder="請在此輸入該機台的最新進度註記..." class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400 text-xs font-semibold"></textarea>
+                    <input type="text" id="note-training" placeholder="項目備註說明..." class="w-full bg-white border border-zinc-300 rounded px-2 py-1 text-xs text-zinc-800 focus:outline-none">
                 </div>
             </div>
 
@@ -239,7 +247,7 @@
                     </div>
                     <div>
                         <label class="block text-zinc-500 mb-1">機台負責人</label>
-                        <input type="text" id="modal-owner" placeholder="例如：Hongs Tsai" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
+                        <input type="text" id="modal-owner" placeholder="例如：張三" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400">
                     </div>
                 </div>
 
@@ -270,8 +278,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-zinc-500 mb-1">進度註記 / 備註說明</label>
-                    <textarea id="modal-note" rows="2" placeholder="請填寫進度備註..." class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"></textarea>
+                    <label class="block text-zinc-500 mb-1">總體進度註記 / 備註說明</label>
+                    <textarea id="modal-note" rows="2" placeholder="請填寫總體備註..." class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-400"></textarea>
                 </div>
             </div>
 
@@ -368,7 +376,6 @@
             document.getElementById('searchInput').addEventListener('input', updateDashboardAndTable);
             document.getElementById('deptFilter').addEventListener('change', updateDashboardAndTable);
 
-            // 監聽獨立儀表板資料庫 (kldr_acceptance)
             onSnapshot(acceptanceRef, (snapshot) => {
                 rawMachinesData = [];
                 snapshot.forEach((doc) => {
@@ -381,7 +388,6 @@
         function updateDashboardAndTable() {
             const monthStr = `${currentYear}/${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
             
-            // 篩選當月資料
             const targetMachines = rawMachinesData.filter(m => {
                 if (!m.adjustedDate) return false;
                 const d = m.adjustedDate.toString().replace(/-/g, '/');
@@ -392,10 +398,10 @@
             let sumReadyRate = 0;
 
             targetMachines.forEach(m => {
-                const c = parseInt(m.crane || 0);
-                const h = parseInt(m.hookup || 0);
-                const mb = parseInt(m.mbo || 0);
-                const t = parseInt(m.training || 0);
+                const c = m.done_crane ? 100 : parseInt(m.crane || 0);
+                const h = m.done_hookup ? 100 : parseInt(m.hookup || 0);
+                const mb = m.done_mbo ? 100 : parseInt(m.mbo || 0);
+                const t = m.done_training ? 100 : parseInt(m.training || 0);
 
                 const readiness = (c + h + mb + t) / 4;
                 sumReadyRate += readiness;
@@ -407,7 +413,6 @@
             document.getElementById('kpi-total-machines').innerHTML = `${totalQty} <span class="text-xs text-zinc-400">台</span>`;
             document.getElementById('kpi-overall-completion').innerText = `${overallCompletion}%`;
 
-            // 搜尋與選單過濾
             const searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
             const selectedDeptFilter = document.getElementById('deptFilter').value;
 
@@ -418,6 +423,10 @@
                     (m.name && m.name.toLowerCase().includes(searchKeyword)) ||
                     (m.owner && m.owner.toLowerCase().includes(searchKeyword)) ||
                     (m.note && m.note.toLowerCase().includes(searchKeyword)) ||
+                    (m.note_crane && m.note_crane.toLowerCase().includes(searchKeyword)) ||
+                    (m.note_hookup && m.note_hookup.toLowerCase().includes(searchKeyword)) ||
+                    (m.note_mbo && m.note_mbo.toLowerCase().includes(searchKeyword)) ||
+                    (m.note_training && m.note_training.toLowerCase().includes(searchKeyword)) ||
                     (m.floor && m.floor.toLowerCase().includes(searchKeyword));
 
                 return matchDept && matchSearch;
@@ -439,13 +448,12 @@
                 const cleanD = (str) => str ? str.replace('-', '/') : '';
                 const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(item.dept)));
 
-                const c = parseInt(item.crane || 0);
-                const h = parseInt(item.hookup || 0);
-                const mb = parseInt(item.mbo || 0);
-                const t = parseInt(item.training || 0);
+                const c = item.done_crane ? 100 : parseInt(item.crane || 0);
+                const h = item.done_hookup ? 100 : parseInt(item.hookup || 0);
+                const mb = item.done_mbo ? 100 : parseInt(item.mbo || 0);
+                const t = item.done_training ? 100 : parseInt(item.training || 0);
                 const readiness = Math.round((c + h + mb + t) / 4);
 
-                // 🎨 站點專屬底色標記
                 let rowBgClass = "bg-white border-l-4 border-l-zinc-300";
                 const cleanDept = item.dept || "";
                 
@@ -457,9 +465,20 @@
                     rowBgClass = "bg-emerald-50/70 border-l-4 border-l-emerald-600";
                 }
 
-                const remarksScrollBox = item.note 
-                    ? `<div class="max-h-[70px] overflow-y-auto pr-1 text-zinc-600 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${item.note}</div>`
-                    : `<span class="text-zinc-400 font-normal">-</span>`;
+                const formatNote = (isDone, noteText) => {
+                    if (isDone) return `<span class="text-emerald-700 font-black">已完成</span>`;
+                    return noteText ? `<span class="text-zinc-600 font-medium">${noteText}</span>` : `<span class="text-zinc-400">-</span>`;
+                };
+
+                const notesDetailHtml = `
+                    <div class="space-y-0.5 text-[10px]">
+                        <div><b class="text-zinc-500">吊掛:</b> ${formatNote(item.done_crane, item.note_crane)}</div>
+                        <div><b class="text-zinc-500">二配:</b> ${formatNote(item.done_hookup, item.note_hookup)}</div>
+                        <div><b class="text-zinc-500">MBO:</b> ${formatNote(item.done_mbo, item.note_mbo)}</div>
+                        <div><b class="text-zinc-500">EE:</b> ${formatNote(item.done_training, item.note_training)}</div>
+                        ${item.note ? `<div class="border-t border-zinc-200/60 pt-0.5 mt-0.5 text-zinc-500 font-bold">總備註: ${item.note}</div>` : ''}
+                    </div>
+                `;
 
                 const tr = document.createElement('tr');
                 tr.className = `${rowBgClass} hover:opacity-90 transition border-b border-zinc-200`;
@@ -477,10 +496,10 @@
                     
                     <td class="py-3.5 px-4">
                         <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-zinc-600 font-mono font-bold">
-                            <div class="flex items-center justify-between"><span>吊掛進機:</span> <span class="text-emerald-800">${c}%</span></div>
-                            <div class="flex items-center justify-between"><span>二次配:</span> <span class="text-emerald-800">${h}%</span></div>
-                            <div class="flex items-center justify-between"><span>MBO:</span> <span class="text-emerald-800">${mb}%</span></div>
-                            <div class="flex items-center justify-between"><span>EE培訓:</span> <span class="text-emerald-800">${t}%</span></div>
+                            <div class="flex items-center justify-between"><span>${item.done_crane ? '✅' : '吊掛:'}</span> <span class="text-emerald-800">${c}%</span></div>
+                            <div class="flex items-center justify-between"><span>${item.done_hookup ? '✅' : '二次配:'}</span> <span class="text-emerald-800">${h}%</span></div>
+                            <div class="flex items-center justify-between"><span>${item.done_mbo ? '✅' : 'MBO:'}</span> <span class="text-emerald-800">${mb}%</span></div>
+                            <div class="flex items-center justify-between"><span>${item.done_training ? '✅' : 'EE培訓:'}</span> <span class="text-emerald-800">${t}%</span></div>
                         </div>
                     </td>
 
@@ -493,7 +512,7 @@
                         </div>
                     </td>
 
-                    <td class="py-3.5 px-4 max-w-[200px]">${remarksScrollBox}</td>
+                    <td class="py-3.5 px-4 max-w-[200px]">${notesDetailHtml}</td>
 
                     <td class="py-3.5 px-4 text-center">
                         ${hasPermission ? `
@@ -516,17 +535,52 @@
             document.getElementById('progress-modal-id').value = id;
             document.getElementById('progress-modal-machine-name').innerText = `${item.name} (${item.adjustedDate} - ${item.dept})`;
 
-            document.getElementById('input-val-crane').value = item.crane !== undefined ? item.crane : 0;
-            document.getElementById('input-val-hookup').value = item.hookup || 0;
-            document.getElementById('input-val-mbo').value = item.mbo || 0;
-            document.getElementById('input-val-training').value = item.training || 0;
-            document.getElementById('progress-modal-note').value = item.note || "";
+            const metrics = ['crane', 'hookup', 'mbo', 'training'];
+            metrics.forEach(m => {
+                const chk = document.getElementById(`chk-done-${m}`);
+                const inputVal = document.getElementById(`input-val-${m}`);
+                const noteInput = document.getElementById(`note-${m}`);
 
-            updateRangeLabel('crane'); updateRangeLabel('hookup');
-            updateRangeLabel('mbo'); updateRangeLabel('training');
+                chk.checked = !!item[`done_${m}`];
+                inputVal.value = chk.checked ? 100 : (item[m] || 0);
+                noteInput.value = chk.checked ? "已完成" : (item[`note_${m}`] || "");
+
+                updateMetricUIState(m, chk.checked);
+                updateRangeLabel(m);
+            });
 
             document.getElementById('progress-modal').classList.remove('hidden');
         };
+
+        window.toggleMetricDone = function(metric) {
+            const chk = document.getElementById(`chk-done-${metric}`);
+            const inputVal = document.getElementById(`input-val-${metric}`);
+            const noteInput = document.getElementById(`note-${metric}`);
+
+            if (chk.checked) {
+                inputVal.value = 100;
+                noteInput.value = "已完成";
+            } else {
+                if (noteInput.value === "已完成") noteInput.value = "";
+            }
+
+            updateMetricUIState(metric, chk.checked);
+            updateRangeLabel(metric);
+        };
+
+        function updateMetricUIState(metric, isDone) {
+            const inputVal = document.getElementById(`input-val-${metric}`);
+            const noteInput = document.getElementById(`note-${metric}`);
+
+            inputVal.disabled = isDone;
+            noteInput.readOnly = isDone;
+
+            if (isDone) {
+                noteInput.classList.add('bg-zinc-100', 'text-emerald-700', 'font-black');
+            } else {
+                noteInput.classList.remove('bg-zinc-100', 'text-emerald-700', 'font-black');
+            }
+        }
 
         window.updateRangeLabel = function(metric) {
             const val = document.getElementById(`input-val-${metric}`).value;
@@ -541,14 +595,18 @@
             const id = document.getElementById('progress-modal-id').value;
             try {
                 const docRef = doc(db, "kldr_acceptance", id);
-                await updateDoc(docRef, {
-                    crane: parseInt(document.getElementById('input-val-crane').value),
-                    hookup: parseInt(document.getElementById('input-val-hookup').value),
-                    mbo: parseInt(document.getElementById('input-val-mbo').value),
-                    training: parseInt(document.getElementById('input-val-training').value),
-                    note: document.getElementById('progress-modal-note').value.trim(),
-                    updated_at: new Date().toISOString()
+                
+                const updatePayload = { updated_at: new Date().toISOString() };
+                const metrics = ['crane', 'hookup', 'mbo', 'training'];
+
+                metrics.forEach(m => {
+                    const isDone = document.getElementById(`chk-done-${m}`).checked;
+                    updatePayload[`done_${m}`] = isDone;
+                    updatePayload[m] = isDone ? 100 : parseInt(document.getElementById(`input-val-${m}`).value);
+                    updatePayload[`note_${m}`] = isDone ? "已完成" : document.getElementById(`note-${m}`).value.trim();
                 });
+
+                await updateDoc(docRef, updatePayload);
                 alert("🎉 四大驗收指標進度已成功儲存！");
                 closeProgressModal();
             } catch (err) { alert("🚨 更新失敗！請確認權限。"); }
@@ -610,6 +668,8 @@
             try {
                 if (id === "NEW") {
                     payload.crane = 0; payload.hookup = 0; payload.mbo = 0; payload.training = 0;
+                    payload.done_crane = false; payload.done_hookup = false; payload.done_mbo = false; payload.done_training = false;
+                    payload.note_crane = ""; payload.note_hookup = ""; payload.note_mbo = ""; payload.note_training = "";
                     const newDocRef = doc(acceptanceRef);
                     await setDoc(newDocRef, payload);
                 } else {
