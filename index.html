@@ -596,28 +596,28 @@
                     }
 
                     const tableContainerHtml = `
-                        <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide">
-                                        <th class="p-3 w-[110px]">是否卸櫃 / 項目</th>
-                                        <th class="p-3 w-[120px]">樓層進度</th>
-                                        <th class="p-3 w-[100px]">站點</th>
-                                        <th class="p-3">預約機台名稱</th>
-                                        <th class="p-3">現場負責人</th>
-                                        <th class="p-3 w-[180px]">件數 / 毛重總重/淨重總重</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
-                                        <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
-                                        <th class="p-3 w-[130px] text-indigo-800 font-black">📋 PO號碼</th>
-                                        <th class="p-3 max-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRowsHtml}
-                                </tbody>
-                            </table>
-                        </div>`;
+    <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
+        <table class="w-full min-w-[1350px] text-left border-collapse">
+            <thead>
+                <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
+                    <th class="p-3 w-[110px]">是否卸櫃 / 項目</th>
+                    <th class="p-3 w-[120px]">樓層進度</th>
+                    <th class="p-3 w-[100px]">站點</th>
+                    <th class="p-3 w-[160px]">預約機台名稱</th>
+                    <th class="p-3 w-[120px]">現場負責人</th>
+                    <th class="p-3 w-[180px]">件數 / 毛重總重/淨重總重</th>
+                    <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
+                    <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
+                    <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
+                    <th class="p-3 w-[130px] text-indigo-800 font-black">📋 PO號碼</th>
+                    <th class="p-3 min-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRowsHtml}
+            </tbody>
+        </table>
+    </div>`;
                     
                     document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
