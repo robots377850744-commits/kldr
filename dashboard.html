@@ -106,7 +106,7 @@
                         <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
                         四大指標動態驗收進度管控表 (獨立手動維護)
                     </h3>
-                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。具備站點專屬顏色標記（BE藍/RDL紅/FC綠），點擊「進度」可進行勾選與獨立備註。</p>
+                    <p class="text-xs text-zinc-500 mt-1">獨立維護儀表板資料。標題文字全數置中加粗，機台欄位適度縮小（w-[170px]），刪除需二次密碼驗證。</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
@@ -125,19 +125,19 @@
                 </div>
             </div>
 
-            <!-- UI/UX 改善：固定 min-w-[1300px] 與獨立滾動條，允許放大字體且不擠壓跑版 -->
+            <!-- UI/UX 改善：標題列全數置中加粗對齊，機台欄位由 220px 縮小至 170px -->
             <div class="overflow-x-auto scroll-custom rounded-xl border border-zinc-200 bg-white shadow-xs">
-                <table class="w-full min-w-[1300px] text-left border-collapse text-sm">
+                <table class="w-full min-w-[1150px] text-left border-collapse text-sm">
                     <thead>
-                        <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
-                            <th class="py-3.5 px-4 w-[220px]">機台名稱 / 負責人</th>
-                            <th class="py-3.5 px-4 w-[110px]">排定吊掛日</th>
-                            <th class="py-3.5 px-4 w-[90px]">目前樓層</th>
-                            <th class="py-3.5 px-4 w-[100px]">站點</th>
-                            <th class="py-3.5 px-4 w-[340px]">四大指標驗收進度 (%)</th>
-                            <th class="py-3.5 px-4 w-[110px] text-center">綜合驗收率</th>
-                            <th class="py-3.5 px-4 min-w-[220px]">進度註記 / 備註</th>
-                            <th class="py-3.5 px-4 w-[140px] text-center">功能操作</th>
+                        <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-800 font-black text-xs tracking-wide whitespace-nowrap">
+                            <th class="py-3.5 px-2 w-[55px] text-center"></th>
+                            <th class="py-3.5 px-3 w-[170px] text-center font-black">機台名稱 / 負責人</th>
+                            <th class="py-3.5 px-3 w-[110px] text-center font-black">排定吊掛日</th>
+                            <th class="py-3.5 px-3 w-[90px] text-center font-black">目前樓層</th>
+                            <th class="py-3.5 px-3 w-[90px] text-center font-black">站點</th>
+                            <th class="py-3.5 px-3 w-[300px] text-center font-black">四大指標驗收進度 (%)</th>
+                            <th class="py-3.5 px-3 w-[110px] text-center font-black">綜合驗收率</th>
+                            <th class="py-3.5 px-3 min-w-[200px] text-center font-black">進度註記 / 備註</th>
                         </tr>
                     </thead>
                     <tbody id="machine-table-body" class="divide-y divide-zinc-200 font-semibold text-zinc-800">
@@ -433,7 +433,7 @@
             renderTable(filteredData);
         }
 
-        // 🎨 UI/UX 改善：放大字體層級（text-sm, text-xs），內襯舒展加寬，維持站點高質感顏色網底
+        // 🎨 表格與標題全數置中對齊，機台欄位寬度收窄至 170px
         function renderTable(data) {
             const tbody = document.getElementById('machine-table-body');
             tbody.innerHTML = '';
@@ -470,7 +470,7 @@
                 };
 
                 const notesDetailHtml = `
-                    <div class="space-y-1 text-xs">
+                    <div class="space-y-1 text-xs text-left">
                         <div><b class="text-zinc-500">吊掛:</b> ${formatNote(item.done_crane, item.note_crane)}</div>
                         <div><b class="text-zinc-500">二配:</b> ${formatNote(item.done_hookup, item.note_hookup)}</div>
                         <div><b class="text-zinc-500">MBO:</b> ${formatNote(item.done_mbo, item.note_mbo)}</div>
@@ -483,17 +483,27 @@
                 tr.className = `${rowBgClass} hover:opacity-95 transition border-b border-zinc-200`;
 
                 tr.innerHTML = `
-                    <td class="py-4 px-4 font-bold text-zinc-900">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-black text-zinc-900 leading-snug">${item.name || '未填機台'}</span>
+                    <td class="py-3 px-2 text-center whitespace-nowrap">
+                        ${hasPermission ? `
+                            <div class="flex flex-col justify-center items-center gap-1">
+                                <button onclick="openProgressModal('${item.id}')" title="調校四大指標進度" class="p-1 bg-emerald-700 hover:bg-emerald-800 text-white transition rounded text-xs font-black shadow-xs cursor-pointer w-6 h-6 flex items-center justify-center">⚙️</button>
+                                <button onclick="openEditMachineModal('${item.id}')" title="編輯機台參數" class="p-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 transition rounded text-xs font-black cursor-pointer w-6 h-6 flex items-center justify-center">✏️</button>
+                                <button onclick="deleteMachine('${item.id}')" title="刪除機台" class="p-1 bg-red-100 hover:bg-red-200 text-red-700 transition rounded text-xs font-black cursor-pointer w-6 h-6 flex items-center justify-center">🗑️</button>
+                            </div>
+                        ` : `<span class="text-zinc-400 text-xs font-bold">唯讀</span>`}
+                    </td>
+
+                    <td class="py-4 px-3 font-bold text-zinc-900 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="text-sm font-black text-zinc-900 leading-snug break-all">${item.name || '未填機台'}</span>
                             <span class="text-xs text-zinc-500 mt-0.5 font-bold">負責人: ${item.owner || '未填'}</span>
                         </div>
                     </td>
-                    <td class="py-4 px-4 text-zinc-800 font-mono text-xs font-extrabold whitespace-nowrap">${item.adjustedDate || '-'}</td>
-                    <td class="py-4 px-4 font-black text-xs text-blue-900 whitespace-nowrap">${item.floor || '1F'}</td>
-                    <td class="py-4 px-4 font-black text-xs whitespace-nowrap">${item.dept || '-'}</td>
+                    <td class="py-4 px-3 text-zinc-800 font-mono text-xs font-extrabold whitespace-nowrap text-center">${item.adjustedDate || '-'}</td>
+                    <td class="py-4 px-3 font-black text-xs text-blue-900 whitespace-nowrap text-center">${item.floor || '1F'}</td>
+                    <td class="py-4 px-3 font-black text-xs whitespace-nowrap text-center">${item.dept || '-'}</td>
                     
-                    <td class="py-4 px-4">
+                    <td class="py-4 px-3">
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-zinc-700 font-mono font-bold">
                             <div class="flex items-center justify-between"><span>${item.done_crane ? '✅' : '吊掛:'}</span> <span class="text-emerald-800 font-extrabold">${c}%</span></div>
                             <div class="flex items-center justify-between"><span>${item.done_hookup ? '✅' : '二次配:'}</span> <span class="text-emerald-800 font-extrabold">${h}%</span></div>
@@ -502,7 +512,7 @@
                         </div>
                     </td>
 
-                    <td class="py-4 px-4 text-center">
+                    <td class="py-4 px-3 text-center">
                         <div class="flex flex-col items-center justify-center">
                             <span class="text-sm font-black font-mono text-emerald-800">${readiness}%</span>
                             <div class="w-18 bg-zinc-200 h-2 rounded-full mt-1 overflow-hidden shadow-inner">
@@ -511,17 +521,7 @@
                         </div>
                     </td>
 
-                    <td class="py-4 px-4 min-w-[220px]">${notesDetailHtml}</td>
-
-                    <td class="py-4 px-4 text-center whitespace-nowrap">
-                        ${hasPermission ? `
-                            <div class="flex justify-center items-center gap-1.5">
-                                <button onclick="openProgressModal('${item.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white transition rounded-xl text-xs font-bold shadow-xs">⚙️ 進度</button>
-                                <button onclick="openEditMachineModal('${item.id}')" class="px-2.5 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 transition rounded-xl text-xs font-bold">編輯</button>
-                                <button onclick="deleteMachine('${item.id}')" class="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 transition rounded-xl text-xs font-bold">刪除</button>
-                            </div>
-                        ` : `<span class="text-zinc-400 text-xs font-bold">唯讀</span>`}
-                    </td>
+                    <td class="py-4 px-3 min-w-[200px] text-center">${notesDetailHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -680,7 +680,15 @@
             } catch (err) { alert("🚨 保存失敗！請檢查權限。"); }
         };
 
+        // 🔒 刪除二次確認密碼 ee 驗證
         window.deleteMachine = async function(id) {
+            const pwd = prompt("🔒 請輸入刪除確認密碼：");
+            if (pwd === null) return;
+            if (pwd !== "ee") {
+                alert("⚠️ 刪除密碼錯誤，拒絕刪除！");
+                return;
+            }
+
             if (!confirm("⚠️ 是否確認刪除此筆儀表板設備資料？")) return;
             try {
                 const docRef = doc(db, "kldr_acceptance", id);
