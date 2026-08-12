@@ -185,7 +185,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">樓層</label>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">目前樓層</label>
                     <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                         <option value="">-- 請選擇樓層 --</option>
                         <option value="1F">1F</option>
@@ -523,13 +523,17 @@
                     const rem = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
                     const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
                     const unloadStr = getUnloadStatus(props.timePeriod);
+                    const curF = props.floor || '1F';
+                    const targetF = props.target_floor || props.floor || '6F';
+                    const autoStatus = (curF === targetF) ? '已完成' : '未完成';
+                    const moveSt = props.move_status || autoStatus;
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${props.floor || '1F'}/${props.target_floor || props.floor || '1F'} (${props.move_status || '已完成'})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${poNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF}/${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${poNoStr}${rem}`;
                     
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 需求一：排程核心數據總覽樓層與站點拆分
+                // 🚀 總覽彈窗：樓層與站點拆分 + 橫向滑動 UI/UX 優化 (min-w-[1350px])
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -559,8 +563,9 @@
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
                             
                             const curF = e.floor || '1F';
-                            const targetF = e.target_floor || e.floor || '1F';
-                            const moveSt = e.move_status || '已完成';
+                            const targetF = e.target_floor || e.floor || '6F';
+                            const autoStatus = (curF === targetF) ? '已完成' : '未完成';
+                            const moveSt = e.move_status || autoStatus;
                             const statusColor = moveSt === '已完成' ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-amber-700 bg-amber-50 border-amber-300';
                             
                             const floorProgressHtml = `
@@ -596,28 +601,28 @@
                     }
 
                     const tableContainerHtml = `
-    <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
-        <table class="w-full min-w-[1350px] text-left border-collapse">
-            <thead>
-                <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
-                    <th class="p-3 w-[110px]">是否卸櫃 / 項目</th>
-                    <th class="p-3 w-[120px]">樓層進度</th>
-                    <th class="p-3 w-[100px]">站點</th>
-                    <th class="p-3 w-[160px]">預約機台名稱</th>
-                    <th class="p-3 w-[120px]">現場負責人</th>
-                    <th class="p-3 w-[180px]">件數 / 毛重總重/淨重總重</th>
-                    <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
-                    <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
-                    <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
-                    <th class="p-3 w-[130px] text-indigo-800 font-black">📋 PO號碼</th>
-                    <th class="p-3 min-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableRowsHtml}
-            </tbody>
-        </table>
-    </div>`;
+                        <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
+                            <table class="w-full min-w-[1350px] text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
+                                        <th class="p-3 w-[110px]">是否卸櫃 / 項目</th>
+                                        <th class="p-3 w-[120px]">樓層進度</th>
+                                        <th class="p-3 w-[100px]">站點</th>
+                                        <th class="p-3 w-[160px]">預約機台名稱</th>
+                                        <th class="p-3 w-[120px]">現場負責人</th>
+                                        <th class="p-3 w-[180px]">件數 / 毛重總重/淨重總重</th>
+                                        <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
+                                        <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
+                                        <th class="p-3 w-[130px] text-emerald-800 font-black">🏷️ 吊運單號</th>
+                                        <th class="p-3 w-[130px] text-indigo-800 font-black">📋 PO號碼</th>
+                                        <th class="p-3 min-w-[250px]">詳細備註事項說明 (支援下拉滑動)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
+                            </table>
+                        </div>`;
                     
                     document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
@@ -630,6 +635,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 單筆卡片點擊詳細彈窗：目前樓層/預計樓層編輯，以及 SUPERkldr 強制覆蓋按鈕
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -637,11 +643,11 @@
                     activeSelectedDocType = props.workType || "吊運";
                     activeSelectedProps = props; 
                     const activeFloor = props.floor || "1F";
-                    const activeTargetFloor = props.target_floor || props.floor || "1F";
-                    const activeMoveStatus = props.move_status || "已完成";
-
+                    const activeTargetFloor = props.target_floor || props.floor || "6F";
+                    
+                    const isSuper = (currentAdminDept === "SUPER_ADMIN");
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
-                    const hasPermission = (currentAdminDept === "SUPER_ADMIN" || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
+                    const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
                     let dateContentHtml = "", floorContentHtml = "", unloadContentHtml = "";
                     const currentUnload = getUnloadStatus(props.timePeriod);
@@ -649,30 +655,45 @@
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         
+                        const autoComputedStatus = (activeFloor === activeTargetFloor) ? "已完成" : "未完成";
+                        const currentStatus = props.move_status || autoComputedStatus;
+
+                        // 特權 SUPERkldr 手動覆蓋控制選單
+                        const superOverrideHtml = isSuper ? `
+                            <div class="mt-1.5 p-1.5 bg-amber-50 rounded border border-amber-200 flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-amber-900">👑 SUPER 強制狀態選單：</span>
+                                <select id="modalSuperStatusSelect" class="bg-white border border-amber-300 text-amber-900 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                    <option value="AUTO">自動判定 (${autoComputedStatus})</option>
+                                    <option value="已完成" ${props.move_status === '已完成' ? 'selected' : ''}>已完成</option>
+                                    <option value="未完成" ${props.move_status === '未完成' ? 'selected' : ''}>未完成</option>
+                                </select>
+                            </div>
+                        ` : ``;
+
                         floorContentHtml = `
-                            <div class="inline-flex items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200">
-                                <span class="text-xs text-zinc-500 font-bold">目前:</span>
-                                <select id="modalFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                    <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
-                                    <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
-                                    <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
-                                    <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
-                                    <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
-                                    <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
-                                </select>
-                                <span class="text-xs text-zinc-500 font-bold">/ 目標:</span>
-                                <select id="modalTargetFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                    <option value="1F" ${activeTargetFloor === '1F' ? 'selected' : ''}>1F</option>
-                                    <option value="2F" ${activeTargetFloor === '2F' ? 'selected' : ''}>2F</option>
-                                    <option value="3F" ${activeTargetFloor === '3F' ? 'selected' : ''}>3F</option>
-                                    <option value="4F" ${activeTargetFloor === '4F' ? 'selected' : ''}>4F</option>
-                                    <option value="5F" ${activeTargetFloor === '5F' ? 'selected' : ''}>5F</option>
-                                    <option value="6F" ${activeTargetFloor === '6F' ? 'selected' : ''}>6F</option>
-                                </select>
-                                <select id="modalMoveStatusSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                    <option value="已完成" ${activeMoveStatus === '已完成' ? 'selected' : ''}>已完成</option>
-                                    <option value="未完成" ${activeMoveStatus === '未完成' ? 'selected' : ''}>未完成</option>
-                                </select>
+                            <div class="flex flex-col gap-1 mt-1">
+                                <div class="inline-flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
+                                    <span class="text-xs text-zinc-500 font-bold">目前樓層:</span>
+                                    <select id="modalFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                        <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
+                                        <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
+                                        <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
+                                        <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
+                                        <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
+                                        <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
+                                    </select>
+                                    <span class="text-xs text-zinc-500 font-bold">/ 預計樓層:</span>
+                                    <select id="modalTargetFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                        <option value="1F" ${activeTargetFloor === '1F' ? 'selected' : ''}>1F</option>
+                                        <option value="2F" ${activeTargetFloor === '2F' ? 'selected' : ''}>2F</option>
+                                        <option value="3F" ${activeTargetFloor === '3F' ? 'selected' : ''}>3F</option>
+                                        <option value="4F" ${activeTargetFloor === '4F' ? 'selected' : ''}>4F</option>
+                                        <option value="5F" ${activeTargetFloor === '5F' ? 'selected' : ''}>5F</option>
+                                        <option value="6F" ${activeTargetFloor === '6F' ? 'selected' : ''}>6F</option>
+                                    </select>
+                                    <span class="text-xs font-extrabold text-emerald-800">狀態: (${currentStatus})</span>
+                                </div>
+                                ${superOverrideHtml}
                             </div>
                         `;
 
@@ -682,7 +703,7 @@
                         </select>`;
                     } else {
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
-                        floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor} / ${activeTargetFloor} (${activeMoveStatus})</span>`;
+                        floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor} / ${activeTargetFloor} (${props.move_status || '已完成'})</span>`;
                         unloadContentHtml = `<span class="text-zinc-900 font-bold">${currentUnload}</span>`;
                     }
 
@@ -798,9 +819,16 @@
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : null;
-                let moveStatusVal = document.getElementById('modalMoveStatusSelect') ? document.getElementById('modalMoveStatusSelect').value : null;
+                let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
+                let computedStatus = "已完成";
+                if (superOverride !== "AUTO") {
+                    computedStatus = superOverride;
+                } else if (floorVal && targetFloorVal) {
+                    computedStatus = (floorVal === targetFloorVal) ? "已完成" : "未完成";
+                }
+
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
@@ -825,12 +853,12 @@
                         main_size: ms,
                         crane_no: cNo,
                         po_no: poNo,
-                        is_relocate: isRelocateVal
+                        is_relocate: isRelocateVal,
+                        move_status: computedStatus
                     };
                     if (dStr) updatePayload.date = dStr;
                     if (floorVal) updatePayload.floor = floorVal;
                     if (targetFloorVal) updatePayload.target_floor = targetFloorVal;
-                    if (moveStatusVal) updatePayload.move_status = moveStatusVal;
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
@@ -846,8 +874,9 @@
                 
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
-                let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : (activeSelectedProps.target_floor || floorVal);
-                let moveStatusVal = document.getElementById('modalMoveStatusSelect') ? document.getElementById('modalMoveStatusSelect').value : (activeSelectedProps.move_status || "已完成");
+                let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : (activeSelectedProps.target_floor || "6F");
+                let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
+                let computedStatus = (superOverride !== "AUTO") ? superOverride : ((floorVal === targetFloorVal) ? "已完成" : "未完成");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
                 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
@@ -884,7 +913,7 @@
                     workType: activeSelectedDocType || "吊運",
                     floor: floorVal,
                     target_floor: targetFloorVal,
-                    move_status: moveStatusVal,
+                    move_status: computedStatus,
                     department: activeSelectedDocDept || activeSelectedProps.department,
                     machine: activeSelectedProps.machine || "未填",
                     worker_name: activeSelectedProps.worker_name || "未填",
@@ -958,7 +987,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,目前樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -977,8 +1006,9 @@
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const unloadStr = getUnloadStatus(d.time);
                         const curF = d.floor || '1F';
-                        const targetF = d.target_floor || d.floor || '1F';
-                        const moveSt = d.move_status || '已完成';
+                        const targetF = d.target_floor || d.floor || '6F';
+                        const autoStatus = (curF === targetF) ? '已完成' : '未完成';
+                        const moveSt = d.move_status || autoStatus;
                         
                         csvContent += `"${d.date || ''}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${curF}","${targetF}","${moveSt}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanPoNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
@@ -1002,7 +1032,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,預約樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,目前樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -1019,8 +1049,9 @@
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const unloadStr = getUnloadStatus(d.time);
                         const curF = d.floor || '1F';
-                        const targetF = d.target_floor || d.floor || '1F';
-                        const moveSt = d.move_status || '已完成';
+                        const targetF = d.target_floor || d.floor || '6F';
+                        const autoStatus = (curF === targetF) ? '已完成' : '未完成';
+                        const moveSt = d.move_status || autoStatus;
                         
                         csvContent += `"${d.date}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${curF}","${targetF}","${moveSt}","${d.department}","${d.machine || '未填'}","${parsed.displayName}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanPoNo}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
@@ -1043,7 +1074,7 @@
                     querySnapshot.forEach((doc) => {
                         const d = doc.data();
                         allDataArray.push({
-                            date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F", target_floor: d.target_floor || d.floor || "1F", move_status: d.move_status || "已完成",
+                            date: d.date, time: d.time, workType: d.workType || "吊運", floor: d.floor || "1F", target_floor: d.target_floor || "6F", move_status: d.move_status || ((d.floor === "6F") ? "已完成" : "未完成"),
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
                             weight_count: d.weight_count || "", main_weight: d.main_weight || "", main_size: d.main_size || "", crane_no: d.crane_no || "", po_no: d.po_no || "", is_relocate: d.is_relocate || false, remarks: d.remarks || "", created_at: d.created_at || new Date().toISOString()
                         });
@@ -1092,9 +1123,13 @@
                                     const safeWorkerPathName = item.worker_name ? item.worker_name.replace(/\//g, '-') : '備份';
                                     const customDocName = `${item.date}_${item.time}_${item.workType || '吊運'}_${item.floor || '1F'}_${safeDeptName}_${safeWorkerPathName.substring(0,20)}_${uniqueId}`;
                                     
+                                    const curF = item.floor || "1F";
+                                    const tarF = item.target_floor || "6F";
+                                    const computedSt = item.move_status || ((curF === tarF) ? "已完成" : "未完成");
+
                                     batch.set(doc(db, "kldr", customDocName), {
                                         date: item.date, time: item.time, workType: item.workType || "吊運",
-                                        floor: item.floor || "1F", target_floor: item.target_floor || item.floor || "1F", move_status: item.move_status || "已完成", department: item.department, machine: item.machine || "未填", 
+                                        floor: curF, target_floor: tarF, move_status: computedSt, department: item.department, machine: item.machine || "未填", 
                                         worker_name: item.worker_name || "未填", weight_count: item.weight_count || "",
                                         main_weight: item.main_weight || "",
                                         main_size: item.main_size || "",
@@ -1136,8 +1171,8 @@
                         borderColor: colorValue,
                         extendedProps: { 
                             floor: data.floor || "", 
-                            target_floor: data.target_floor || data.floor || "",
-                            move_status: data.move_status || "已完成",
+                            target_floor: data.target_floor || "6F",
+                            move_status: data.move_status || ((data.floor === "6F") ? "已完成" : "未完成"),
                             department: data.department, 
                             machine: data.machine, 
                             timePeriod: data.time, 
@@ -1183,8 +1218,8 @@
                 const cleanWeight = (item.weight_count || parsed.displayWeight || "");
                 const unloadStr = getUnloadStatus(item.time);
                 const curF = item.floor || '1F';
-                const targetF = item.target_floor || item.floor || '1F';
-                const moveSt = item.move_status || '已完成';
+                const targetF = item.target_floor || '6F';
+                const moveSt = item.move_status || ((curF === targetF) ? '已完成' : '未完成');
                 csvContent += `"${item.date}","${unloadStr}","${item.workType || '吊運'}","${curF}","${targetF}","${moveSt}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1205,7 +1240,8 @@
             let mainWeight = document.getElementById('inputMainWeight').value.trim();
             let mainSize = document.getElementById('inputMainSize').value.trim();
             let remarks = document.getElementById('inputRemarks').value.trim();
-            let floorInput = document.getElementById('floor').value;
+            let inputFloor = document.getElementById('floor').value;
+            let computedStatus = (inputFloor === "6F") ? "已完成" : "未完成";
             
             let weightCountStr = "";
             if (pieces || grossWeight || netWeight) {
@@ -1216,9 +1252,9 @@
                 date: document.getElementById('date').value, 
                 time: document.getElementById('timePeriod').value, 
                 workType: document.getElementById('workType').value, 
-                floor: floorInput,
-                target_floor: floorInput,
-                move_status: "已完成",
+                floor: inputFloor,
+                target_floor: "6F",
+                move_status: computedStatus,
                 department: document.getElementById('department').value, 
                 machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
