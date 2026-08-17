@@ -154,6 +154,7 @@
     </div>
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
+        <!-- 頁首標題區與轉頁按鈕 -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
             <div></div>
             <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center">
@@ -164,6 +165,7 @@
             </a>
         </div>
 
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -251,7 +253,7 @@
             </div>
         </form>
 
-        <div class="bg-zinc-100/80 border border-zinc-200 p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-4 items-center">
+        <div class="bg-zinc-100/80 border border-zinc-200 p-4 rounded-xl mb-4 flex flex-col sm:flex-row gap-4 items-center">
             <div class="flex items-center gap-1.5 shrink-0">
                 <span class="text-sm font-black text-zinc-700 tracking-wider">🔍 看板即時篩選：</span>
             </div>
@@ -282,6 +284,22 @@
             <div class="text-xs text-zinc-400 sm:ml-auto text-center sm:text-right">
                 💡 篩選僅影響您的畫面，不影響雲端資料庫。
             </div>
+        </div>
+
+        <!-- 📢 看板與行事曆之間的跑馬燈公告欄 -->
+        <div class="bg-amber-50 border border-amber-300/80 rounded-xl p-2.5 mb-6 flex items-center gap-3 shadow-xs overflow-hidden">
+            <div class="flex items-center gap-1.5 shrink-0 bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-xs">
+                <span>📢</span>
+                <span class="whitespace-nowrap">即時公告</span>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <marquee id="marqueeDisplay" behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();" class="text-xs font-black text-amber-950 block pt-0.5">
+                    歡迎使用吊運排程管理系統！請各站點同仁注意作業安全與吊掛時段，隨時點擊右側按鈕即可自訂公告內容。
+                </marquee>
+            </div>
+            <button type="button" onclick="editMarqueeAnnouncement()" class="shrink-0 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-3 py-1 rounded-lg transition shadow-2xs cursor-pointer">
+                ✏️ 編輯公告
+            </button>
         </div>
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
@@ -347,6 +365,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const scheduleRef = collection(db, "kldr");
+        const marqueeDocRef = doc(db, "kldr_settings", "announcement");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -361,6 +380,42 @@
         const now = new Date();
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
+
+        // 📢 跑馬燈自訂編輯與儲存函式
+        window.editMarqueeAnnouncement = async function() {
+            const currentContent = document.getElementById('marqueeDisplay').innerText.trim();
+            const newContent = prompt("📢 請輸入要顯示在跑馬燈上的即時公告內容：", currentContent);
+            if (newContent !== null && newContent.trim() !== "") {
+                const textToSave = newContent.trim();
+                try {
+                    await setDoc(marqueeDocRef, {
+                        text: textToSave,
+                        updated_at: new Date().toISOString()
+                    }, { merge: true });
+                    localStorage.setItem("kldr_marquee_text", textToSave);
+                    document.getElementById('marqueeDisplay').innerText = textToSave;
+                    alert("🎉 跑馬燈公告已成功同步至全體雲端！");
+                } catch (e) {
+                    localStorage.setItem("kldr_marquee_text", textToSave);
+                    document.getElementById('marqueeDisplay').innerText = textToSave;
+                    alert("🎉 公告已儲存於本機！");
+                }
+            }
+        };
+
+        // 監聽跑馬燈即時變更
+        onSnapshot(marqueeDocRef, (snap) => {
+            if (snap.exists() && snap.data().text) {
+                document.getElementById('marqueeDisplay').innerText = snap.data().text;
+                localStorage.setItem("kldr_marquee_text", snap.data().text);
+            } else {
+                const localSaved = localStorage.getItem("kldr_marquee_text");
+                if (localSaved) document.getElementById('marqueeDisplay').innerText = localSaved;
+            }
+        }, (err) => {
+            const localSaved = localStorage.getItem("kldr_marquee_text");
+            if (localSaved) document.getElementById('marqueeDisplay').innerText = localSaved;
+        });
 
         function getTodayYMD() {
             const d = new Date();
@@ -533,7 +588,7 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 🚀 總覽彈窗：樓層與站點拆分 + 橫向滑動 UI/UX 優化 (min-w-[1350px])
+                // 總覽彈窗：樓層與站點拆分 + 橫向滑動 UI/UX 優化 (min-w-[1350px])
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -658,7 +713,6 @@
                         const autoComputedStatus = (activeFloor === activeTargetFloor) ? "已完成" : "未完成";
                         const currentStatus = props.move_status || autoComputedStatus;
 
-                        // 特權 SUPERkldr 手動覆蓋控制選單
                         const superOverrideHtml = isSuper ? `
                             <div class="mt-1.5 p-1.5 bg-amber-50 rounded border border-amber-200 flex items-center gap-1.5">
                                 <span class="text-xs font-bold text-amber-900">👑 SUPER 強制狀態選單：</span>
@@ -958,7 +1012,7 @@
                 }
             });
 
-            // 🚀 需求二：歷史日期紀錄（< 今天日期）非 SUPERkldr 阻斷刪除
+            // 歷史日期紀錄（< 今天日期）非 SUPERkldr 阻斷刪除
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
