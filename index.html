@@ -154,7 +154,6 @@
     </div>
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
-        <!-- 頁首標題區與轉頁按鈕 -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
             <div></div>
             <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center">
@@ -165,7 +164,6 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -286,7 +284,6 @@
             </div>
         </div>
 
-        <!-- 📢 看板與行事曆之間的跑馬燈公告欄 -->
         <div class="bg-amber-50 border border-amber-300/80 rounded-xl p-2.5 mb-6 flex items-center gap-3 shadow-xs overflow-hidden">
             <div class="flex items-center gap-1.5 shrink-0 bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-xs">
                 <span>📢</span>
@@ -380,6 +377,19 @@
         const now = new Date();
         const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('exportMonthFilter').value = currentYearMonth;
+
+        // 📅 判斷日期是否為週三 (3) 或週四 (4)
+        function isWedOrThu(dateStr) {
+            if (!dateStr) return false;
+            const parts = dateStr.replace(/\//g, '-').split('-');
+            if (parts.length < 3) return false;
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            const d = parseInt(parts[2], 10);
+            const dt = new Date(y, m, d);
+            const day = dt.getDay();
+            return (day === 3 || day === 4);
+        }
 
         // 📢 跑馬燈自訂編輯與儲存函式
         window.editMarqueeAnnouncement = async function() {
@@ -866,16 +876,24 @@
 
             applyLiveFilters();
 
-            // 💾 儲存寫入邏輯
+            // 💾 儲存寫入邏輯（含週三/週四 FC 禁設 1F 防呆）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
-                let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : null;
+                let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : null;
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
+                // 🛑 防呆檢查：非 SUPER 管理員，每逢週三/週四 FC 站點禁止設定目前或預計樓層為 1F
+                if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr)) {
+                    if (floorVal === "1F" || targetFloorVal === "1F") {
+                        alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定或變更為 1F 樓層！請重新選擇其他樓層。");
+                        return;
+                    }
+                }
+
                 let computedStatus = "已完成";
                 if (superOverride !== "AUTO") {
                     computedStatus = superOverride;
@@ -920,7 +938,7 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯
+            // 📋 複製邏輯（含週三/週四 FC 禁設 1F 防呆）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -933,6 +951,16 @@
                 let computedStatus = (superOverride !== "AUTO") ? superOverride : ((floorVal === targetFloorVal) ? "已完成" : "未完成");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
                 
+                const targetDept = activeSelectedDocDept || activeSelectedProps.department;
+
+                // 🛑 防呆檢查：非 SUPER 管理員，複製目標日期若為週三/週四且為 FC，禁止設定為 1F
+                if (currentAdminDept !== "SUPER_ADMIN" && targetDept === "FC" && isWedOrThu(targetDate)) {
+                    if (floorVal === "1F" || targetFloorVal === "1F") {
+                        alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止複製排程至 1F 樓層！請重新選擇其他樓層。");
+                        return;
+                    }
+                }
+
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
                 let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
@@ -968,7 +996,7 @@
                     floor: floorVal,
                     target_floor: targetFloorVal,
                     move_status: computedStatus,
-                    department: activeSelectedDocDept || activeSelectedProps.department,
+                    department: targetDept,
                     machine: activeSelectedProps.machine || "未填",
                     worker_name: activeSelectedProps.worker_name || "未填",
                     weight_count: weightCountStr,
@@ -1282,11 +1310,24 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
+        // 快速新增表單提交（含週三/週四 FC 禁填 1F 防呆）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
             
+            const inputDate = document.getElementById('date').value;
+            const inputDept = document.getElementById('department').value;
+            const inputFloor = document.getElementById('floor').value;
+
+            // 🛑 防呆檢查：非 SUPER 登入下，若日期為週三/週四且站點為 FC，禁止選擇 1F
+            if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
+                alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請/填寫 1F 樓層！請重新選擇其他樓層。");
+                btn.disabled = false;
+                btn.innerText = "確認排程";
+                return;
+            }
+
             let pieces = document.getElementById('inputPieces').value.trim();
             let grossWeight = document.getElementById('inputWeight').value.trim();
             let netWeight = document.getElementById('inputNetWeight') ? document.getElementById('inputNetWeight').value.trim() : "";
@@ -1294,7 +1335,6 @@
             let mainWeight = document.getElementById('inputMainWeight').value.trim();
             let mainSize = document.getElementById('inputMainSize').value.trim();
             let remarks = document.getElementById('inputRemarks').value.trim();
-            let inputFloor = document.getElementById('floor').value;
             let computedStatus = (inputFloor === "6F") ? "已完成" : "未完成";
             
             let weightCountStr = "";
@@ -1303,13 +1343,13 @@
             }
 
             const payload = {
-                date: document.getElementById('date').value, 
+                date: inputDate, 
                 time: document.getElementById('timePeriod').value, 
                 workType: document.getElementById('workType').value, 
                 floor: inputFloor,
                 target_floor: "6F",
                 move_status: computedStatus,
-                department: document.getElementById('department').value, 
+                department: inputDept, 
                 machine: document.getElementById('machine').value.trim(), 
                 worker_name: document.getElementById('name').value.trim(),
                 weight_count: weightCountStr,
