@@ -301,38 +301,54 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full xl:w-auto">
-                <div class="text-sm text-zinc-500 font-medium shrink-0">
-                    🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
-                </div>
-                <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-4 py-1.5 rounded-xl tracking-wide shadow-xs shrink-0">
-                    🔥 雲端全歷史總計 ➔ 排程預約總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
-                </div>
-                <button type="button" id="publicExportCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-sm px-4 py-1.5 rounded-xl transition shadow font-bold cursor-pointer shrink-0">
-                    📥 匯出雲端全資料庫總報表 (CSV)
-                </button>
-            </div>
+        <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col gap-4">
             
-            <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full xl:w-auto justify-start xl:justify-end">
-                <div id="exportWrapper" class="flex gap-2 items-center hidden mr-2">
-                    <input type="month" id="exportMonthFilter" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 font-medium">
-                    <input id="exportExcelBtn" type="button" class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-semibold cursor-pointer" value="📊 匯出選定月份報表">
-                </div>
-
-                <div id="superAdminWrapper" class="flex flex-wrap gap-2 items-center hidden mr-2">
-                    <button type="button" id="exportAllCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出雲端全資料庫總報表 (CSV)</button>
-                    <button type="button" id="exportAllJsonBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出雲端全資料庫總備份 (JSON)</button>
-                    <button type="button" id="clearAllDbBtn" class="bg-red-700 hover:bg-red-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">🔥 超級特權：一鍵清空資料庫</button>
-                    <label class="bg-blue-700 hover:bg-blue-800 text-white text-sm px-4 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">
-                        📥 一鍵批次匯入備份 (JSON)
-                        <input type="file" id="importJsonFile" accept=".json" class="hidden">
-                    </label>
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-zinc-200/80">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="text-sm text-zinc-500 font-medium shrink-0">
+                        🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
+                    </div>
+                    <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-3.5 py-1 rounded-xl tracking-wide shadow-xs shrink-0">
+                        🔥 雲端全歷史總計 ➔ 排程預約總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
+                    </div>
                 </div>
                 
-                <input type="password" id="adminPassword" placeholder="輸入站點特權金鑰" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
-                <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition window cursor-pointer">認證特權暗號</button>
+                <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full lg:w-auto justify-start lg:justify-end">
+                    <div id="superAdminWrapper" class="flex flex-wrap gap-2 items-center hidden mr-2">
+                        <button type="button" id="exportAllCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出全庫總表 (CSV)</button>
+                        <button type="button" id="exportAllJsonBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出全庫備份 (JSON)</button>
+                        <button type="button" id="clearAllDbBtn" class="bg-red-700 hover:bg-red-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">🔥 一鍵清空資料庫</button>
+                        <label class="bg-blue-700 hover:bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">
+                            📥 匯入備份 (JSON)
+                            <input type="file" id="importJsonFile" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                    
+                    <input type="password" id="adminPassword" placeholder="輸入站點特權金鑰" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition cursor-pointer">認證特權暗號</button>
+                </div>
             </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
+                    <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
+                        <span class="text-xs font-bold text-zinc-500">從</span>
+                        <input type="date" id="publicExportStartDate" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        <span class="text-xs font-bold text-zinc-500">至</span>
+                        <input type="date" id="publicExportEndDate" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    </div>
+                    <button type="button" id="publicExportRangeBtn" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs font-bold cursor-pointer">
+                        📥 匯出選定區間報表 (Excel/CSV)
+                    </button>
+                </div>
+                <div class="shrink-0 w-full md:w-auto text-right">
+                    <button type="button" id="publicExportCsvBtn" class="w-full md:w-auto bg-zinc-700 hover:bg-zinc-800 text-white text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs font-bold cursor-pointer">
+                        📥 匯出全歷史總報表 (CSV)
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -374,9 +390,13 @@
         let activeSelectedProps = null; 
         let calendar; 
 
-        const now = new Date();
-        const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        document.getElementById('exportMonthFilter').value = currentYearMonth;
+        // 初始化自訂區間匯出預設日期（當月第一天至最後一天）
+        const dNow = new Date();
+        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
+        const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+        document.getElementById('publicExportStartDate').value = firstDayOfMonth;
+        document.getElementById('publicExportEndDate').value = lastDayOfMonth;
 
         // 📅 判斷日期是否為週三 (3) 或週四 (4)
         function isWedOrThu(dateStr) {
@@ -521,11 +541,9 @@
                     document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
                     document.getElementById('superAdminWrapper').classList.remove('hidden'); 
-                    document.getElementById('exportWrapper').classList.remove('hidden'); 
                 } else {
                     document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬港口快速編輯功能)`;
                     document.getElementById('currentRole').className = "font-bold text-emerald-700";
-                    document.getElementById('exportWrapper').classList.remove('hidden');
                 }
                 document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
                 document.getElementById('adminLoginBtn').style.display = "none";
@@ -1061,6 +1079,79 @@
                 }
             });
 
+            // 📥 免登入：自訂日期/月份區間報表匯出 (CSV / Excel)
+            document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
+                if (!localSchedules || localSchedules.length === 0) {
+                    alert("目前雲端沒有任何排程數據可供導出！");
+                    return;
+                }
+
+                const startD = document.getElementById('publicExportStartDate').value;
+                const endD = document.getElementById('publicExportEndDate').value;
+
+                if (!startD || !endD) {
+                    alert("🚨 請先選取匯出之『開始日期』與『結束日期』！");
+                    return;
+                }
+                if (startD > endD) {
+                    alert("🚨 開始日期不可晚於結束日期，請重新檢查！");
+                    return;
+                }
+
+                const filtered = localSchedules.filter(item => {
+                    if (!item.date) return false;
+                    const d = item.date.toString().replace(/\//g, '-');
+                    return d >= startD && d <= endD;
+                });
+
+                if (filtered.length === 0) {
+                    alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何排程資料！`);
+                    return;
+                }
+
+                if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
+
+                try {
+                    let csvContent = "\uFEFF預約日期,是否卸櫃,作業項目,移機標記,目前樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,機台最大重量,最大尺寸,吊運單號,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    const sorted = [...filtered].sort((a, b) => {
+                        const dateCmp = (a.date || "").localeCompare(b.date || "");
+                        if (dateCmp !== 0) return dateCmp;
+                        return (a.time || "").localeCompare(b.time || "");
+                    });
+
+                    sorted.forEach((d) => {
+                        const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const parsed = parseWorkerInfo(d.worker_name, d.weight_count);
+                        const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                        const cleanWeight = (d.weight_count || parsed.displayWeight || "");
+                        const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
+                        const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        const cleanCraneNo = (d.crane_no || "").replace(/"/g, '""');
+                        const cleanPoNo = (d.po_no || parsed.displayPo || "").replace(/"/g, '""');
+                        const relocateTag = d.is_relocate ? "是" : "否";
+                        const unloadStr = getUnloadStatus(d.time);
+                        const curF = d.floor || '1F';
+                        const targetF = d.target_floor || d.floor || '6F';
+                        const autoStatus = (curF === targetF) ? '已完成' : '未完成';
+                        const moveSt = d.move_status || autoStatus;
+                        
+                        csvContent += `"${d.date || ''}","${unloadStr}","${d.workType || '吊運'}","${relocateTag}","${curF}","${targetF}","${moveSt}","${d.department || ''}","${d.machine || '未填'}","${d.worker_name || '未填'}","${cleanWeight}","${cleanMainWeight}","${cleanMainSize}","${cleanCraneNo}","${cleanPoNo}","${cleanRemarks}","${localTimeStr}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `排程自訂區間報表_${startD}_至_${endD}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (err) {
+                    alert("🚨 導出失敗！請檢查網路連線。");
+                }
+            });
+
+            // 📥 免登入：全歷史總報表匯出 (CSV)
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1108,6 +1199,7 @@
                 }
             });
 
+            // 👑 SUPER 特權：全庫總表匯出 (CSV)
             document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
                 if (!confirm("📥 您確定要下載全體歷史排程總報表 CSV 檔案嗎？")) return;
@@ -1146,6 +1238,7 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
+            // 👑 SUPER 特權：全庫備份 (JSON)
             document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
                 if (!confirm("📥 是否下載雲端全資料庫備份 JSON 還原檔？")) return;
@@ -1169,6 +1262,7 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
+            // 👑 SUPER 特權：清空資料庫
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
                 const doubleCheck = confirm("🚨🚨🚨【警告】您確定要一鍵清空整個 Firebase 雲端資料庫嗎？");
                 if (doubleCheck) {
@@ -1187,6 +1281,7 @@
                 }
             });
 
+            // 👑 SUPER 特權：批次匯入備份
             document.getElementById('importJsonFile').addEventListener('change', function(e) {
                 const file = e.target.files[0]; if (!file) return;
                 const reader = new FileReader();
@@ -1279,35 +1374,6 @@
         document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
         document.getElementById('resetFilterBtn').addEventListener('click', () => {
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
-        });
-
-        document.getElementById('exportExcelBtn').addEventListener('click', () => {
-            if(localSchedules.length === 0) { alert("目前雲端沒有任何排程數據可以導出！"); return; }
-            const selectedMonth = document.getElementById('exportMonthFilter').value;
-            if (!selectedMonth) { alert("請先選擇要匯出的月份！"); return; }
-            const filteredSchedules = localSchedules.filter(item => item.date && item.date.startsWith(selectedMonth));
-            if (filteredSchedules.length === 0) { alert(`⚠️ 匯出失敗：在您指定的月份 [${selectedMonth}] 中，目前沒有數據。`); return; }
-
-            const backupJsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredSchedules, null, 2));
-            const jsonAnchor = document.createElement('a'); jsonAnchor.setAttribute("href", backupJsonString); jsonAnchor.setAttribute("download", `排程雲端數據還原檔_${selectedMonth}.json`);
-            document.body.appendChild(jsonAnchor); jsonAnchor.click(); document.body.removeChild(jsonAnchor);
-
-            let csvContent = "\uFEFF日期,是否卸櫃,作業項目,目前樓層,目標樓層,搬遷狀態,部門/站點,機台名稱,負責人姓名,件數 / 毛重總重/淨重總重,備註說明,建立時間(台灣時區)\n";
-            const sortedSchedules = [...filteredSchedules].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-            sortedSchedules.forEach(item => {
-                const parsed = parseWorkerInfo(item.worker_name, item.weight_count);
-                const cleanRemarks = (item.remarks || "").replace(/"/g, '""');
-                const cleanWeight = (item.weight_count || parsed.displayWeight || "");
-                const unloadStr = getUnloadStatus(item.time);
-                const curF = item.floor || '1F';
-                const targetF = item.target_floor || '6F';
-                const moveSt = item.move_status || ((curF === targetF) ? '已完成' : '未完成');
-                csvContent += `"${item.date}","${unloadStr}","${item.workType || '吊運'}","${curF}","${targetF}","${moveSt}","${item.department}","${item.machine || '未填'}","${item.worker_name}","${cleanWeight}","${cleanRemarks}","${formatToTaiwanTime(item.created_at)}"\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a"); link.setAttribute("href", url); link.setAttribute("download", `吊運及電梯排程月報表_${selectedMonth}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         });
 
         // 快速新增表單提交（含週三/週四 FC 禁填 1F 防呆）
