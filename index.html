@@ -154,6 +154,7 @@
     </div>
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
+        <!-- 頁首標題區與轉頁按鈕 -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
             <div></div>
             <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center">
@@ -164,6 +165,7 @@
             </a>
         </div>
 
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -284,6 +286,7 @@
             </div>
         </div>
 
+        <!-- 📢 看板與行事曆之間的跑馬燈公告欄 -->
         <div class="bg-amber-50 border border-amber-300/80 rounded-xl p-2.5 mb-6 flex items-center gap-3 shadow-xs overflow-hidden">
             <div class="flex items-center gap-1.5 shrink-0 bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-xs">
                 <span>📢</span>
@@ -301,8 +304,10 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
+        <!-- 底部控制列：包含免登入公開區間匯出與特權管理區 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col gap-4">
             
+            <!-- 上排：身分指示與管理員登入區 -->
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-zinc-200/80">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="text-sm text-zinc-500 font-medium shrink-0">
@@ -329,6 +334,7 @@
                 </div>
             </div>
 
+            <!-- 下排：【免登入公開報表匯出區】(支援自由選定日期/月份區間及全歷史匯出) -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
@@ -363,7 +369,11 @@
             "BEkldr": "BE/Recon",
             "RDLkldr": "RDL",
             "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN" 
+            "SUPERkldr": "SUPER_ADMIN",
+            /* [XH 臨時特權 - 開始] (具備與 SUPERkldr 完全相同之最高特權，日後可整段移除) */
+            "XH": "SUPER_ADMIN",
+            "XHkldr": "SUPER_ADMIN"
+            /* [XH 臨時特權 - 結束] */
         };
 
         const firebaseConfig = {
