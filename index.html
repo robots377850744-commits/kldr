@@ -118,6 +118,36 @@
             color: #27272a;
             line-height: 1.6;
         }
+
+        /* ⛈️ 8/23、8/24 豪雨取消吊掛專屬全格浮水印與背景警示 (方案 B) */
+        td[data-date="2026-08-23"],
+        td[data-date="2026-08-24"] {
+            background-color: #fee2e2 !important;
+        }
+        td[data-date="2026-08-23"] .fc-daygrid-day-frame,
+        td[data-date="2026-08-24"] .fc-daygrid-day-frame {
+            position: relative !important;
+        }
+        td[data-date="2026-08-23"] .fc-daygrid-day-frame::after,
+        td[data-date="2026-08-24"] .fc-daygrid-day-frame::after {
+            content: "⛈️ 豪雨取消吊掛";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-12deg);
+            font-size: 14px;
+            font-weight: 900;
+            color: #b91c1c;
+            opacity: 0.55;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(254, 242, 242, 0.85);
+            padding: 3px 6px;
+            border: 1.5px dashed #ef4444;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body class="min-h-screen p-3 md:p-6 lg:p-8">
@@ -583,26 +613,6 @@
                 initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
-                
-                // ⛈️ 方案 B：8/23、8/24 豪雨全格浮水印與背景警示
-                dayCellDidMount: function(arg) {
-                    if (arg.dateStr === '2026-08-23' || arg.dateStr === '2026-08-24') {
-                        arg.el.style.backgroundColor = '#fef2f2';
-                        const frame = arg.el.querySelector('.fc-daygrid-day-frame');
-                        if (frame) {
-                            frame.style.position = 'relative';
-                            frame.style.overflow = 'hidden';
-                            const watermark = document.createElement('div');
-                            watermark.className = 'pointer-events-none absolute inset-0 flex flex-col items-center justify-center select-none z-0 p-1';
-                            watermark.innerHTML = `
-                                <span class="text-red-600 font-black text-xs md:text-sm tracking-widest text-center opacity-30 transform -rotate-12 leading-tight">
-                                    ⛈️ 豪雨<br>取消吊掛
-                                </span>
-                            `;
-                            frame.appendChild(watermark);
-                        }
-                    }
-                },
 
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
@@ -646,7 +656,6 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 總覽彈窗：樓層與站點拆分 + 橫向滑動 UI/UX 優化 (min-w-[1350px])
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     const dayEvents = localSchedules.filter(item => {
@@ -748,7 +757,6 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 單筆卡片點擊詳細彈窗：目前樓層/預計樓層編輯，以及 SUPERkldr 強制覆蓋按鈕
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1406,7 +1414,6 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 快速新增表單提交（含週三/週四 FC 禁填 1F 防呆）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1416,7 +1423,6 @@
             const inputDept = document.getElementById('department').value;
             const inputFloor = document.getElementById('floor').value;
 
-            // 🛑 防呆檢查：非 SUPER 登入下，若日期為週三/週四且站點為 FC，禁止選擇 1F
             if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
                 alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請/填寫 1F 樓層！請重新選擇其他樓層。");
                 btn.disabled = false;
