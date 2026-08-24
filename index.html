@@ -584,6 +584,26 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
                 
+                // ⛈️ 方案 B：8/23、8/24 豪雨全格浮水印與背景警示
+                dayCellDidMount: function(arg) {
+                    if (arg.dateStr === '2026-08-23' || arg.dateStr === '2026-08-24') {
+                        arg.el.style.backgroundColor = '#fef2f2';
+                        const frame = arg.el.querySelector('.fc-daygrid-day-frame');
+                        if (frame) {
+                            frame.style.position = 'relative';
+                            frame.style.overflow = 'hidden';
+                            const watermark = document.createElement('div');
+                            watermark.className = 'pointer-events-none absolute inset-0 flex flex-col items-center justify-center select-none z-0 p-1';
+                            watermark.innerHTML = `
+                                <span class="text-red-600 font-black text-xs md:text-sm tracking-widest text-center opacity-30 transform -rotate-12 leading-tight">
+                                    ⛈️ 豪雨<br>取消吊掛
+                                </span>
+                            `;
+                            frame.appendChild(watermark);
+                        }
+                    }
+                },
+
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
