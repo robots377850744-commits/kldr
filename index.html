@@ -175,7 +175,14 @@
                 <button id="modalSpecialDateBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">⛈️ 設定/修改本日特殊標記</button>
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
-                <button id="modalToggleWorkTypeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔄 變更作業項目</button>
+                
+                <!-- 方案 C：3 顆獨立切換快捷鍵按鈕組 -->
+                <div id="modalWorkTypeButtonsGroup" class="flex flex-wrap items-center gap-1.5 hidden">
+                    <button id="modalSetCraneBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🔴 改為吊運</button>
+                    <button id="modalSetElevatorBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🟡 改為電梯</button>
+                    <button id="modalSetShiftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🔵 改為平移</button>
+                </div>
+
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
             </div>
@@ -240,7 +247,7 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區（已新增 🔵 平移） -->
+        <!-- 快速新增表單區（含 🔵 平移） -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -920,7 +927,7 @@
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
                     document.getElementById('modalDeleteBtn').classList.add('hidden'); 
-                    document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
+                    document.getElementById('modalWorkTypeButtonsGroup').classList.add('hidden'); 
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
                     document.getElementById('modalCopyBtn').classList.add('hidden'); 
 
@@ -942,6 +949,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 📋 單筆卡片點擊詳細彈窗（方案 C：內建下拉選單 ＋ 底部 3 顆快捷鍵按鈕）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -955,12 +963,21 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "", unloadContentHtml = "";
+                    let dateContentHtml = "", floorContentHtml = "", unloadContentHtml = "", workTypeContentHtml = "";
                     const currentUnload = getUnloadStatus(props.timePeriod);
 
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         
+                        // 方案 C：明細表單內建下拉選單
+                        workTypeContentHtml = `
+                            <select id="modalWorkTypeSelect" class="bg-white border border-zinc-300 text-zinc-900 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                                <option value="吊運" ${activeSelectedDocType === '吊運' ? 'selected' : ''}>🔴 吊運</option>
+                                <option value="電梯" ${activeSelectedDocType === '電梯' ? 'selected' : ''}>🟡 電梯</option>
+                                <option value="平移" ${activeSelectedDocType === '平移' ? 'selected' : ''}>🔵 平移</option>
+                            </select>
+                        `;
+
                         const autoComputedStatus = (activeFloor === activeTargetFloor) ? "已完成" : "未完成";
                         const currentStatus = props.move_status || autoComputedStatus;
 
@@ -1010,6 +1027,11 @@
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${activeFloor} / ${activeTargetFloor} (${props.move_status || '已完成'})</span>`;
                         unloadContentHtml = `<span class="text-zinc-900 font-bold">${currentUnload}</span>`;
+                        
+                        let displayEmoji = "🔴";
+                        if (activeSelectedDocType === "電梯") displayEmoji = "🟡";
+                        else if (activeSelectedDocType === "平移") displayEmoji = "🔵";
+                        workTypeContentHtml = `<span class="text-blue-700 font-black">${displayEmoji} ${activeSelectedDocType}</span>`;
                     }
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
@@ -1083,7 +1105,7 @@
                         relocateBlock +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
                         `• <b>是否卸櫃：</b>${unloadContentHtml}<br>` +
-                        `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
+                        `• <b>作業項目：</b>${workTypeContentHtml}<br>` +
                         `• <b>樓層進度調校：</b>${floorContentHtml}<br>` +
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
@@ -1102,20 +1124,12 @@
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
                         document.getElementById('modalCopyBtn').classList.remove('hidden'); 
-                        
-                        // 🔄 三段式順暢輪替：吊運 ➔ 電梯 ➔ 平移 ➔ 吊運
-                        let nextType = "電梯";
-                        if (activeSelectedDocType === "吊運") nextType = "電梯";
-                        else if (activeSelectedDocType === "電梯") nextType = "平移";
-                        else if (activeSelectedDocType === "平移") nextType = "吊運";
-
-                        document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
-                        document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
+                        document.getElementById('modalWorkTypeButtonsGroup').classList.remove('hidden'); 
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
                         document.getElementById('modalCopyBtn').classList.add('hidden');
-                        document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden');
+                        document.getElementById('modalWorkTypeButtonsGroup').classList.add('hidden');
                     }
                     document.getElementById('customAlertModal').style.display = 'flex';
                 }
@@ -1150,6 +1164,7 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
+            // 💾 儲存寫入邏輯（同步作業項目下拉選單）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1158,6 +1173,7 @@
                 let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : null;
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
+                let workTypeVal = document.getElementById('modalWorkTypeSelect') ? document.getElementById('modalWorkTypeSelect').value : activeSelectedDocType;
                 
                 if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr)) {
                     if (floorVal === "1F" || targetFloorVal === "1F") {
@@ -1198,7 +1214,8 @@
                         crane_no: cNo,
                         po_no: poNo,
                         is_relocate: isRelocateVal,
-                        move_status: computedStatus
+                        move_status: computedStatus,
+                        workType: workTypeVal || "吊運"
                     };
                     if (dStr) updatePayload.date = dStr;
                     if (floorVal) updatePayload.floor = floorVal;
@@ -1206,10 +1223,11 @@
                     if (unloadSelectVal) updatePayload.time = unloadSelectVal;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！內容與樓層進度已即時同步雲端。"); closeCustomModal();
+                    alert("🎉 變更儲存成功！內容、樓層進度與作業項目已即時同步雲端。"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
+            // 📋 複製邏輯
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1221,6 +1239,7 @@
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let computedStatus = (superOverride !== "AUTO") ? superOverride : ((floorVal === targetFloorVal) ? "已完成" : "未完成");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
+                let workTypeVal = document.getElementById('modalWorkTypeSelect') ? document.getElementById('modalWorkTypeSelect').value : (activeSelectedDocType || "吊運");
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
 
@@ -1262,7 +1281,7 @@
                 const payload = {
                     date: targetDate,
                     time: unloadSelectVal,
-                    workType: activeSelectedDocType || "吊運",
+                    workType: workTypeVal || "吊運",
                     floor: floorVal,
                     target_floor: targetFloorVal,
                     move_status: computedStatus,
@@ -1298,23 +1317,28 @@
                 }
             });
 
-            // 🔄 作業項目按鈕直接依序輪替 (吊運 ➔ 電梯 ➔ 平移 ➔ 吊運)
-            document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
+            // 方案 C：3 顆獨立切換快捷鍵處理函式
+            async function quickChangeWorkType(targetType) {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                
-                let nextType = "電梯";
-                if (activeSelectedDocType === "吊運") nextType = "電梯";
-                else if (activeSelectedDocType === "電梯") nextType = "平移";
-                else if (activeSelectedDocType === "平移") nextType = "吊運";
-
-                if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？`)) {
+                if (activeSelectedDocType === targetType) {
+                    alert(`⚠️ 目前已經是【${targetType}】作業項目！`);
+                    return;
+                }
+                if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${targetType}】嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
-                        await updateDoc(docRef, { workType: nextType });
-                        alert("🎉 變更成功！"); closeCustomModal();
-                    } catch (error) { alert("🚨 變更失敗！"); }
+                        await updateDoc(docRef, { workType: targetType });
+                        alert(`🎉 作業項目已成功變更為【${targetType}】！`);
+                        closeCustomModal();
+                    } catch (error) {
+                        alert("🚨 變更失敗！請檢查權限。");
+                    }
                 }
-            });
+            }
+
+            document.getElementById('modalSetCraneBtn').addEventListener('click', () => quickChangeWorkType('吊運'));
+            document.getElementById('modalSetElevatorBtn').addEventListener('click', () => quickChangeWorkType('電梯'));
+            document.getElementById('modalSetShiftBtn').addEventListener('click', () => quickChangeWorkType('平移'));
 
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
