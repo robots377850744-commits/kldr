@@ -196,7 +196,6 @@
             </div>
 
             <div class="py-4 space-y-4">
-                <!-- 新增標記表單 -->
                 <div class="bg-zinc-50 p-3.5 rounded-xl border border-zinc-200 space-y-3">
                     <span class="text-xs font-black text-zinc-700 block">➕ 新增 / 覆蓋特殊標記日期：</span>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -216,7 +215,6 @@
                     </div>
                 </div>
 
-                <!-- 目前已標記清單 -->
                 <div>
                     <span class="text-xs font-black text-zinc-700 mb-2 block">📋 目前已生效的特殊標記清單：</span>
                     <div class="overflow-y-auto max-h-56 border border-zinc-200 rounded-xl divide-y divide-zinc-200 bg-white" id="specialDatesListContainer">
@@ -242,7 +240,7 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區 -->
+        <!-- 快速新增表單區（已新增 🔵 平移） -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div>
@@ -261,6 +259,7 @@
                     <select id="workType" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-bold text-blue-700">
                         <option value="吊運">🔴 吊運</option>
                         <option value="電梯">🟡 電梯</option>
+                        <option value="平移">🔵 平移</option>
                     </select>
                 </div>
                 <div>
@@ -480,7 +479,7 @@
         let activeDateStr = null; 
         let calendar; 
 
-        // ⛈️ 特殊日期動態標記儲存物件（預設含 8/23、8/24 豪雨）
+        // ⛈️ 特殊日期動態標記儲存物件
         let specialDatesMap = {
             "2026-08-23": "⛈️ 豪雨取消吊掛",
             "2026-08-24": "⛈️ 豪雨取消吊掛"
@@ -527,7 +526,6 @@
             }
         }
 
-        // 監聽雲端特殊日期設定
         onSnapshot(specialDatesDocRef, (snap) => {
             if (snap.exists() && snap.data().marks) {
                 specialDatesMap = snap.data().marks;
@@ -536,7 +534,6 @@
             renderSpecialDatesManageList();
         });
 
-        // 📅 判斷日期是否為週三 (3) 或週四 (4)
         function isWedOrThu(dateStr) {
             if (!dateStr) return false;
             const parts = dateStr.replace(/\//g, '-').split('-');
@@ -549,7 +546,6 @@
             return (day === 3 || day === 4);
         }
 
-        // 📢 跑馬燈自訂編輯與儲存函式
         window.editMarqueeAnnouncement = async function() {
             const currentContent = document.getElementById('marqueeDisplay').innerText.trim();
             const newContent = prompt("📢 請輸入要顯示在跑馬燈上的即時公告內容：", currentContent);
@@ -571,7 +567,6 @@
             }
         };
 
-        // 監聽跑馬燈即時變更
         onSnapshot(marqueeDocRef, (snap) => {
             if (snap.exists() && snap.data().text) {
                 document.getElementById('marqueeDisplay').innerText = snap.data().text;
@@ -777,10 +772,15 @@
                     applySpecialDateStyles();
                 },
 
+                // 🎨 行事曆卡片排程文字前綴渲染 (🔴 吊運 / 🟡 電梯 / 🔵 平移)
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
-                    const typeEmoji = props.workType === "電梯" ? "🟡" : "🔴";
+                    
+                    let typeEmoji = "🔴";
+                    if (props.workType === "電梯") typeEmoji = "🟡";
+                    else if (props.workType === "平移") typeEmoji = "🔵";
+
                     const floorStr = props.floor ? `[${props.floor}]` : "";
                     const deptStr = props.department || "";
                     const machineStr = props.machine ? `${props.machine}` : "未填機台";
@@ -841,9 +841,13 @@
                         });
                         sortedEvents.forEach(e => {
                             const parsed = parseWorkerInfo(e.worker_name, e.weight_count);
-                            const typeBadge = e.workType === "電梯" 
-                                ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md text-xs font-black">🟡 電梯</span>`
-                                : `<span class="bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded-md text-xs font-black">🔴 吊運</span>`;
+                            
+                            let typeBadge = `<span class="bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded-md text-xs font-black">🔴 吊運</span>`;
+                            if (e.workType === "電梯") {
+                                typeBadge = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-md text-xs font-black">🟡 電梯</span>`;
+                            } else if (e.workType === "平移") {
+                                typeBadge = `<span class="bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 rounded-md text-xs font-black">🔵 平移</span>`;
+                            }
                             
                             const deptColor = getDeptColor(e.department || "");
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
@@ -883,7 +887,7 @@
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="11" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運 or 電梯預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="11" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前產線無 any 吊運、電梯或平移預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
@@ -920,7 +924,6 @@
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
                     document.getElementById('modalCopyBtn').classList.add('hidden'); 
 
-                    // ⛈️ SUPER / XH 入口 1：單日標記按鈕
                     const isSuper = (currentAdminDept === "SUPER_ADMIN");
                     const markBtn = document.getElementById('modalSpecialDateBtn');
                     if (isSuper) {
@@ -1099,7 +1102,13 @@
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
                         document.getElementById('modalCopyBtn').classList.remove('hidden'); 
-                        const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
+                        
+                        // 🔄 三段式順暢輪替：吊運 ➔ 電梯 ➔ 平移 ➔ 吊運
+                        let nextType = "電梯";
+                        if (activeSelectedDocType === "吊運") nextType = "電梯";
+                        else if (activeSelectedDocType === "電梯") nextType = "平移";
+                        else if (activeSelectedDocType === "平移") nextType = "吊運";
+
                         document.getElementById('modalToggleWorkTypeBtn').innerText = `🔄 直接變更作業項目為：【${nextType}】`;
                         document.getElementById('modalToggleWorkTypeBtn').classList.remove('hidden');
                     } else {
@@ -1115,11 +1124,10 @@
 
             applyLiveFilters();
 
-            // ⛈️ SUPER / XH 入口 1 點擊處理邏輯
             document.getElementById('modalSpecialDateBtn').addEventListener('click', async () => {
                 if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
                 const currentText = specialDatesMap[activeDateStr] || "⛈️ 豪雨取消吊掛";
-                const choice = prompt(`【${activeDateStr} 特殊日期標記設定】\n\n請輸入標記文字（如：⛈️ 豪雨取消吊掛 / 🌪️ 颱風停工）：\n（若要「清除標記」，請將輸入框完全清空或輸入 CLEAR）`, currentText);
+                const choice = prompt(`【${activeDateStr} 特殊日期標記設定】\n\n請輸入標記文字（如：⛈️ 豪雨取消吊掛 / 🌪️ 颱風停工 / 🚧 廠區歲修）：\n（若要「清除標記」，請將輸入框完全清空或輸入 CLEAR）`, currentText);
                 if (choice === null) return;
 
                 if (choice.trim() === "" || choice.trim().toUpperCase() === "CLEAR") {
@@ -1134,7 +1142,6 @@
                 closeCustomModal();
             });
 
-            // ⛈️ SUPER / XH 入口 2：開啟管理清單
             document.getElementById('openSpecialDatesManageBtn').addEventListener('click', () => {
                 if (currentAdminDept !== "SUPER_ADMIN") return;
                 const today = getTodayYMD();
@@ -1143,7 +1150,6 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存寫入邏輯（含週三/週四 FC 禁設 1F 防呆）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1204,7 +1210,6 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（含週三/週四 FC 禁設 1F 防呆）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1293,9 +1298,15 @@
                 }
             });
 
+            // 🔄 作業項目按鈕直接依序輪替 (吊運 ➔ 電梯 ➔ 平移 ➔ 吊運)
             document.getElementById('modalToggleWorkTypeBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
-                const nextType = activeSelectedDocType === "吊運" ? "電梯" : "吊運";
+                
+                let nextType = "電梯";
+                if (activeSelectedDocType === "吊運") nextType = "電梯";
+                else if (activeSelectedDocType === "電梯") nextType = "平移";
+                else if (activeSelectedDocType === "平移") nextType = "吊運";
+
                 if (confirm(`🔄 您確定要直接將這筆排程的作業項目修改為【${nextType}】嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
@@ -1305,7 +1316,6 @@
                 }
             });
 
-            // 歷史日期紀錄（< 今天日期）非 SUPERkldr 阻斷刪除
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1326,7 +1336,6 @@
                 }
             });
 
-            // 📥 免登入：自訂日期/月份區間報表匯出 (CSV / Excel)
             document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1398,7 +1407,6 @@
                 }
             });
 
-            // 📥 免登入：全歷史總報表匯出 (CSV)
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何排程數據可供導出！");
@@ -1446,7 +1454,6 @@
                 }
             });
 
-            // 👑 SUPER 特權：全庫總表匯出 (CSV)
             document.getElementById('exportAllCsvBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
                 if (!confirm("📥 您確定要下載全體歷史排程總報表 CSV 檔案嗎？")) return;
@@ -1485,7 +1492,6 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
-            // 👑 SUPER 特權：全庫備份 (JSON)
             document.getElementById('exportAllJsonBtn').addEventListener('click', async () => {
                 if(currentAdminDept !== "SUPER_ADMIN") return alert("🚨 特權拒絕！");
                 if (!confirm("📥 是否下載雲端全資料庫備份 JSON 還原檔？")) return;
@@ -1509,7 +1515,6 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
-            // 👑 SUPER 特權：清空資料庫
             document.getElementById('clearAllDbBtn').addEventListener('click', async () => {
                 const doubleCheck = confirm("🚨🚨🚨【警告】您確定要一鍵清空整個 Firebase 雲端資料庫嗎？");
                 if (doubleCheck) {
@@ -1528,7 +1533,6 @@
                 }
             });
 
-            // 👑 SUPER 特權：批次匯入備份
             document.getElementById('importJsonFile').addEventListener('change', function(e) {
                 const file = e.target.files[0]; if (!file) return;
                 const reader = new FileReader();
@@ -1623,7 +1627,6 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 快速新增表單提交（含週三/週四 FC 禁填 1F 防呆）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
