@@ -27,6 +27,7 @@
 
         .fc-daygrid-day-frame {
             min-height: 105px !important;
+            position: relative !important;
         }
         
         .fc-event { 
@@ -39,6 +40,8 @@
             display: block !important; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.07);
             transition: transform 0.1s ease;
+            position: relative;
+            z-index: 5;
         }
 
         .fc-event:hover {
@@ -66,6 +69,8 @@
             color: #27272a !important;
             padding: 6px 8px !important;
             font-weight: 600;
+            position: relative;
+            z-index: 5;
         }
         .fc .fc-day-today {
             background-color: #fefce8 !important;
@@ -119,30 +124,23 @@
             line-height: 1.6;
         }
 
-        /* ⛈️ 8/23、8/24 豪雨取消吊掛專屬全格浮水印與背景警示 (方案 B) */
-        td[data-date="2026-08-23"],
-        td[data-date="2026-08-24"] {
+        /* ⛈️ 動態特殊日期/豪雨標記專屬浮水印樣式 */
+        .special-date-cell {
             background-color: #fee2e2 !important;
         }
-        td[data-date="2026-08-23"] .fc-daygrid-day-frame,
-        td[data-date="2026-08-24"] .fc-daygrid-day-frame {
-            position: relative !important;
-        }
-        td[data-date="2026-08-23"] .fc-daygrid-day-frame::after,
-        td[data-date="2026-08-24"] .fc-daygrid-day-frame::after {
-            content: "⛈️ 豪雨取消吊掛";
+        .special-date-watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-12deg);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 900;
             color: #b91c1c;
-            opacity: 0.55;
+            opacity: 0.65;
             white-space: nowrap;
             pointer-events: none;
-            z-index: 10;
-            background: rgba(254, 242, 242, 0.85);
+            z-index: 2;
+            background: rgba(254, 242, 242, 0.9);
             padding: 3px 6px;
             border: 1.5px dashed #ef4444;
             border-radius: 6px;
@@ -174,11 +172,60 @@
             <div id="modalBody" class="font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
             </div>
             <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
+                <button id="modalSpecialDateBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">⛈️ 設定/修改本日特殊標記</button>
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
                 <button id="modalToggleWorkTypeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔄 變更作業項目</button>
                 <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
                 <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUPER / XH 專屬：特殊日期標記清單管理彈窗 -->
+    <div id="specialDatesManageModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-zinc-800 w-full max-w-xl rounded-2xl shadow-2xl p-6 text-zinc-800">
+            <div class="flex justify-between items-center pb-3 border-b border-zinc-200">
+                <div>
+                    <h3 class="text-base font-extrabold text-zinc-900 flex items-center gap-2">
+                        ⛈️ 特殊日期與天氣標記管理
+                    </h3>
+                    <p class="text-xs text-zinc-500 font-bold mt-0.5">標記後將即時於月曆呈現半透明浮水印與淡紅警示背景</p>
+                </div>
+                <button onclick="closeSpecialDatesManageModal()" class="text-zinc-400 hover:text-zinc-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="py-4 space-y-4">
+                <!-- 新增標記表單 -->
+                <div class="bg-zinc-50 p-3.5 rounded-xl border border-zinc-200 space-y-3">
+                    <span class="text-xs font-black text-zinc-700 block">➕ 新增 / 覆蓋特殊標記日期：</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-zinc-500 mb-1">目標日期</label>
+                            <input type="date" id="newSpecialDateInput" class="w-full bg-white border border-zinc-300 text-zinc-800 font-bold rounded-lg p-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-[11px] font-bold text-zinc-500 mb-1">標記文字說明</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="newSpecialTextInput" placeholder="例如：⛈️ 豪雨取消吊掛" value="⛈️ 豪雨取消吊掛" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                                <button type="button" onclick="addNewSpecialDateMark()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg shrink-0 shadow-xs cursor-pointer">
+                                    確認新增
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 目前已標記清單 -->
+                <div>
+                    <span class="text-xs font-black text-zinc-700 mb-2 block">📋 目前已生效的特殊標記清單：</span>
+                    <div class="overflow-y-auto max-h-56 border border-zinc-200 rounded-xl divide-y divide-zinc-200 bg-white" id="specialDatesListContainer">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-3 border-t border-zinc-200">
+                <button onclick="closeSpecialDatesManageModal()" class="px-4 py-2 bg-zinc-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-md">關閉管理視窗</button>
             </div>
         </div>
     </div>
@@ -350,6 +397,7 @@
                 
                 <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full lg:w-auto justify-start lg:justify-end">
                     <div id="superAdminWrapper" class="flex flex-wrap gap-2 items-center hidden mr-2">
+                        <button type="button" id="openSpecialDatesManageBtn" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">⛈️ 特殊日期標記管理</button>
                         <button type="button" id="exportAllCsvBtn" class="bg-teal-700 hover:bg-teal-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出全庫總表 (CSV)</button>
                         <button type="button" id="exportAllJsonBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">📥 匯出全庫備份 (JSON)</button>
                         <button type="button" id="clearAllDbBtn" class="bg-red-700 hover:bg-red-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow font-bold cursor-pointer">🔥 一鍵清空資料庫</button>
@@ -364,7 +412,7 @@
                 </div>
             </div>
 
-            <!-- 下排：【免登入公開報表匯出區】(支援自由選定日期/月份區間及全歷史匯出) -->
+            <!-- 下排：【免登入公開報表匯出區】 -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
@@ -419,6 +467,7 @@
         const db = getFirestore(app);
         const scheduleRef = collection(db, "kldr");
         const marqueeDocRef = doc(db, "kldr_settings", "announcement");
+        const specialDatesDocRef = doc(db, "kldr_settings", "special_dates");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -428,15 +477,64 @@
         let activeSelectedDocDept = null; 
         let activeSelectedDocType = null; 
         let activeSelectedProps = null; 
+        let activeDateStr = null; 
         let calendar; 
 
-        // 初始化自訂區間匯出預設日期（當月第一天至最後一天）
+        // ⛈️ 特殊日期動態標記儲存物件（預設含 8/23、8/24 豪雨）
+        let specialDatesMap = {
+            "2026-08-23": "⛈️ 豪雨取消吊掛",
+            "2026-08-24": "⛈️ 豪雨取消吊掛"
+        };
+
+        // 初始化自訂區間匯出預設日期
         const dNow = new Date();
         const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
         const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
+
+        // 🎨 動態渲染特殊日期浮水印與淡紅背景
+        function applySpecialDateStyles() {
+            document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
+                const dateStr = td.getAttribute('data-date');
+                const frame = td.querySelector('.fc-daygrid-day-frame');
+                if (!frame) return;
+
+                const existingWatermark = frame.querySelector('.special-date-watermark');
+                if (existingWatermark) existingWatermark.remove();
+
+                if (specialDatesMap && specialDatesMap[dateStr]) {
+                    td.classList.add('special-date-cell');
+                    const markDiv = document.createElement('div');
+                    markDiv.className = 'special-date-watermark';
+                    markDiv.innerText = specialDatesMap[dateStr];
+                    frame.appendChild(markDiv);
+                } else {
+                    td.classList.remove('special-date-cell');
+                }
+            });
+        }
+
+        async function saveSpecialDatesToFirebase() {
+            try {
+                await setDoc(specialDatesDocRef, {
+                    marks: specialDatesMap,
+                    updated_at: new Date().toISOString()
+                }, { merge: true });
+            } catch (err) {
+                console.error("Save special dates error:", err);
+            }
+        }
+
+        // 監聽雲端特殊日期設定
+        onSnapshot(specialDatesDocRef, (snap) => {
+            if (snap.exists() && snap.data().marks) {
+                specialDatesMap = snap.data().marks;
+            }
+            applySpecialDateStyles();
+            renderSpecialDatesManageList();
+        });
 
         // 📅 判斷日期是否為週三 (3) 或週四 (4)
         function isWedOrThu(dateStr) {
@@ -554,6 +652,67 @@
             activeSelectedDocDept = null;
             activeSelectedDocType = null;
             activeSelectedProps = null;
+            activeDateStr = null;
+        }
+
+        window.closeSpecialDatesManageModal = function() {
+            document.getElementById('specialDatesManageModal').classList.add('hidden');
+        }
+
+        window.renderSpecialDatesManageList = function() {
+            const container = document.getElementById('specialDatesListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const keys = Object.keys(specialDatesMap).sort();
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-zinc-400 font-bold">目前尚無任何生效中的特殊標記日期</div>`;
+                return;
+            }
+
+            keys.forEach(d => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between p-2.5 hover:bg-zinc-50 transition text-xs';
+                itemDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-black text-zinc-800">${d}</span>
+                        <span class="text-red-700 font-bold bg-red-50 border border-red-200 px-2 py-0.5 rounded">${specialDatesMap[d]}</span>
+                    </div>
+                    <button type="button" onclick="deleteSpecialDateMark('${d}')" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2 py-1 rounded text-xs transition cursor-pointer">
+                        🗑️ 刪除
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        window.addNewSpecialDateMark = async function() {
+            const dateVal = document.getElementById('newSpecialDateInput').value;
+            const textVal = document.getElementById('newSpecialTextInput').value.trim();
+
+            if (!dateVal) {
+                alert("請先選取目標日期！");
+                return;
+            }
+            if (!textVal) {
+                alert("請輸入標記文字！");
+                return;
+            }
+
+            specialDatesMap[dateVal] = textVal;
+            await saveSpecialDatesToFirebase();
+            applySpecialDateStyles();
+            renderSpecialDatesManageList();
+            alert(`🎉 已成功新增 [ ${dateVal} ] 特殊標記：${textVal}`);
+        }
+
+        window.deleteSpecialDateMark = async function(dateKey) {
+            if (!confirm(`⚠️ 是否確認刪除 [ ${dateKey} ] 的特殊日期標記？`)) return;
+            delete specialDatesMap[dateKey];
+            await saveSpecialDatesToFirebase();
+            applySpecialDateStyles();
+            renderSpecialDatesManageList();
+            alert(`🎉 已成功刪除 [ ${dateKey} ] 的特殊標記！`);
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
@@ -614,6 +773,10 @@
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
 
+                datesSet: function() {
+                    applySpecialDateStyles();
+                },
+
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -658,6 +821,7 @@
 
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
+                    activeDateStr = targetDate;
                     const dayEvents = localSchedules.filter(item => {
                         if (!item.date) return false;
                         const dStr = item.date.toString().trim();
@@ -746,7 +910,8 @@
                             </table>
                         </div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】`;
+                    const markTagText = specialDatesMap[targetDate] ? `【${specialDatesMap[targetDate]}】` : '';
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText}`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
@@ -754,6 +919,23 @@
                     document.getElementById('modalToggleWorkTypeBtn').classList.add('hidden'); 
                     document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
                     document.getElementById('modalCopyBtn').classList.add('hidden'); 
+
+                    // ⛈️ SUPER / XH 入口 1：單日標記按鈕
+                    const isSuper = (currentAdminDept === "SUPER_ADMIN");
+                    const markBtn = document.getElementById('modalSpecialDateBtn');
+                    if (isSuper) {
+                        markBtn.classList.remove('hidden');
+                        if (specialDatesMap[targetDate]) {
+                            markBtn.innerText = `⛈️ 編輯/清除本日特殊標記 (${specialDatesMap[targetDate]})`;
+                            markBtn.className = "bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md";
+                        } else {
+                            markBtn.innerText = `⛈️ 設定本日特殊標記`;
+                            markBtn.className = "bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md";
+                        }
+                    } else {
+                        markBtn.classList.add('hidden');
+                    }
+
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
@@ -911,6 +1093,7 @@
                     document.getElementById('modalTitle').innerText = `📋 預約排程單筆明細`;
                     document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
+                    document.getElementById('modalSpecialDateBtn').classList.add('hidden');
                     
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
@@ -932,6 +1115,34 @@
 
             applyLiveFilters();
 
+            // ⛈️ SUPER / XH 入口 1 點擊處理邏輯
+            document.getElementById('modalSpecialDateBtn').addEventListener('click', async () => {
+                if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
+                const currentText = specialDatesMap[activeDateStr] || "⛈️ 豪雨取消吊掛";
+                const choice = prompt(`【${activeDateStr} 特殊日期標記設定】\n\n請輸入標記文字（如：⛈️ 豪雨取消吊掛 / 🌪️ 颱風停工）：\n（若要「清除標記」，請將輸入框完全清空或輸入 CLEAR）`, currentText);
+                if (choice === null) return;
+
+                if (choice.trim() === "" || choice.trim().toUpperCase() === "CLEAR") {
+                    delete specialDatesMap[activeDateStr];
+                } else {
+                    specialDatesMap[activeDateStr] = choice.trim();
+                }
+
+                await saveSpecialDatesToFirebase();
+                applySpecialDateStyles();
+                alert("🎉 特殊日期標記已成功更新並同步至全體雲端！");
+                closeCustomModal();
+            });
+
+            // ⛈️ SUPER / XH 入口 2：開啟管理清單
+            document.getElementById('openSpecialDatesManageBtn').addEventListener('click', () => {
+                if (currentAdminDept !== "SUPER_ADMIN") return;
+                const today = getTodayYMD();
+                document.getElementById('newSpecialDateInput').value = today;
+                renderSpecialDatesManageList();
+                document.getElementById('specialDatesManageModal').classList.remove('hidden');
+            });
+
             // 💾 儲存寫入邏輯（含週三/週四 FC 禁設 1F 防呆）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
@@ -942,7 +1153,6 @@
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 
-                // 🛑 防呆檢查：非 SUPER 管理員，每逢週三/週四 FC 站點禁止設定目前或預計樓層為 1F
                 if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr)) {
                     if (floorVal === "1F" || targetFloorVal === "1F") {
                         alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定或變更為 1F 樓層！請重新選擇其他樓層。");
@@ -1009,7 +1219,6 @@
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
 
-                // 🛑 防呆檢查：非 SUPER 管理員，複製目標日期若為週三/週四且為 FC，禁止設定為 1F
                 if (currentAdminDept !== "SUPER_ADMIN" && targetDept === "FC" && isWedOrThu(targetDate)) {
                     if (floorVal === "1F" || targetFloorVal === "1F") {
                         alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止複製排程至 1F 樓層！請重新選擇其他樓層。");
@@ -1414,6 +1623,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
+        // 快速新增表單提交（含週三/週四 FC 禁填 1F 防呆）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
