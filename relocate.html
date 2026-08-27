@@ -173,7 +173,7 @@
             </a>
         </div>
 
-        <!-- 移機排程表單區 -->
+        <!-- 定位排程表單區 -->
         <form id="relocateForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <!-- 第一排：5 大基礎欄位 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -204,11 +204,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                    <input type="text" id="machine" placeholder="例如：飛機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
-                    <input type="text" id="workerInfo" placeholder="例如：汯勳 28006" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="workerInfo" placeholder="例如：張三 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
             </div>
 
@@ -236,7 +236,7 @@
                 </div>
                 <div class="flex items-end sm:col-span-2 md:col-span-3 lg:col-span-1">
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-sm h-[40px]">
-                        確認移機排程
+                        確認定位排程
                     </button>
                 </div>
             </div>
@@ -286,7 +286,7 @@
                         🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
                     </div>
                     <div class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-3.5 py-1 rounded-xl tracking-wide shadow-xs shrink-0">
-                        🚚 雲端移機總排程數：<span id="globalRelocateTotalSpan" class="text-base text-indigo-900 font-black underline decoration-double">0</span> 台
+                        🚚 雲端定位總排程數：<span id="globalRelocateTotalSpan" class="text-base text-indigo-900 font-black underline decoration-double">0</span> 台
                     </div>
                 </div>
                 
@@ -312,7 +312,7 @@
                 </div>
                 <div class="shrink-0 w-full md:w-auto text-right">
                     <button type="button" id="publicExportCsvBtn" class="w-full md:w-auto bg-zinc-700 hover:bg-zinc-800 text-white text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs font-bold cursor-pointer">
-                        📥 匯出全移機總報表 (CSV)
+                        📥 匯出全定位總報表 (CSV)
                     </button>
                 </div>
             </div>
@@ -321,7 +321,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD  = "kl"; 
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
@@ -357,6 +357,7 @@
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
         let activeSelectedProps = null; 
+        let activeDateStr = null;
         let calendar; 
 
         // 初始化自訂區間預設日期
@@ -411,6 +412,7 @@
             activeSelectedDocId = null;
             activeSelectedDocDept = null;
             activeSelectedProps = null;
+            activeDateStr = null;
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
@@ -435,7 +437,7 @@
             if (ADMIN_PASSWORDS[input]) {
                 currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
                 if (currentAdminDept === "SUPER_ADMIN") {
-                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 移機特權完全開通`;
+                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 定位特權與順序調整完全開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
                 } else {
                     document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員`;
@@ -443,7 +445,7 @@
                 }
                 document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
                 document.getElementById('adminLoginBtn').style.display = "none";
-                alert(`權限驗證成功！您現在具備維護 ${currentAdminDept} 移機排程的權限。`);
+                alert(`權限驗證成功！您現在具備維護 ${currentAdminDept} 定位排程與調整順序的權限。`);
             } else { alert("特權金鑰錯誤！"); }
         });
 
@@ -463,19 +465,153 @@
             }
         }
 
+        // 🚀 方案 C：SUPER / XH 總覽視窗內 ⬆️ / ⬇️ 快速對調順序
+        window.moveRelocateOrder = async function(docId, dateStr, direction) {
+            if (currentAdminDept !== "SUPER_ADMIN") return;
+
+            const dayItems = localSchedules
+                .filter(item => (item.date || "").replace(/\//g, '-') === dateStr.replace(/\//g, '-'))
+                .map((item, idx) => ({ ...item, order_num: parseInt(item.order_num) || (idx + 1) }))
+                .sort((a, b) => a.order_num - b.order_num);
+
+            const currentIndex = dayItems.findIndex(i => i.id === docId);
+            if (currentIndex === -1) return;
+
+            const targetIndex = direction === 'UP' ? currentIndex - 1 : currentIndex + 1;
+            if (targetIndex < 0 || targetIndex >= dayItems.length) return;
+
+            const currentItem = dayItems[currentIndex];
+            const targetItem = dayItems[targetIndex];
+
+            let currentOrder = currentItem.order_num;
+            let targetOrder = targetItem.order_num;
+
+            if (currentOrder === targetOrder) {
+                currentOrder = currentIndex + 1;
+                targetOrder = targetIndex + 1;
+            }
+
+            try {
+                const batch = writeBatch(db);
+                batch.update(doc(db, "kldr_relocate", currentItem.id), { order_num: targetOrder });
+                batch.update(doc(db, "kldr_relocate", targetItem.id), { order_num: currentOrder });
+                await batch.commit();
+
+                // 重新渲染當前總覽彈窗
+                openDayOverviewModal(dateStr);
+            } catch (err) {
+                alert("🚨 調整順序失敗！請檢查權限。");
+            }
+        };
+
+        function openDayOverviewModal(targetDate) {
+            activeDateStr = targetDate;
+            const dayEvents = localSchedules.filter(item => {
+                if (!item.date) return false;
+                const dStr = item.date.toString().trim();
+                return dStr === targetDate || dStr.replace(/\//g, '-') === targetDate;
+            });
+
+            // 依據 order_num 升序排列
+            dayEvents.sort((a, b) => (parseInt(a.order_num) || 999) - (parseInt(b.order_num) || 999));
+            
+            const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
+            const countFC = dayEvents.filter(e => e.department === "FC").length;
+            const countRDL = dayEvents.filter(e => e.department === "RDL").length;
+            const isSuper = (currentAdminDept === "SUPER_ADMIN");
+
+            let tableRowsHtml = "";
+            if (dayEvents.length > 0) {
+                dayEvents.forEach((e, idx) => {
+                    const deptColor = getDeptColor(e.department || "");
+                    const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
+                    const remarksScrollBox = e.remarks 
+                        ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
+                        : `<span class="text-zinc-400 font-normal">-</span>`;
+
+                    const weightDisplay = (e.pieces || e.net_weight) ? `${e.pieces ? e.pieces + '件' : ''}${e.net_weight ? ' / ' + e.net_weight + 'kg' : ''}` : '-';
+                    const currentOrder = e.order_num || (idx + 1);
+
+                    // 順序欄位與 SUPER 專屬 ⬆️ / ⬇️ 調序控制按鈕
+                    let orderControlHtml = `
+                        <div class="flex items-center justify-center gap-1.5">
+                            <span class="bg-amber-400 text-zinc-950 font-black text-xs px-2 py-0.5 rounded border border-amber-500 shadow-xs">
+                                ${currentOrder}
+                            </span>
+                            ${isSuper ? `
+                                <div class="flex flex-col gap-0.5">
+                                    <button onclick="moveRelocateOrder('${e.id}', '${targetDate}', 'UP')" title="上移" class="text-[10px] bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold px-1 rounded cursor-pointer leading-none">▲</button>
+                                    <button onclick="moveRelocateOrder('${e.id}', '${targetDate}', 'DOWN')" title="下移" class="text-[10px] bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold px-1 rounded cursor-pointer leading-none">▼</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
+                        <td class="p-3 text-center">${orderControlHtml}</td>
+                        <td class="p-3 font-bold text-indigo-900 text-center">${e.floor || '未填'}</td>
+                        <td class="p-3">${deptBadge}</td>
+                        <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
+                        <td class="p-3 font-bold text-zinc-700">${e.worker_info || '未填'}</td>
+                        <td class="p-3 text-emerald-800 font-bold text-xs">${weightDisplay}</td>
+                        <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.main_weight || '-'}</td>
+                        <td class="p-3 text-blue-800 font-extrabold text-xs">${e.main_size || '-'}</td>
+                        <td class="p-3 max-w-[250px]">${remarksScrollBox}</td>
+                    </tr>`;
+                });
+            } else {
+                tableRowsHtml = `<tr><td colspan="9" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內定位預約排程</td></tr>`;
+            }
+
+            const tableContainerHtml = `
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
+                    <table class="w-full min-w-[1200px] text-left border-collapse">
+                        <thead>
+                            <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
+                                <th class="p-3 w-[85px] text-center">順序</th>
+                                <th class="p-3 w-[80px] text-center">樓層</th>
+                                <th class="p-3 w-[110px]">站點</th>
+                                <th class="p-3 w-[160px]">預約機台名稱</th>
+                                <th class="p-3 w-[180px]">負責人姓名 / 連絡電話</th>
+                                <th class="p-3 w-[150px]">件數 / 淨重總重</th>
+                                <th class="p-3 w-[140px] text-indigo-800 font-black">⚙️ 機台最大重量</th>
+                                <th class="p-3 w-[130px] text-blue-800 font-black">📏 尺寸</th>
+                                <th class="p-3 min-w-[200px]">詳細備註事項說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>`;
+            
+            document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 廠內定位排程總覽 】`;
+            document.getElementById('modalStatsTitle').innerText = `➔ 當日定位總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台 ${isSuper ? '(⚡ 管理員可點選 ▲/▼ 調動順序)' : ''}`;
+            
+            document.getElementById('modalBody').innerHTML = tableContainerHtml;
+            document.getElementById('modalDeleteBtn').classList.add('hidden'); 
+            document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
+            document.getElementById('modalCopyBtn').classList.add('hidden'); 
+
+            document.getElementById('customAlertModal').style.display = 'flex'; 
+        }
+
         function initSystem() {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
+                eventOrder: 'order_num,title', // 依序號自動於月曆格內從上到下排列
 
+                // 🎨 樣式 2：卡片最左側加入高對比醒目方塊序號標籤 [ 1 ]、[ 2 ]...
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const floorStr = props.floor ? `[${props.floor}]` : "";
                     const deptStr = props.department || "";
                     const machineStr = props.machine ? `${props.machine}` : "未填機台";
                     const workerStr = props.worker_info || "未填";
+                    const orderDisplay = props.order_num || 1;
                     
                     let specArr = [];
                     if (props.pieces) specArr.push(`${props.pieces}件`);
@@ -484,97 +620,34 @@
                     if (props.main_size) specArr.push(`${props.main_size}`);
                     const specStr = specArr.length > 0 ? ` ｜ ${specArr.join('/')}` : "";
 
-                    const line1 = `🚚 ${floorStr}${deptStr} ➔ ${machineStr}`;
-                    const line2 = `${workerStr}${specStr}`;
-
                     return {
-                        html: `<div class="flex flex-col text-xs leading-tight py-0.5 px-0.5 overflow-hidden">
-                            <div class="font-black truncate text-white tracking-tight">${line1}</div>
-                            <div class="text-[11px] font-semibold opacity-90 truncate text-zinc-100">${line2}</div>
+                        html: `<div class="flex items-center gap-1.5 py-0.5 px-0.5 overflow-hidden">
+                            <span class="bg-amber-300 text-zinc-950 font-black text-xs px-1.5 py-0.5 rounded border border-amber-400 shrink-0 shadow-2xs leading-none">
+                                ${orderDisplay}
+                            </span>
+                            <div class="flex flex-col min-w-0 flex-1 leading-tight overflow-hidden">
+                                <div class="font-black truncate text-white tracking-tight">${floorStr}${deptStr} ➔ ${machineStr}</div>
+                                <div class="text-[11px] font-semibold opacity-90 truncate text-zinc-100">${workerStr}${specStr}</div>
+                            </div>
                         </div>`
                     };
                 },
 
                 eventDidMount: function(info) {
                     const props = info.event.extendedProps;
+                    const ordStr = props.order_num ? `\n🏷️ 當日定位順序: 第 ${props.order_num} 順位` : '';
                     const pStr = props.pieces ? `\n📦 件數: ${props.pieces}件` : '';
                     const nwStr = props.net_weight ? `\n⚖️ 淨重總重: ${props.net_weight}kg` : '';
                     const mwStr = props.main_weight ? `\n⚙️ 機台最大重量: ${props.main_weight}` : '';
                     const msStr = props.main_size ? `\n📏 尺寸: ${props.main_size}` : '';
                     const remStr = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
 
-                    const tooltipText = `📅 預約移機日期: ${info.event.startStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}${pStr}${nwStr}${mwStr}${msStr}${remStr}`;
+                    const tooltipText = `📅 預約定位日期: ${info.event.startStr}${ordStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}${pStr}${nwStr}${mwStr}${msStr}${remStr}`;
                     info.el.setAttribute('title', tooltipText);
                 },
 
                 dateClick: function(info) {
-                    const targetDate = info.dateStr;
-                    const dayEvents = localSchedules.filter(item => {
-                        if (!item.date) return false;
-                        const dStr = item.date.toString().trim();
-                        return dStr === targetDate || dStr.replace(/\//g, '-') === targetDate;
-                    });
-                    
-                    const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
-                    const countFC = dayEvents.filter(e => e.department === "FC").length;
-                    const countRDL = dayEvents.filter(e => e.department === "RDL").length;
-
-                    let tableRowsHtml = "";
-                    if (dayEvents.length > 0) {
-                        dayEvents.forEach(e => {
-                            const deptColor = getDeptColor(e.department || "");
-                            const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
-                            const remarksScrollBox = e.remarks 
-                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
-                                : `<span class="text-zinc-400 font-normal">-</span>`;
-
-                            const weightDisplay = (e.pieces || e.net_weight) ? `${e.pieces ? e.pieces + '件' : ''}${e.net_weight ? ' / ' + e.net_weight + 'kg' : ''}` : '-';
-
-                            tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold text-indigo-900">${e.floor || '未填'}</td>
-                                <td class="p-3">${deptBadge}</td>
-                                <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
-                                <td class="p-3 font-bold text-zinc-700">${e.worker_info || '未填'}</td>
-                                <td class="p-3 text-emerald-800 font-bold text-xs">${weightDisplay}</td>
-                                <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.main_weight || '-'}</td>
-                                <td class="p-3 text-blue-800 font-extrabold text-xs">${e.main_size || '-'}</td>
-                                <td class="p-3 max-w-[250px]">${remarksScrollBox}</td>
-                            </tr>`;
-                        });
-                    } else {
-                        tableRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內定位預約排程</td></tr>`;
-                    }
-
-                    const tableContainerHtml = `
-                        <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
-                            <table class="w-full min-w-[1100px] text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
-                                        <th class="p-3 w-[90px]">樓層</th>
-                                        <th class="p-3 w-[110px]">站點</th>
-                                        <th class="p-3 w-[160px]">預約機台名稱</th>
-                                        <th class="p-3 w-[180px]">負責人姓名 / 連絡電話</th>
-                                        <th class="p-3 w-[150px]">件數 / 淨重總重</th>
-                                        <th class="p-3 w-[140px] text-indigo-800 font-black">⚙️ 機台最大重量</th>
-                                        <th class="p-3 w-[130px] text-blue-800 font-black">📏 尺寸</th>
-                                        <th class="p-3 min-w-[200px]">詳細備註事項說明</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRowsHtml}
-                                </tbody>
-                            </table>
-                        </div>`;
-                    
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 廠內定位排程總覽 】`;
-                    document.getElementById('modalStatsTitle').innerText = `➔ 當日移機總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
-                    
-                    document.getElementById('modalBody').innerHTML = tableContainerHtml;
-                    document.getElementById('modalDeleteBtn').classList.add('hidden'); 
-                    document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
-                    document.getElementById('modalCopyBtn').classList.add('hidden'); 
-
-                    document.getElementById('customAlertModal').style.display = 'flex'; 
+                    openDayOverviewModal(info.dateStr);
                 },
                 
                 eventClick: function(info) {
@@ -587,7 +660,7 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", specContentHtml = "", remarksBlock = "";
+                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", specContentHtml = "", orderContentHtml = "", remarksBlock = "";
 
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
@@ -602,6 +675,13 @@
                                 <option value="6F" ${props.floor === '6F' ? 'selected' : ''}>6F</option>
                             </select>
                         `;
+
+                        // 方案 C：單筆明細內支援直接調整 order_num
+                        orderContentHtml = isSuper ? `
+                            • <b>當日定位順序 (優先級)：</b>
+                            <input type="number" id="modalOrderNumInput" value="${props.order_num || 1}" min="1" class="w-20 bg-amber-50 border border-amber-300 text-amber-950 font-black rounded px-2 py-0.5 text-xs focus:outline-none ml-1">
+                            <span class="text-xs text-zinc-400 ml-1 font-normal">(數字越小越優先排列)</span><br>
+                        ` : `• <b>當日定位順序：</b><span class="text-zinc-900 font-black bg-amber-100 px-2 py-0.5 rounded border border-amber-300">第 ${props.order_num || 1} 順位</span><br>`;
 
                         workerContentHtml = `<input type="text" id="modalWorkerInfoInput" value="${props.worker_info || ''}" placeholder="負責人姓名 / 連絡電話" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         
@@ -631,6 +711,7 @@
                     } else {
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${props.floor || '未填'}</span>`;
+                        orderContentHtml = `• <b>當日定位順序：</b><span class="text-zinc-900 font-black bg-amber-100 px-2 py-0.5 rounded border border-amber-300">第 ${props.order_num || 1} 順位</span><br>`;
                         workerContentHtml = `<span class="text-zinc-900 font-bold">${props.worker_info || '未填'}</span><br>`;
                         
                         specContentHtml = `
@@ -643,6 +724,7 @@
 
                     const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base space-y-2">` +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
+                        orderContentHtml +
                         `• <b>樓層：</b>${floorContentHtml}<br>` +
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b><span class="text-zinc-900 font-black">${props.machine || '未填'}</span><br>` +
@@ -651,7 +733,7 @@
                         remarksBlock +
                         `</div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📋 移機排程單筆明細`;
+                    document.getElementById('modalTitle').innerText = `📋 定位排程單筆明細`;
                     document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     
@@ -682,6 +764,7 @@
                 let netWeightVal = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
                 let mainWeightVal = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let mainSizeVal = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
+                let orderNumVal = document.getElementById('modalOrderNumInput') ? parseInt(document.getElementById('modalOrderNumInput').value) || 1 : (activeSelectedProps.order_num || 1);
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
 
                 // 週三/週四 FC 禁設 1F
@@ -699,16 +782,17 @@
                         net_weight: netWeightVal,
                         main_weight: mainWeightVal,
                         main_size: mainSizeVal,
+                        order_num: orderNumVal,
                         remarks: r
                     };
                     if (dStr) updatePayload.date = dStr;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 移機排程變更儲存成功！"); closeCustomModal();
+                    alert("🎉 定位排程變更儲存成功！"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存失敗！請檢查權限。"); }
             });
 
-            // 📋 複製移機排程
+            // 📋 複製定位排程
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -730,10 +814,18 @@
                 }
 
                 if (!targetDate) { alert("🚨 請選擇複製排程的目標日期！"); return; }
-                if (!confirm(`📋 您確定要將這筆移機資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？`)) return;
+                if (!confirm(`📋 您確定要將這筆定位資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？`)) return;
 
                 copyBtn.disabled = true;
                 copyBtn.innerText = "複製寫入中...";
+
+                // 計算目標日期之自動累加序號
+                const existingDayItems = localSchedules.filter(item => (item.date || '').replace(/\//g, '-') === targetDate.replace(/\//g, '-'));
+                let nextOrder = 1;
+                if (existingDayItems.length > 0) {
+                    const maxOrder = Math.max(...existingDayItems.map(i => parseInt(i.order_num) || 0));
+                    nextOrder = maxOrder + 1;
+                }
 
                 const payload = {
                     date: targetDate,
@@ -745,6 +837,7 @@
                     net_weight: netWeightVal,
                     main_weight: mainWeightVal,
                     main_size: mainSizeVal,
+                    order_num: nextOrder,
                     remarks: r,
                     secret_key: BACKEND_SECRET,
                     created_at: new Date().toISOString()
@@ -756,7 +849,7 @@
                     const customDocName = `${payload.date}_${payload.floor}_${safeDeptName}_${uniqueId}`;
 
                     await setDoc(doc(db, "kldr_relocate", customDocName), payload);
-                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的移機排程。`);
+                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的定位排程（順位 #${nextOrder}）。`);
                     closeCustomModal();
                 } catch (error) {
                     alert("🚨 複製新增失敗！請檢查雲端權限。");
@@ -766,7 +859,7 @@
                 }
             });
 
-            // 刪除移機排程
+            // 刪除定位排程
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -776,7 +869,7 @@
                     return;
                 }
 
-                if (confirm(`⚠️ 您確定要將這筆移機排程從雲端徹底移除嗎？`)) {
+                if (confirm(`⚠️ 您確定要將這筆定位排程從雲端徹底移除嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr_relocate", activeSelectedDocId);
                         const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
@@ -787,10 +880,10 @@
                 }
             });
 
-            // 區間匯出 CSV
+            // 區間匯出 CSV (依序號與日期精準排序)
             document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
                 if (!localSchedules || localSchedules.length === 0) {
-                    alert("目前雲端沒有任何移機數據可供導出！");
+                    alert("目前雲端沒有任何定位數據可供導出！");
                     return;
                 }
 
@@ -807,15 +900,19 @@
                 });
 
                 if (filtered.length === 0) {
-                    alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何移機資料！`);
+                    alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何定位資料！`);
                     return;
                 }
 
-                if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆移機報表？`)) return;
+                if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆定位報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
-                    const sorted = [...filtered].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
+                    const sorted = [...filtered].sort((a, b) => {
+                        const dCmp = (a.date || "").localeCompare(b.date || "");
+                        if (dCmp !== 0) return dCmp;
+                        return (parseInt(a.order_num) || 999) - (parseInt(b.order_num) || 999);
+                    });
 
                     sorted.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
@@ -823,7 +920,8 @@
                         const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
-                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const orderStr = d.order_num || '1';
+                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -835,17 +933,21 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
-            // 全歷史匯出 CSV
+            // 全歷史匯出 CSV (依序號與日期精準排序)
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
-                    alert("目前雲端沒有任何移機數據可供導出！");
+                    alert("目前雲端沒有任何定位數據可供導出！");
                     return;
                 }
                 if (!confirm("📥 是否確認下載『廠內定位全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
-                    const sorted = [...localSchedules].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
+                    const sorted = [...localSchedules].sort((a, b) => {
+                        const dCmp = (a.date || "").localeCompare(b.date || "");
+                        if (dCmp !== 0) return dCmp;
+                        return (parseInt(a.order_num) || 999) - (parseInt(b.order_num) || 999);
+                    });
 
                     sorted.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
@@ -853,7 +955,8 @@
                         const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
-                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const orderStr = d.order_num || '1';
+                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -873,7 +976,7 @@
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 if (data.date && data.department) {
-                    localSchedules.push(data); totalCount++;
+                    localSchedules.push({ id: doc.id, ...data }); totalCount++;
                     const colorValue = getDeptColor(data.department);
 
                     globalEventsArray.push({
@@ -882,6 +985,7 @@
                         allDay: true, 
                         backgroundColor: colorValue, 
                         borderColor: colorValue,
+                        order_num: parseInt(data.order_num) || 1, // FullCalendar 排序依據
                         extendedProps: { 
                             floor: data.floor || "", 
                             department: data.department, 
@@ -891,6 +995,7 @@
                             net_weight: data.net_weight || "",
                             main_weight: data.main_weight || "",
                             main_size: data.main_size || "",
+                            order_num: parseInt(data.order_num) || 1,
                             remarks: data.remarks || "" 
                         }
                     });
@@ -906,7 +1011,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 表單提交處理
+        // 表單提交處理（自動計算 order_num 遞增）
         const form = document.getElementById('relocateForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -920,8 +1025,16 @@
             if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
                 alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請 1F 樓層！請重新選擇其他樓層。");
                 btn.disabled = false;
-                btn.innerText = "確認移機排程";
+                btn.innerText = "確認定位排程";
                 return;
+            }
+
+            // 計算當天自動累加序號
+            const existingDayItems = localSchedules.filter(item => (item.date || '').replace(/\//g, '-') === inputDate.replace(/\//g, '-'));
+            let nextOrder = 1;
+            if (existingDayItems.length > 0) {
+                const maxOrder = Math.max(...existingDayItems.map(i => parseInt(i.order_num) || 0));
+                nextOrder = maxOrder + 1;
             }
 
             const payload = {
@@ -934,6 +1047,7 @@
                 net_weight: document.getElementById('netWeight').value.trim(),
                 main_weight: document.getElementById('mainWeight').value.trim(),
                 main_size: document.getElementById('mainSize').value.trim(),
+                order_num: nextOrder,
                 remarks: document.getElementById('remarks').value.trim(),
                 secret_key: BACKEND_SECRET, 
                 created_at: new Date().toISOString()
@@ -946,7 +1060,7 @@
                 
                 await setDoc(doc(db, "kldr_relocate", customDocName), payload);
 
-                alert('🎉 移機排程已成功同步至雲端！');
+                alert(`🎉 定位排程已成功同步至雲端（當日序號 #${nextOrder}）！`);
                 document.getElementById('machine').value = ''; 
                 document.getElementById('workerInfo').value = ''; 
                 document.getElementById('pieces').value = ''; 
@@ -954,7 +1068,7 @@
                 document.getElementById('mainWeight').value = ''; 
                 document.getElementById('mainSize').value = ''; 
                 document.getElementById('remarks').value = '';
-            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認移機排程"; }
+            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認定位排程"; }
         };
     </script>
 </body>
