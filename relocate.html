@@ -116,7 +116,7 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 1350px; 
+            max-width: 1400px; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
@@ -173,9 +173,10 @@
             </a>
         </div>
 
-        <!-- 移機精簡表單（僅保留 6 個必要欄位） -->
+        <!-- 移機排程表單區 -->
         <form id="relocateForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <!-- 第一排：5 大基礎欄位 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
@@ -207,21 +208,37 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
-                    <input type="text" id="workerInfo" placeholder="如: 張三 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">⚙️ 機台重量</label>
-                    <input type="text" id="machineWeight" placeholder="例如：750kg" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="workerInfo" placeholder="例如：張三 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 border-t border-zinc-200/60 pt-3">
-                <div class="w-full sm:flex-1">
-                    <input type="text" id="remarks" placeholder="移機補充備註說明 (選填)..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-xs sm:text-sm">
+            <!-- 第二排：4 大規格欄位 ＋ 備註 ＋ 送出按鈕 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 border-t border-zinc-200/60 pt-3">
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
+                    <input type="number" id="pieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <button type="submit" id="submitBtn" class="w-full sm:w-48 bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[40px] shrink-0">
-                    確認移機排程
-                </button>
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">淨重總重 (kg)</label>
+                    <input type="number" id="netWeight" min="0" placeholder="例如：500" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">⚙️ 機台最大重量</label>
+                    <input type="text" id="mainWeight" placeholder="例如：主機750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">📏 尺寸</label>
+                    <input type="text" id="mainSize" placeholder="例如：200*150*220" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
+                </div>
+                <div class="sm:col-span-2 md:col-span-1 lg:col-span-1">
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註說明</label>
+                    <input type="text" id="remarks" placeholder="補充備註事項說明..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-xs sm:text-sm">
+                </div>
+                <div class="flex items-end sm:col-span-2 md:col-span-3 lg:col-span-1">
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-sm h-[40px]">
+                        確認移機排程
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -459,10 +476,16 @@
                     const deptStr = props.department || "";
                     const machineStr = props.machine ? `${props.machine}` : "未填機台";
                     const workerStr = props.worker_info || "未填";
-                    const weightStr = props.machine_weight ? ` ｜ ${props.machine_weight}` : "";
+                    
+                    let specArr = [];
+                    if (props.pieces) specArr.push(`${props.pieces}件`);
+                    if (props.net_weight) specArr.push(`${props.net_weight}kg`);
+                    if (props.main_weight) specArr.push(`${props.main_weight}`);
+                    if (props.main_size) specArr.push(`${props.main_size}`);
+                    const specStr = specArr.length > 0 ? ` ｜ ${specArr.join('/')}` : "";
 
                     const line1 = `🚚 ${floorStr}${deptStr} ➔ ${machineStr}`;
-                    const line2 = `${workerStr}${weightStr}`;
+                    const line2 = `${workerStr}${specStr}`;
 
                     return {
                         html: `<div class="flex flex-col text-xs leading-tight py-0.5 px-0.5 overflow-hidden">
@@ -474,7 +497,13 @@
 
                 eventDidMount: function(info) {
                     const props = info.event.extendedProps;
-                    const tooltipText = `📅 預約移機日期: ${info.event.startStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}\n⚙️ 機台重量: ${props.machine_weight || '未填'}\n📝 備註: ${props.remarks || '無'}`;
+                    const pStr = props.pieces ? `\n📦 件數: ${props.pieces}件` : '';
+                    const nwStr = props.net_weight ? `\n⚖️ 淨重總重: ${props.net_weight}kg` : '';
+                    const mwStr = props.main_weight ? `\n⚙️ 機台最大重量: ${props.main_weight}` : '';
+                    const msStr = props.main_size ? `\n📏 尺寸: ${props.main_size}` : '';
+                    const remStr = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
+
+                    const tooltipText = `📅 預約移機日期: ${info.event.startStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}${pStr}${nwStr}${mwStr}${msStr}${remStr}`;
                     info.el.setAttribute('title', tooltipText);
                 },
 
@@ -499,29 +528,35 @@
                                 ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
+                            const weightDisplay = (e.pieces || e.net_weight) ? `${e.pieces ? e.pieces + '件' : ''}${e.net_weight ? ' / ' + e.net_weight + 'kg' : ''}` : '-';
+
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
                                 <td class="p-3 font-bold text-indigo-900">${e.floor || '未填'}</td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
                                 <td class="p-3 font-bold text-zinc-700">${e.worker_info || '未填'}</td>
-                                <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.machine_weight || '-'}</td>
+                                <td class="p-3 text-emerald-800 font-bold text-xs">${weightDisplay}</td>
+                                <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.main_weight || '-'}</td>
+                                <td class="p-3 text-blue-800 font-extrabold text-xs">${e.main_size || '-'}</td>
                                 <td class="p-3 max-w-[250px]">${remarksScrollBox}</td>
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="6" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內移機預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內移機預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
                         <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
-                            <table class="w-full min-w-[900px] text-left border-collapse">
+                            <table class="w-full min-w-[1100px] text-left border-collapse">
                                 <thead>
                                     <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
-                                        <th class="p-3 w-[100px]">樓層</th>
-                                        <th class="p-3 w-[120px]">站點</th>
-                                        <th class="p-3 w-[180px]">預約機台名稱</th>
-                                        <th class="p-3 w-[200px]">負責人姓名 / 連絡電話</th>
-                                        <th class="p-3 w-[150px] text-indigo-800 font-black">⚙️ 機台重量</th>
+                                        <th class="p-3 w-[90px]">樓層</th>
+                                        <th class="p-3 w-[110px]">站點</th>
+                                        <th class="p-3 w-[160px]">預約機台名稱</th>
+                                        <th class="p-3 w-[180px]">負責人姓名 / 連絡電話</th>
+                                        <th class="p-3 w-[150px]">件數 / 淨重總重</th>
+                                        <th class="p-3 w-[140px] text-indigo-800 font-black">⚙️ 機台最大重量</th>
+                                        <th class="p-3 w-[130px] text-blue-800 font-black">📏 尺寸</th>
                                         <th class="p-3 min-w-[200px]">詳細備註事項說明</th>
                                     </tr>
                                 </thead>
@@ -552,7 +587,7 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", weightContentHtml = "", remarksBlock = "";
+                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", specContentHtml = "", remarksBlock = "";
 
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
@@ -568,15 +603,41 @@
                             </select>
                         `;
 
-                        workerContentHtml = `<input type="text" id="modalWorkerInfoInput" value="${props.worker_info || ''}" placeholder="負責人姓名/電話" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
-                        weightContentHtml = `<input type="text" id="modalMachineWeightInput" value="${props.machine_weight || ''}" placeholder="如: 750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        workerContentHtml = `<input type="text" id="modalWorkerInfoInput" value="${props.worker_info || ''}" placeholder="負責人姓名 / 連絡電話" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        
+                        specContentHtml = `
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1 bg-white p-2 rounded-lg border border-zinc-200">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-500 mb-0.5">件數</label>
+                                    <input type="number" id="modalPiecesInput" value="${props.pieces || ''}" placeholder="件數" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-500 mb-0.5">淨重總重(kg)</label>
+                                    <input type="number" id="modalNetWeightInput" value="${props.net_weight || ''}" placeholder="淨重" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-500 mb-0.5">機台最大重量</label>
+                                    <input type="text" id="modalMainWeightInput" value="${props.main_weight || ''}" placeholder="最大重量" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-zinc-500 mb-0.5">尺寸</label>
+                                    <input type="text" id="modalMainSizeInput" value="${props.main_size || ''}" placeholder="尺寸" class="w-full bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-1 text-xs font-bold focus:outline-none">
+                                </div>
+                            </div>
+                        `;
+
                         remarksBlock = `• <b>詳細備註說明：</b><br>
                             <textarea id="modalRemarksInput" rows="2" placeholder="請在此修改備註..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400">${props.remarks || ''}</textarea>`;
                     } else {
                         dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
                         floorContentHtml = `<span class="text-zinc-900 font-bold">${props.floor || '未填'}</span>`;
                         workerContentHtml = `<span class="text-zinc-900 font-bold">${props.worker_info || '未填'}</span><br>`;
-                        weightContentHtml = `<span class="text-indigo-800 font-bold">${props.machine_weight || '未填'}</span><br>`;
+                        
+                        specContentHtml = `
+                            • <b>規格明細：</b>
+                            <span class="text-zinc-700 font-bold">件數: ${props.pieces || '-'} ｜ 淨重: ${props.net_weight ? props.net_weight + 'kg' : '-'} ｜ 最大重量: ${props.main_weight || '-'} ｜ 尺寸: ${props.main_size || '-'}</span><br>
+                        `;
+
                         remarksBlock = props.remarks ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line">${props.remarks}</div>` : "";
                     }
 
@@ -586,7 +647,7 @@
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b><span class="text-zinc-900 font-black">${props.machine || '未填'}</span><br>` +
                         `• <b>負責人姓名 / 連絡電話：</b><br>${workerContentHtml}` +
-                        `• <b>機台重量：</b><br>${weightContentHtml}` +
+                        specContentHtml +
                         remarksBlock +
                         `</div>`;
                     
@@ -617,7 +678,10 @@
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let workerVal = document.getElementById('modalWorkerInfoInput') ? document.getElementById('modalWorkerInfoInput').value.trim() : "";
-                let weightVal = document.getElementById('modalMachineWeightInput') ? document.getElementById('modalMachineWeightInput').value.trim() : "";
+                let piecesVal = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
+                let netWeightVal = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
+                let mainWeightVal = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
+                let mainSizeVal = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
 
                 // 週三/週四 FC 禁設 1F
@@ -631,7 +695,10 @@
                     let updatePayload = { 
                         floor: floorVal,
                         worker_info: workerVal,
-                        machine_weight: weightVal,
+                        pieces: piecesVal,
+                        net_weight: netWeightVal,
+                        main_weight: mainWeightVal,
+                        main_size: mainSizeVal,
                         remarks: r
                     };
                     if (dStr) updatePayload.date = dStr;
@@ -649,7 +716,10 @@
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
                 let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
                 let workerVal = document.getElementById('modalWorkerInfoInput') ? document.getElementById('modalWorkerInfoInput').value.trim() : (activeSelectedProps.worker_info || "");
-                let weightVal = document.getElementById('modalMachineWeightInput') ? document.getElementById('modalMachineWeightInput').value.trim() : (activeSelectedProps.machine_weight || "");
+                let piecesVal = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : (activeSelectedProps.pieces || "");
+                let netWeightVal = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : (activeSelectedProps.net_weight || "");
+                let mainWeightVal = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : (activeSelectedProps.main_weight || "");
+                let mainSizeVal = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : (activeSelectedProps.main_size || "");
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : (activeSelectedProps.remarks || "");
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
@@ -671,7 +741,10 @@
                     department: targetDept,
                     machine: activeSelectedProps.machine || "未填",
                     worker_info: workerVal,
-                    machine_weight: weightVal,
+                    pieces: piecesVal,
+                    net_weight: netWeightVal,
+                    main_weight: mainWeightVal,
+                    main_size: mainSizeVal,
                     remarks: r,
                     secret_key: BACKEND_SECRET,
                     created_at: new Date().toISOString()
@@ -741,15 +814,16 @@
                 if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆移機報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,機台重量,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
                     sorted.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
                         const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
-                        const cleanWeight = (d.machine_weight || "").replace(/"/g, '""');
                         const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
-                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
+                        const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -770,15 +844,16 @@
                 if (!confirm("📥 是否確認下載『廠內移機全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,機台重量,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...localSchedules].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
                     sorted.forEach((d) => {
                         const localTimeStr = formatToTaiwanTime(d.created_at);
                         const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
-                        const cleanWeight = (d.machine_weight || "").replace(/"/g, '""');
                         const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
-                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
+                        const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
+                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -812,7 +887,10 @@
                             department: data.department, 
                             machine: data.machine, 
                             worker_info: data.worker_info || "",
-                            machine_weight: data.machine_weight || "",
+                            pieces: data.pieces || "",
+                            net_weight: data.net_weight || "",
+                            main_weight: data.main_weight || "",
+                            main_size: data.main_size || "",
                             remarks: data.remarks || "" 
                         }
                     });
@@ -828,7 +906,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 表單提交
+        // 表單提交處理
         const form = document.getElementById('relocateForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -852,7 +930,10 @@
                 department: inputDept, 
                 machine: document.getElementById('machine').value.trim(), 
                 worker_info: document.getElementById('workerInfo').value.trim(),
-                machine_weight: document.getElementById('machineWeight').value.trim(),
+                pieces: document.getElementById('pieces').value.trim(),
+                net_weight: document.getElementById('netWeight').value.trim(),
+                main_weight: document.getElementById('mainWeight').value.trim(),
+                main_size: document.getElementById('mainSize').value.trim(),
                 remarks: document.getElementById('remarks').value.trim(),
                 secret_key: BACKEND_SECRET, 
                 created_at: new Date().toISOString()
@@ -868,7 +949,10 @@
                 alert('🎉 移機排程已成功同步至雲端！');
                 document.getElementById('machine').value = ''; 
                 document.getElementById('workerInfo').value = ''; 
-                document.getElementById('machineWeight').value = ''; 
+                document.getElementById('pieces').value = ''; 
+                document.getElementById('netWeight').value = ''; 
+                document.getElementById('mainWeight').value = ''; 
+                document.getElementById('mainSize').value = ''; 
                 document.getElementById('remarks').value = '';
             } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認移機排程"; }
         };
