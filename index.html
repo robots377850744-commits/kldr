@@ -176,7 +176,7 @@
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
                 
-                <!-- 方案 C：3 顆獨立切換快捷鍵按鈕組 -->
+                <!-- 3 顆獨立切換快捷鍵按鈕組 -->
                 <div id="modalWorkTypeButtonsGroup" class="flex flex-wrap items-center gap-1.5 hidden">
                     <button id="modalSetCraneBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🔴 改為吊運</button>
                     <button id="modalSetElevatorBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🟡 改為電梯</button>
@@ -236,9 +236,14 @@
     </div>
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
+        
         <!-- 頁首標題區與轉頁按鈕 -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
-            <div></div>
+            <div class="flex items-center gap-2">
+                <a href="relocate.html" class="inline-flex items-center gap-1.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
+                    🚚 轉至：廠內移機排程 ➔
+                </a>
+            </div>
             <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center">
                 🏗️ 吊運排程管理系統
             </h1>
@@ -247,7 +252,7 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區（新增「貨櫃種類」自由備註欄位） -->
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                 <div>
@@ -458,7 +463,7 @@
             "RDLkldr": "RDL",
             "FCkldr": "FC",
             "SUPERkldr": "SUPER_ADMIN",
-            /* [XH 臨時特權 - 開始] (具備與 SUPERkldr 完全相同之最高特權，日後可整段移除) */
+            /* [XH 臨時特權 - 開始] */
             "XH": "SUPER_ADMIN",
             "XHkldr": "SUPER_ADMIN"
             /* [XH 臨時特權 - 結束] */
@@ -504,7 +509,6 @@
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
 
-        // 🎨 動態渲染特殊日期浮水印與淡紅背景
         function applySpecialDateStyles() {
             document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
                 const dateStr = td.getAttribute('data-date');
@@ -957,6 +961,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
+                // 📋 單筆卡片點擊詳細彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1175,7 +1180,7 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存寫入邏輯（含貨櫃種類與作業項目）
+            // 💾 儲存寫入邏輯
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1669,7 +1674,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 快速新增表單提交（儲存貨櫃種類）
+        // 快速新增表單提交
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
