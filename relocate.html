@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>廠內移機排程管理系統</title>
+    <title>廠內定位排程管理系統</title>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -129,8 +129,8 @@
 
     <div id="passwordOverlay">
         <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-100">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">🚚 移機系統限制存取</h2>
-            <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖廠內移機排程系統</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">🚚 定位系統限制存取</h2>
+            <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖廠內定位排程系統</p>
             <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
             <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button></div>
             <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
@@ -141,7 +141,7 @@
         <div class="modal-content p-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b-2 border-zinc-200 pb-3 mb-4 gap-2">
                 <div class="flex flex-col gap-1">
-                    <h3 class="text-lg font-extrabold text-zinc-800" id="modalTitle">📅 移機排程總覽</h3>
+                    <h3 class="text-lg font-extrabold text-zinc-800" id="modalTitle">📅 定位排程總覽</h3>
                     <div class="text-sm font-bold text-indigo-800 tracking-wide" id="modalStatsTitle"></div>
                 </div>
                 <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-3xl font-bold transition self-end sm:self-center">&times;</button>
@@ -166,7 +166,7 @@
                 </a>
             </div>
             <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center flex items-center gap-2">
-                🚚 廠內移機排程管理系統
+                🚚 廠內定位排程管理系統
             </h1>
             <a href="dashboard.html" class="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
                 📊 轉至：動態儀表板 ➔
@@ -204,11 +204,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                    <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="machine" placeholder="例如：飛機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
-                    <input type="text" id="workerInfo" placeholder="例如：張三 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="workerInfo" placeholder="例如：汯勳 28006" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
             </div>
 
