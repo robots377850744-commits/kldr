@@ -542,7 +542,7 @@
                             </tr>`;
                         });
                     } else {
-                        tableRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內移機預約排程</td></tr>`;
+                        tableRowsHtml = `<tr><td colspan="8" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內定位預約排程</td></tr>`;
                     }
 
                     const tableContainerHtml = `
@@ -566,7 +566,7 @@
                             </table>
                         </div>`;
                     
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 廠內移機排程總覽 】`;
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 廠內定位排程總覽 】`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日移機總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
@@ -830,7 +830,7 @@
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement("a");
                     link.setAttribute("href", url);
-                    link.setAttribute("download", `廠內移機區間報表_${startD}_至_${endD}.csv`);
+                    link.setAttribute("download", `廠內定位區間報表_${startD}_至_${endD}.csv`);
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
@@ -841,7 +841,7 @@
                     alert("目前雲端沒有任何移機數據可供導出！");
                     return;
                 }
-                if (!confirm("📥 是否確認下載『廠內移機全資料庫總報表』CSV 檔案？")) return;
+                if (!confirm("📥 是否確認下載『廠內定位全資料庫總報表』CSV 檔案？")) return;
 
                 try {
                     let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
@@ -860,7 +860,7 @@
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement("a");
                     link.setAttribute("href", url);
-                    link.setAttribute("download", `廠內移機全資料庫總報表_${new Date().toISOString().slice(0,10)}.csv`);
+                    link.setAttribute("download", `廠內定位全資料庫總報表_${new Date().toISOString().slice(0,10)}.csv`);
                     document.body.appendChild(link); link.click(); document.body.removeChild(link);
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
