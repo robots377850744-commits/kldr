@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>廠內移機排程管理系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            background-color: #F5FFCD !important;
+            color: #27272a !important;
+            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+        }
+
+        .fc {
+            --fc-border-color: #e4e4e7 !important;
+            --fc-page-bg-color: #ffffff !important;
+            --fc-neutral-text-color: #52525b !important;
+            min-height: 78vh !important; 
+        }
+
+        .fc-daygrid-day-frame {
+            min-height: 105px !important;
+            position: relative !important;
+        }
+        
+        .fc-event { 
+            cursor: pointer; 
+            padding: 3px 6px !important; 
+            font-size: 13px !important;   
+            border-radius: 6px !important; 
+            margin-bottom: 4px !important; 
+            border: none !important;
+            display: block !important; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+            transition: transform 0.1s ease;
+            position: relative;
+            z-index: 5;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.01);
+        }
+        .fc-event-title { 
+            font-weight: 600 !important; 
+            color: #ffffff !important; 
+        }
+        .fc-daygrid-event-dot { display: none !important; }
+        .fc-event-time { display: none !important; }
+        
+        #passwordOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #F5FFCD; z-index: 9999; display: flex; justify-content: center; align-items: center; 
+        }
+
+        .fc .fc-col-header-cell {
+            background-color: #fafafa !important;
+            padding: 12px 0 !important;
+            color: #27272a !important;
+            font-weight: 700;
+        }
+        .fc .fc-daygrid-day-number {
+            color: #27272a !important;
+            padding: 6px 8px !important;
+            font-weight: 600;
+            position: relative;
+            z-index: 5;
+        }
+        .fc .fc-day-today {
+            background-color: #fefce8 !important;
+            border: 2px solid #eab308 !important;
+        }
+        .fc-day-other {
+            opacity: 0.4;
+        }
+        .fc .fc-toolbar-title {
+            color: #27272a !important;
+            font-size: 1.4rem !important;
+            font-weight: 800 !important;
+        }
+        @media (min-width: 768px) {
+            .fc .fc-toolbar-title { font-size: 1.7rem !important; }
+        }
+        .fc .fc-button-primary {
+            background-color: #ffffff !important;
+            border-color: #e4e4e7 !important;
+            color: #27272a !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+            transition: all 0.2s;
+        }
+        .fc .fc-button-primary:hover {
+            background-color: #f4f4f5 !important;
+            border-color: #d4d4d8 !important;
+        }
+
+        #customAlertModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #customAlertModal .modal-content {
+            background-color: #FFFFFF;
+            border: 2px solid #27272a;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1350px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            font-size: 16px !important; 
+            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
+            color: #27272a;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 lg:p-8">
+
+    <div id="passwordOverlay">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center border border-zinc-100">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">🚚 移機系統限制存取</h2>
+            <p class="text-sm text-gray-400 mb-6">請輸入密碼解鎖廠內移機排程系統</p>
+            <input type="password" id="gatePassword" placeholder="請輸入系統解鎖密碼" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-center mb-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+            <div class="px-1"><button id="unlockBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2.5 rounded-xl transition shadow-md">驗證並解鎖</button></div>
+            <p id="loginError" class="text-red-500 text-xs mt-3 hidden">⚠️ 密碼錯誤，拒絕存取！</p>
+        </div>
+    </div>
+
+    <div id="customAlertModal">
+        <div class="modal-content p-6">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b-2 border-zinc-200 pb-3 mb-4 gap-2">
+                <div class="flex flex-col gap-1">
+                    <h3 class="text-lg font-extrabold text-zinc-800" id="modalTitle">📅 移機排程總覽</h3>
+                    <div class="text-sm font-bold text-indigo-800 tracking-wide" id="modalStatsTitle"></div>
+                </div>
+                <button onclick="closeCustomModal()" class="text-zinc-400 hover:text-zinc-800 text-3xl font-bold transition self-end sm:self-center">&times;</button>
+            </div>
+            <div id="modalBody" class="font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
+            </div>
+            <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
+                <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
+                <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
+                <button id="modalDeleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🗑️ 刪除此筆排程</button>
+                <button onclick="closeCustomModal()" class="bg-zinc-900 hover:bg-black text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md ml-auto">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
+        <!-- 頁首標題區與導航按鈕 -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-black text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
+                    🏗️ 返回：主吊運排程
+                </a>
+            </div>
+            <h1 class="text-2xl font-extrabold text-zinc-800 tracking-wide text-center flex items-center gap-2">
+                🚚 廠內移機排程管理系統
+            </h1>
+            <a href="dashboard.html" class="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
+                📊 轉至：動態儀表板 ➔
+            </a>
+        </div>
+
+        <!-- 移機精簡表單（僅保留 6 個必要欄位） -->
+        <form id="relocateForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
+                    <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">樓層</label>
+                    <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                        <option value="">-- 請選擇樓層 --</option>
+                        <option value="1F">1F</option>
+                        <option value="2F">2F</option>
+                        <option value="3F">3F</option>
+                        <option value="4F">4F</option>
+                        <option value="5F">5F</option>
+                        <option value="6F">6F</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
+                    <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                        <option value="">-- 請選擇站點 --</option>
+                        <option value="BE/Recon">BE/Recon</option>
+                        <option value="RDL">RDL</option>
+                        <option value="FC">FC</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
+                    <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
+                    <input type="text" id="workerInfo" placeholder="如: 張三 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">⚙️ 機台重量</label>
+                    <input type="text" id="machineWeight" placeholder="例如：750kg" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold text-xs sm:text-sm">
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 border-t border-zinc-200/60 pt-3">
+                <div class="w-full sm:flex-1">
+                    <input type="text" id="remarks" placeholder="移機補充備註說明 (選填)..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-xs sm:text-sm">
+                </div>
+                <button type="submit" id="submitBtn" class="w-full sm:w-48 bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[40px] shrink-0">
+                    確認移機排程
+                </button>
+            </div>
+        </form>
+
+        <!-- 看板即時篩選 -->
+        <div class="bg-zinc-100/80 border border-zinc-200 p-4 rounded-xl mb-4 flex flex-col sm:flex-row gap-4 items-center">
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-sm font-black text-zinc-700 tracking-wider">🔍 看板即時篩選：</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:flex-row items-center">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-zinc-500">樓層</label>
+                    <select id="filterFloor" class="bg-white border border-zinc-300 text-zinc-800 font-semibold rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 transition min-w-[110px]">
+                        <option value="ALL">全部樓層</option>
+                        <option value="1F">1F</option>
+                        <option value="2F">2F</option>
+                        <option value="3F">3F</option>
+                        <option value="4F">4F</option>
+                        <option value="5F">5F</option>
+                        <option value="6F">6F</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-zinc-500">站點</label>
+                    <select id="filterDept" class="bg-white border border-zinc-300 text-zinc-800 font-semibold rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 transition min-w-[110px]">
+                        <option value="ALL">全部站點</option>
+                        <option value="BE/Recon">BE/Recon</option>
+                        <option value="RDL">RDL</option>
+                        <option value="FC">FC</option>
+                    </select>
+                </div>
+                <button id="resetFilterBtn" class="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold text-xs px-3 py-1.5 rounded-lg transition border border-zinc-300">清除篩選</button>
+            </div>
+            <div class="text-xs text-zinc-400 sm:ml-auto text-center sm:text-right">
+                💡 篩選僅影響您的畫面，不影響雲端資料庫。
+            </div>
+        </div>
+
+        <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
+
+        <!-- 底部控制列 -->
+        <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col gap-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-zinc-200/80">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="text-sm text-zinc-500 font-medium shrink-0">
+                        🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
+                    </div>
+                    <div class="text-sm font-black text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-3.5 py-1 rounded-xl tracking-wide shadow-xs shrink-0">
+                        🚚 雲端移機總排程數：<span id="globalRelocateTotalSpan" class="text-base text-indigo-900 font-black underline decoration-double">0</span> 台
+                    </div>
+                </div>
+                
+                <div id="adminLoginArea" class="flex flex-wrap gap-2 items-center w-full lg:w-auto justify-start lg:justify-end">
+                    <input type="password" id="adminPassword" placeholder="輸入站點特權金鑰" class="bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    <button id="adminLoginBtn" class="bg-zinc-800 hover:bg-black text-white text-sm px-4 py-1 rounded-lg transition cursor-pointer">認證特權暗號</button>
+                </div>
+            </div>
+
+            <!-- 免登入公開報表匯出區 -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
+                    <div class="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-2.5 py-1 rounded-lg">
+                        <span class="text-xs font-bold text-zinc-500">從</span>
+                        <input type="date" id="publicExportStartDate" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                        <span class="text-xs font-bold text-zinc-500">至</span>
+                        <input type="date" id="publicExportEndDate" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-400">
+                    </div>
+                    <button type="button" id="publicExportRangeBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs font-bold cursor-pointer">
+                        📥 匯出選定區間報表 (CSV)
+                    </button>
+                </div>
+                <div class="shrink-0 w-full md:w-auto text-right">
+                    <button type="button" id="publicExportCsvBtn" class="w-full md:w-auto bg-zinc-700 hover:bg-zinc-800 text-white text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs font-bold cursor-pointer">
+                        📥 匯出全移機總報表 (CSV)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const GATE_PASSWORD  = "kl"; 
+        const BACKEND_SECRET = "kldriver_secure_key_999"; 
+
+        const ADMIN_PASSWORDS = {
+            "BEkldr": "BE/Recon",
+            "RDLkldr": "RDL",
+            "FCkldr": "FC",
+            "SUPERkldr": "SUPER_ADMIN",
+            /* [XH 臨時特權 - 開始] */
+            "XH": "SUPER_ADMIN",
+            "XHkldr": "SUPER_ADMIN"
+            /* [XH 臨時特權 - 結束] */
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBEgKgE6dr0dV3MtRz3lrgQzAHVZNhvoPY",
+            authDomain: "kldriver.firebaseapp.com",
+            projectId: "kldriver",
+            storageBucket: "kldriver.firebasestorage.app",
+            messagingSenderId: "773359626716",
+            appId: "1:773359626716:web:bd627c9d5f464f658e0719"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const relocateRef = collection(db, "kldr_relocate");
+
+        let globalEventsArray = []; 
+        let localSchedules = [];
+        let isAdmin = false;       
+        let currentAdminDept = null; 
+        let activeSelectedDocId = null; 
+        let activeSelectedDocDept = null; 
+        let activeSelectedProps = null; 
+        let calendar; 
+
+        // 初始化自訂區間預設日期
+        const dNow = new Date();
+        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
+        const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+        document.getElementById('publicExportStartDate').value = firstDayOfMonth;
+        document.getElementById('publicExportEndDate').value = lastDayOfMonth;
+
+        function isWedOrThu(dateStr) {
+            if (!dateStr) return false;
+            const parts = dateStr.replace(/\//g, '-').split('-');
+            if (parts.length < 3) return false;
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            const d = parseInt(parts[2], 10);
+            const dt = new Date(y, m, d);
+            const day = dt.getDay();
+            return (day === 3 || day === 4);
+        }
+
+        function isPastDate(targetDateStr) {
+            if (!targetDateStr) return false;
+            const todayStr = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(dNow.getDate()).padStart(2, '0')}`;
+            return targetDateStr.replace(/\//g, '-') < todayStr;
+        }
+
+        function getDeptColor(deptName) {
+            if (!deptName) return "#4b5563";
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "BE-Recon": "#1d4ed8",
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            return "#4f46e5";
+        }
+
+        function formatToTaiwanTime(isoString) {
+            if (!isoString) return "";
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+            } catch (e) { return isoString; }
+        }
+
+        window.closeCustomModal = function() {
+            document.getElementById('customAlertModal').style.display = 'none';
+            activeSelectedDocId = null;
+            activeSelectedDocDept = null;
+            activeSelectedProps = null;
+        }
+
+        document.getElementById('gatePassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { document.getElementById('unlockBtn').click(); }
+        });
+
+        document.getElementById('unlockBtn').addEventListener('click', () => {
+            const input = document.getElementById('gatePassword').value;
+            if (input === GATE_PASSWORD) {
+                document.getElementById('passwordOverlay').style.display = 'none';
+                document.getElementById('mainSystem').classList.remove('hidden');
+                initSystem();
+            } else { document.getElementById('loginError').classList.remove('hidden'); }
+        });
+
+        document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { document.getElementById('adminLoginBtn').click(); }
+        });
+
+        document.getElementById('adminLoginBtn').addEventListener('click', () => {
+            const input = document.getElementById('adminPassword').value.trim();
+            if (ADMIN_PASSWORDS[input]) {
+                currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
+                if (currentAdminDept === "SUPER_ADMIN") {
+                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 移機特權完全開通`;
+                    document.getElementById('currentRole').className = "font-bold text-red-600";
+                } else {
+                    document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員`;
+                    document.getElementById('currentRole').className = "font-bold text-indigo-700";
+                }
+                document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
+                document.getElementById('adminLoginBtn').style.display = "none";
+                alert(`權限驗證成功！您現在具備維護 ${currentAdminDept} 移機排程的權限。`);
+            } else { alert("特權金鑰錯誤！"); }
+        });
+
+        function applyLiveFilters() {
+            const selectedFloor = document.getElementById('filterFloor').value;
+            const selectedDept = document.getElementById('filterDept').value;
+
+            const filteredEvents = globalEventsArray.filter(evt => {
+                const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
+                const cleanD = (d) => d ? d.replace('-', '/') : '';
+                const matchDept = (selectedDept === "ALL") || (cleanD(evt.extendedProps.department) === cleanD(selectedDept));
+                return matchFloor && matchDept;
+            });
+
+            if (calendar) {
+                calendar.setOption('events', filteredEvents);
+            }
+        }
+
+        function initSystem() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
+                headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+                buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
+
+                eventContent: function(arg) {
+                    const props = arg.event.extendedProps;
+                    const floorStr = props.floor ? `[${props.floor}]` : "";
+                    const deptStr = props.department || "";
+                    const machineStr = props.machine ? `${props.machine}` : "未填機台";
+                    const workerStr = props.worker_info || "未填";
+                    const weightStr = props.machine_weight ? ` ｜ ${props.machine_weight}` : "";
+
+                    const line1 = `🚚 ${floorStr}${deptStr} ➔ ${machineStr}`;
+                    const line2 = `${workerStr}${weightStr}`;
+
+                    return {
+                        html: `<div class="flex flex-col text-xs leading-tight py-0.5 px-0.5 overflow-hidden">
+                            <div class="font-black truncate text-white tracking-tight">${line1}</div>
+                            <div class="text-[11px] font-semibold opacity-90 truncate text-zinc-100">${line2}</div>
+                        </div>`
+                    };
+                },
+
+                eventDidMount: function(info) {
+                    const props = info.event.extendedProps;
+                    const tooltipText = `📅 預約移機日期: ${info.event.startStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}\n⚙️ 機台重量: ${props.machine_weight || '未填'}\n📝 備註: ${props.remarks || '無'}`;
+                    info.el.setAttribute('title', tooltipText);
+                },
+
+                dateClick: function(info) {
+                    const targetDate = info.dateStr;
+                    const dayEvents = localSchedules.filter(item => {
+                        if (!item.date) return false;
+                        const dStr = item.date.toString().trim();
+                        return dStr === targetDate || dStr.replace(/\//g, '-') === targetDate;
+                    });
+                    
+                    const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
+                    const countFC = dayEvents.filter(e => e.department === "FC").length;
+                    const countRDL = dayEvents.filter(e => e.department === "RDL").length;
+
+                    let tableRowsHtml = "";
+                    if (dayEvents.length > 0) {
+                        dayEvents.forEach(e => {
+                            const deptColor = getDeptColor(e.department || "");
+                            const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
+                            const remarksScrollBox = e.remarks 
+                                ? `<div class="max-h-[85px] overflow-y-auto pr-1 bg-zinc-50/70 p-1.5 rounded border border-zinc-200 text-zinc-500 text-xs font-medium break-words whitespace-pre-line text-left scrollbar-thin">${e.remarks}</div>`
+                                : `<span class="text-zinc-400 font-normal">-</span>`;
+
+                            tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
+                                <td class="p-3 font-bold text-indigo-900">${e.floor || '未填'}</td>
+                                <td class="p-3">${deptBadge}</td>
+                                <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
+                                <td class="p-3 font-bold text-zinc-700">${e.worker_info || '未填'}</td>
+                                <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.machine_weight || '-'}</td>
+                                <td class="p-3 max-w-[250px]">${remarksScrollBox}</td>
+                            </tr>`;
+                        });
+                    } else {
+                        tableRowsHtml = `<tr><td colspan="6" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內移機預約排程</td></tr>`;
+                    }
+
+                    const tableContainerHtml = `
+                        <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
+                            <table class="w-full min-w-[900px] text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
+                                        <th class="p-3 w-[100px]">樓層</th>
+                                        <th class="p-3 w-[120px]">站點</th>
+                                        <th class="p-3 w-[180px]">預約機台名稱</th>
+                                        <th class="p-3 w-[200px]">負責人姓名 / 連絡電話</th>
+                                        <th class="p-3 w-[150px] text-indigo-800 font-black">⚙️ 機台重量</th>
+                                        <th class="p-3 min-w-[200px]">詳細備註事項說明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRowsHtml}
+                                </tbody>
+                            </table>
+                        </div>`;
+                    
+                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 廠內移機排程總覽 】`;
+                    document.getElementById('modalStatsTitle').innerText = `➔ 當日移機總計 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
+                    
+                    document.getElementById('modalBody').innerHTML = tableContainerHtml;
+                    document.getElementById('modalDeleteBtn').classList.add('hidden'); 
+                    document.getElementById('modalSaveFieldsBtn').classList.add('hidden'); 
+                    document.getElementById('modalCopyBtn').classList.add('hidden'); 
+
+                    document.getElementById('customAlertModal').style.display = 'flex'; 
+                },
+                
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
+                    activeSelectedDocId = info.event.id;
+                    activeSelectedDocDept = props.department;
+                    activeSelectedProps = props; 
+                    
+                    const isSuper = (currentAdminDept === "SUPER_ADMIN");
+                    const cleanD = (str) => str ? str.replace('-', '/') : '';
+                    const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
+
+                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", weightContentHtml = "", remarksBlock = "";
+
+                    if (hasPermission) {
+                        dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        
+                        floorContentHtml = `
+                            <select id="modalFloorSelect" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none ml-1">
+                                <option value="1F" ${props.floor === '1F' ? 'selected' : ''}>1F</option>
+                                <option value="2F" ${props.floor === '2F' ? 'selected' : ''}>2F</option>
+                                <option value="3F" ${props.floor === '3F' ? 'selected' : ''}>3F</option>
+                                <option value="4F" ${props.floor === '4F' ? 'selected' : ''}>4F</option>
+                                <option value="5F" ${props.floor === '5F' ? 'selected' : ''}>5F</option>
+                                <option value="6F" ${props.floor === '6F' ? 'selected' : ''}>6F</option>
+                            </select>
+                        `;
+
+                        workerContentHtml = `<input type="text" id="modalWorkerInfoInput" value="${props.worker_info || ''}" placeholder="負責人姓名/電話" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        weightContentHtml = `<input type="text" id="modalMachineWeightInput" value="${props.machine_weight || ''}" placeholder="如: 750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
+                        remarksBlock = `• <b>詳細備註說明：</b><br>
+                            <textarea id="modalRemarksInput" rows="2" placeholder="請在此修改備註..." class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg p-2 mt-1 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400">${props.remarks || ''}</textarea>`;
+                    } else {
+                        dateContentHtml = `<span class="text-zinc-900 font-bold">${info.event.startStr}</span>`;
+                        floorContentHtml = `<span class="text-zinc-900 font-bold">${props.floor || '未填'}</span>`;
+                        workerContentHtml = `<span class="text-zinc-900 font-bold">${props.worker_info || '未填'}</span><br>`;
+                        weightContentHtml = `<span class="text-indigo-800 font-bold">${props.machine_weight || '未填'}</span><br>`;
+                        remarksBlock = props.remarks ? `• <b>詳細備註：</b><div class="bg-white p-2.5 rounded-lg border border-zinc-200 mt-1 text-zinc-600 text-sm font-medium whitespace-pre-line">${props.remarks}</div>` : "";
+                    }
+
+                    const detailHtml = `<div class="bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-base space-y-2">` +
+                        `• <b>預約日期：</b>${dateContentHtml}<br>` +
+                        `• <b>樓層：</b>${floorContentHtml}<br>` +
+                        `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
+                        `• <b>機台名稱：</b><span class="text-zinc-900 font-black">${props.machine || '未填'}</span><br>` +
+                        `• <b>負責人姓名 / 連絡電話：</b><br>${workerContentHtml}` +
+                        `• <b>機台重量：</b><br>${weightContentHtml}` +
+                        remarksBlock +
+                        `</div>`;
+                    
+                    document.getElementById('modalTitle').innerText = `📋 移機排程單筆明細`;
+                    document.getElementById('modalStatsTitle').innerText = ""; 
+                    document.getElementById('modalBody').innerHTML = detailHtml;
+                    
+                    if (hasPermission) {
+                        document.getElementById('modalDeleteBtn').classList.remove('hidden');
+                        document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
+                        document.getElementById('modalCopyBtn').classList.remove('hidden'); 
+                    } else {
+                        document.getElementById('modalDeleteBtn').classList.add('hidden');
+                        document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
+                        document.getElementById('modalCopyBtn').classList.add('hidden');
+                    }
+                    document.getElementById('customAlertModal').style.display = 'flex';
+                }
+            });
+            calendar.render();
+
+            applyLiveFilters();
+
+            // 💾 儲存修改
+            document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept) return;
+                
+                let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
+                let workerVal = document.getElementById('modalWorkerInfoInput') ? document.getElementById('modalWorkerInfoInput').value.trim() : "";
+                let weightVal = document.getElementById('modalMachineWeightInput') ? document.getElementById('modalMachineWeightInput').value.trim() : "";
+                let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
+
+                // 週三/週四 FC 禁設 1F
+                if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr) && floorVal === "1F") {
+                    alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定為 1F 樓層！請重新選擇其他樓層。");
+                    return;
+                }
+                
+                try {
+                    const docRef = doc(db, "kldr_relocate", activeSelectedDocId);
+                    let updatePayload = { 
+                        floor: floorVal,
+                        worker_info: workerVal,
+                        machine_weight: weightVal,
+                        remarks: r
+                    };
+                    if (dStr) updatePayload.date = dStr;
+
+                    await updateDoc(docRef, updatePayload);
+                    alert("🎉 移機排程變更儲存成功！"); closeCustomModal();
+                } catch (error) { alert("🚨 儲存失敗！請檢查權限。"); }
+            });
+
+            // 📋 複製移機排程
+            document.getElementById('modalCopyBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
+                
+                const copyBtn = document.getElementById('modalCopyBtn');
+                let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
+                let workerVal = document.getElementById('modalWorkerInfoInput') ? document.getElementById('modalWorkerInfoInput').value.trim() : (activeSelectedProps.worker_info || "");
+                let weightVal = document.getElementById('modalMachineWeightInput') ? document.getElementById('modalMachineWeightInput').value.trim() : (activeSelectedProps.machine_weight || "");
+                let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : (activeSelectedProps.remarks || "");
+                
+                const targetDept = activeSelectedDocDept || activeSelectedProps.department;
+
+                if (currentAdminDept !== "SUPER_ADMIN" && targetDept === "FC" && isWedOrThu(targetDate) && floorVal === "1F") {
+                    alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止複製排程至 1F 樓層！請重新選擇其他樓層。");
+                    return;
+                }
+
+                if (!targetDate) { alert("🚨 請選擇複製排程的目標日期！"); return; }
+                if (!confirm(`📋 您確定要將這筆移機資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？`)) return;
+
+                copyBtn.disabled = true;
+                copyBtn.innerText = "複製寫入中...";
+
+                const payload = {
+                    date: targetDate,
+                    floor: floorVal,
+                    department: targetDept,
+                    machine: activeSelectedProps.machine || "未填",
+                    worker_info: workerVal,
+                    machine_weight: weightVal,
+                    remarks: r,
+                    secret_key: BACKEND_SECRET,
+                    created_at: new Date().toISOString()
+                };
+
+                try {
+                    const uniqueId = Date.now() % 100000;
+                    const safeDeptName = payload.department ? payload.department.replace('/', '-') : '未知';
+                    const customDocName = `${payload.date}_${payload.floor}_${safeDeptName}_${uniqueId}`;
+
+                    await setDoc(doc(db, "kldr_relocate", customDocName), payload);
+                    alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的移機排程。`);
+                    closeCustomModal();
+                } catch (error) {
+                    alert("🚨 複製新增失敗！請檢查雲端權限。");
+                } finally {
+                    copyBtn.disabled = false;
+                    copyBtn.innerText = "📋 複製並新增為新排程";
+                }
+            });
+
+            // 刪除移機排程
+            document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
+                if (!activeSelectedDocId || !currentAdminDept) return;
+                
+                let checkDate = activeSelectedProps ? activeSelectedProps.date : null;
+                if (checkDate && isPastDate(checkDate) && currentAdminDept !== "SUPER_ADMIN") {
+                    alert("🔒 當前日期之前的歷史排程僅供 SUPER 管理員刪除，其餘權限無刪除權限！");
+                    return;
+                }
+
+                if (confirm(`⚠️ 您確定要將這筆移機排程從雲端徹底移除嗎？`)) {
+                    try {
+                        const docRef = doc(db, "kldr_relocate", activeSelectedDocId);
+                        const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
+                        await setDoc(docRef, { request_delete_pass: token }, { merge: true });
+                        await deleteDoc(docRef);
+                        alert("🎉 刪除成功！"); closeCustomModal();
+                    } catch (error) { alert("🚨 刪除失敗！"); }
+                }
+            });
+
+            // 區間匯出 CSV
+            document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
+                if (!localSchedules || localSchedules.length === 0) {
+                    alert("目前雲端沒有任何移機數據可供導出！");
+                    return;
+                }
+
+                const startD = document.getElementById('publicExportStartDate').value;
+                const endD = document.getElementById('publicExportEndDate').value;
+
+                if (!startD || !endD) { alert("🚨 請先選取匯出之『開始日期』與『結束日期』！"); return; }
+                if (startD > endD) { alert("🚨 開始日期不可晚於結束日期！"); return; }
+
+                const filtered = localSchedules.filter(item => {
+                    if (!item.date) return false;
+                    const d = item.date.toString().replace(/\//g, '-');
+                    return d >= startD && d <= endD;
+                });
+
+                if (filtered.length === 0) {
+                    alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何移機資料！`);
+                    return;
+                }
+
+                if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆移機報表？`)) return;
+
+                try {
+                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,機台重量,詳細備註,建立時間(台灣時區)\n";
+                    const sorted = [...filtered].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+                    sorted.forEach((d) => {
+                        const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                        const cleanWeight = (d.machine_weight || "").replace(/"/g, '""');
+                        const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
+                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `廠內移機區間報表_${startD}_至_${endD}.csv`);
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                } catch (err) { alert("🚨 導出失敗！"); }
+            });
+
+            // 全歷史匯出 CSV
+            document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
+                if (!localSchedules || localSchedules.length === 0) {
+                    alert("目前雲端沒有任何移機數據可供導出！");
+                    return;
+                }
+                if (!confirm("📥 是否確認下載『廠內移機全資料庫總報表』CSV 檔案？")) return;
+
+                try {
+                    let csvContent = "\uFEFF預約日期,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,機台重量,詳細備註,建立時間(台灣時區)\n";
+                    const sorted = [...localSchedules].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+                    sorted.forEach((d) => {
+                        const localTimeStr = formatToTaiwanTime(d.created_at);
+                        const cleanRemarks = (d.remarks || "").replace(/"/g, '""').replace(/\n/g, ' ');
+                        const cleanWeight = (d.machine_weight || "").replace(/"/g, '""');
+                        const cleanWorker = (d.worker_info || "").replace(/"/g, '""');
+                        csvContent += `"${d.date || ''}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${cleanWeight}","${cleanRemarks}","${localTimeStr}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `廠內移機全資料庫總報表_${new Date().toISOString().slice(0,10)}.csv`);
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                } catch (err) { alert("🚨 導出失敗！"); }
+            });
+        }
+
+        onSnapshot(relocateRef, (snapshot) => {
+            globalEventsArray = []; localSchedules = [];
+            let totalCount = 0;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.date && data.department) {
+                    localSchedules.push(data); totalCount++;
+                    const colorValue = getDeptColor(data.department);
+
+                    globalEventsArray.push({
+                        id: doc.id, 
+                        start: data.date, 
+                        allDay: true, 
+                        backgroundColor: colorValue, 
+                        borderColor: colorValue,
+                        extendedProps: { 
+                            floor: data.floor || "", 
+                            department: data.department, 
+                            machine: data.machine, 
+                            worker_info: data.worker_info || "",
+                            machine_weight: data.machine_weight || "",
+                            remarks: data.remarks || "" 
+                        }
+                    });
+                }
+            });
+            document.getElementById('globalRelocateTotalSpan').innerText = totalCount;
+            applyLiveFilters(); 
+        });
+
+        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
+        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
+        });
+
+        // 表單提交
+        const form = document.getElementById('relocateForm');
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在同步...";
+            
+            const inputDate = document.getElementById('date').value;
+            const inputDept = document.getElementById('department').value;
+            const inputFloor = document.getElementById('floor').value;
+
+            // 週三/週四 FC 禁選 1F
+            if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
+                alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請 1F 樓層！請重新選擇其他樓層。");
+                btn.disabled = false;
+                btn.innerText = "確認移機排程";
+                return;
+            }
+
+            const payload = {
+                date: inputDate, 
+                floor: inputFloor,
+                department: inputDept, 
+                machine: document.getElementById('machine').value.trim(), 
+                worker_info: document.getElementById('workerInfo').value.trim(),
+                machine_weight: document.getElementById('machineWeight').value.trim(),
+                remarks: document.getElementById('remarks').value.trim(),
+                secret_key: BACKEND_SECRET, 
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const uniqueId = Date.now() % 100000; 
+                const safeDeptName = payload.department.replace('/', '-'); 
+                const customDocName = `${payload.date}_${payload.floor}_${safeDeptName}_${uniqueId}`;
+                
+                await setDoc(doc(db, "kldr_relocate", customDocName), payload);
+
+                alert('🎉 移機排程已成功同步至雲端！');
+                document.getElementById('machine').value = ''; 
+                document.getElementById('workerInfo').value = ''; 
+                document.getElementById('machineWeight').value = ''; 
+                document.getElementById('remarks').value = '';
+            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認移機排程"; }
+        };
+    </script>
+</body>
+</html>
