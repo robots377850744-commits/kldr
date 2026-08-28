@@ -116,12 +116,19 @@
             border: 2px solid #27272a;
             border-radius: 16px;
             width: 100%;
-            max-width: 1400px; 
+            max-width: 1480px; 
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
             font-size: 16px !important; 
             font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif !important;
             color: #27272a;
             line-height: 1.6;
+        }
+
+        .lp-completed-box {
+            background-color: #ecfdf5 !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), 0 4px 6px -1px rgba(16, 185, 129, 0.1) !important;
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -175,8 +182,15 @@
 
         <!-- 定位排程表單區 -->
         <form id="relocateForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
-            <!-- 第一排：5 大基礎欄位 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            
+            <!-- 第一排：【需要信宏協助】前置選項 ＋ 5 大基礎欄位 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+                <div class="bg-amber-100/90 border border-amber-300 p-2 rounded-lg flex items-center h-[42px] shadow-2xs">
+                    <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-black text-amber-950 w-full">
+                        <input type="checkbox" id="needShinHong" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 cursor-pointer">
+                        <span>🛠️ 需要信宏協助</span>
+                    </label>
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
@@ -204,38 +218,72 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
-                    <input type="text" id="machine" placeholder="例如：機台Name" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="machine" placeholder="例如：機台名稱" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
-                    <input type="text" id="workerInfo" placeholder="中文電話:帥哥28006" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <input type="text" id="workerInfo" placeholder="中文姓名/電話:帥哥28006" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
             </div>
 
-            <!-- 第二排：4 大規格欄位 ＋ 備註 ＋ 送出按鈕 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 border-t border-zinc-200/60 pt-3">
-                <div>
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
-                    <input type="number" id="pieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+            <!-- 第二排：4 大規格欄位（受【需要信宏協助】勾選連動收合/展開） -->
+            <div id="specRowContainer" class="hidden border-t border-amber-200/80 pt-3 bg-amber-50/50 p-3 rounded-xl border border-amber-200">
+                <div class="text-xs font-black text-amber-900 mb-2 flex items-center gap-1.5">
+                    <span>📦 信宏協助機台規格填寫專區：</span>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">淨重總重 (kg)</label>
-                    <input type="number" id="netWeight" min="0" placeholder="例如：500" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-600 tracking-wider mb-1">件數</label>
+                        <input type="number" id="pieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-400 transition font-semibold text-xs sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-600 tracking-wider mb-1">淨重總重 (kg)</label>
+                        <input type="number" id="netWeight" min="0" placeholder="例如：500" class="w-full bg-white border border-zinc-300 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-400 transition font-semibold text-xs sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1">⚙️ 機台最大重量</label>
+                        <input type="text" id="mainWeight" placeholder="例如：主機750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1">📏 尺寸</label>
+                        <input type="text" id="mainSize" placeholder="例如：200*150*220" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">⚙️ 機台最大重量</label>
-                    <input type="text" id="mainWeight" placeholder="例如：主機750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-indigo-800 tracking-wider mb-1.5">📏 尺寸</label>
-                    <input type="text" id="mainSize" placeholder="例如：200*150*220" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-xs sm:text-sm">
-                </div>
-                <div class="sm:col-span-2 md:col-span-1 lg:col-span-1">
+            </div>
+
+            <!-- 第三排：詳細備註說明（常駐可填） ＋ Loadport 動態標示專區 ＋ 送出按鈕 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 border-t border-zinc-200/60 pt-3 items-end">
+                <div class="lg:col-span-4">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註說明</label>
                     <input type="text" id="remarks" placeholder="補充備註事項說明..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-xs sm:text-sm">
                 </div>
-                <div class="flex items-end sm:col-span-2 md:col-span-3 lg:col-span-1">
-                    <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-sm h-[40px]">
+
+                <!-- Loadport 3 項驗證專區（含動態前置作業已/未完成膠囊徽章） -->
+                <div id="lpFormBox" class="lg:col-span-6 bg-zinc-50 border border-zinc-300 p-2.5 rounded-xl transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-2xs">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-xs font-black text-indigo-950">🎯 Loadport:</span>
+                        <span id="lpStatusBadge" class="text-[10px] font-black px-2 py-0.5 rounded shadow-xs bg-red-100 text-red-700 border border-red-300">
+                            前置作業未完成
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="flex items-center gap-1 cursor-pointer select-none text-xs font-bold text-zinc-800">
+                            <input type="checkbox" id="lpInitial" class="lp-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                            <span>初放定位</span>
+                        </label>
+                        <label class="flex items-center gap-1 cursor-pointer select-none text-xs font-bold text-zinc-800">
+                            <input type="checkbox" id="lpLevel" class="lp-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                            <span>水平確認</span>
+                        </label>
+                        <label class="flex items-center gap-1 cursor-pointer select-none text-xs font-bold text-zinc-800">
+                            <input type="checkbox" id="lpLoading" class="lp-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                            <span>上下貨位置確認</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2">
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-black text-white font-bold py-2 px-4 rounded-xl transition shadow-md cursor-pointer text-sm h-[42px]">
                         確認定位排程
                     </button>
                 </div>
@@ -331,10 +379,8 @@
             "RDLkldr": "RDL",
             "FCkldr": "FC",
             "SUPERkldr": "SUPER_ADMIN",
-            /* [XH 臨時特權 - 開始] */
             "XH": "SUPER_ADMIN",
             "XHkldr": "SUPER_ADMIN"
-            /* [XH 臨時特權 - 結束] */
         };
 
         const firebaseConfig = {
@@ -360,13 +406,46 @@
         let activeDateStr = null;
         let calendar; 
 
-        // 初始化自訂區間預設日期
         const dNow = new Date();
         const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
         const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
+
+        // 🛠️ 表單連動：切換【需要信宏協助】顯示/隱藏第二排規格專區
+        const needShCheckbox = document.getElementById('needShinHong');
+        const specContainer = document.getElementById('specRowContainer');
+        needShCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                specContainer.classList.remove('hidden');
+            } else {
+                specContainer.classList.add('hidden');
+            }
+        });
+
+        // 🎯 表單連動：監聽 Loadport 3 項 Checkbox，即時切換動態標籤
+        const lpInitial = document.getElementById('lpInitial');
+        const lpLevel = document.getElementById('lpLevel');
+        const lpLoading = document.getElementById('lpLoading');
+        const lpFormBox = document.getElementById('lpFormBox');
+        const lpStatusBadge = document.getElementById('lpStatusBadge');
+
+        function updateFormLpVisual() {
+            const isAllDone = (lpInitial.checked && lpLevel.checked && lpLoading.checked);
+            if (isAllDone) {
+                lpFormBox.classList.add('lp-completed-box');
+                lpStatusBadge.innerText = "前置作業已完成";
+                lpStatusBadge.className = "text-[10px] font-black px-2 py-0.5 rounded shadow-xs bg-emerald-600 text-white border border-emerald-700";
+            } else {
+                lpFormBox.classList.remove('lp-completed-box');
+                lpStatusBadge.innerText = "前置作業未完成";
+                lpStatusBadge.className = "text-[10px] font-black px-2 py-0.5 rounded shadow-xs bg-red-100 text-red-700 border border-red-300";
+            }
+        }
+        lpInitial.addEventListener('change', updateFormLpVisual);
+        lpLevel.addEventListener('change', updateFormLpVisual);
+        lpLoading.addEventListener('change', updateFormLpVisual);
 
         function isWedOrThu(dateStr) {
             if (!dateStr) return false;
@@ -413,6 +492,26 @@
             activeSelectedDocDept = null;
             activeSelectedProps = null;
             activeDateStr = null;
+        }
+
+        // 🔒 防呆綁定函式：取消打勾需輸入 'v' 才能解除
+        function attachUncheckGuard(elementId, labelName, onPassedCallback) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.addEventListener('click', function(e) {
+                if (!this.checked) {
+                    const pass = prompt(`🔒 取消確認：此項目為【${labelName}】關鍵確認紀錄。\n若確定取消勾選，請輸入 'v'：`);
+                    if (pass !== "v" && pass !== "V") {
+                        e.preventDefault();
+                        this.checked = true;
+                        alert("⚠️ 驗證碼未符合，已保留勾選狀態！");
+                    } else if (onPassedCallback) {
+                        onPassedCallback();
+                    }
+                } else if (onPassedCallback) {
+                    onPassedCallback();
+                }
+            });
         }
 
         document.getElementById('gatePassword').addEventListener('keypress', (e) => {
@@ -465,7 +564,6 @@
             }
         }
 
-        // 🚀 方案 C：SUPER / XH 總覽視窗內 ⬆️ / ⬇️ 快速對調順序
         window.moveRelocateOrder = async function(docId, dateStr, direction) {
             if (currentAdminDept !== "SUPER_ADMIN") return;
 
@@ -497,7 +595,6 @@
                 batch.update(doc(db, "kldr_relocate", targetItem.id), { order_num: currentOrder });
                 await batch.commit();
 
-                // 重新渲染當前總覽彈窗
                 openDayOverviewModal(dateStr);
             } catch (err) {
                 alert("🚨 調整順序失敗！請檢查權限。");
@@ -512,7 +609,6 @@
                 return dStr === targetDate || dStr.replace(/\//g, '-') === targetDate;
             });
 
-            // 依據 order_num 升序排列
             dayEvents.sort((a, b) => (parseInt(a.order_num) || 999) - (parseInt(b.order_num) || 999));
             
             const countBE = dayEvents.filter(e => e.department === "BE/Recon" || e.department === "BE-Recon").length;
@@ -532,7 +628,34 @@
                     const weightDisplay = (e.pieces || e.net_weight) ? `${e.pieces ? e.pieces + '件' : ''}${e.net_weight ? ' / ' + e.net_weight + 'kg' : ''}` : '-';
                     const currentOrder = e.order_num || (idx + 1);
 
-                    // 順序欄位與 SUPER 專屬 ⬆️ / ⬇️ 調序控制按鈕
+                    // 🎯 精定位前置作業 直列卡片式排版
+                    const isAllLpDone = (e.lp_initial && e.lp_level && e.lp_loading);
+                    const lpHeaderTitle = isAllLpDone ? `精定位前置作業 ｜ 已完成` : `精定位前置作業 ｜ 未完成`;
+                    const lpHeaderStyle = isAllLpDone ? `bg-emerald-600 text-white` : `bg-zinc-200 text-zinc-700`;
+                    const lpContainerStyle = isAllLpDone ? `bg-emerald-50/90 border-emerald-400` : `bg-zinc-50 border-zinc-200`;
+
+                    const lpInitBadge = e.lp_initial ? `<span class="text-emerald-700 font-black">✅</span>` : `<span class="text-zinc-400 font-normal">⬜</span>`;
+                    const lpLvlBadge = e.lp_level ? `<span class="text-emerald-700 font-black">✅</span>` : `<span class="text-zinc-400 font-normal">⬜</span>`;
+                    const lpLoadBadge = e.lp_loading ? `<span class="text-emerald-700 font-black">✅</span>` : `<span class="text-zinc-400 font-normal">⬜</span>`;
+
+                    const shBadge = e.need_shinhong ? `<div class="mb-1"><span class="bg-amber-100 text-amber-900 border border-amber-300 font-black text-[10px] px-1.5 py-0.5 rounded inline-block shadow-2xs">🛠️ 需信宏協助</span></div>` : ``;
+
+                    const lpStatusHtml = `
+                        <div class="flex flex-col">
+                            ${shBadge}
+                            <div class="flex flex-col border rounded-lg overflow-hidden shadow-2xs ${lpContainerStyle}">
+                                <div class="px-2 py-1 text-[11px] font-black tracking-wide ${lpHeaderStyle}">
+                                    ${lpHeaderTitle}
+                                </div>
+                                <div class="p-2 space-y-1 text-xs font-mono text-zinc-800">
+                                    <div class="flex justify-between items-center"><span>初放定位:</span> ${lpInitBadge}</div>
+                                    <div class="flex justify-between items-center"><span>水平確認:</span> ${lpLvlBadge}</div>
+                                    <div class="flex justify-between items-center"><span>上下貨位置:</span> ${lpLoadBadge}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
                     let orderControlHtml = `
                         <div class="flex items-center justify-center gap-1.5">
                             <span class="bg-amber-400 text-zinc-950 font-black text-xs px-2 py-0.5 rounded border border-amber-500 shadow-xs">
@@ -553,6 +676,7 @@
                         <td class="p-3">${deptBadge}</td>
                         <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
                         <td class="p-3 font-bold text-zinc-700">${e.worker_info || '未填'}</td>
+                        <td class="p-3">${lpStatusHtml}</td>
                         <td class="p-3 text-emerald-800 font-bold text-xs">${weightDisplay}</td>
                         <td class="p-3 text-indigo-800 font-extrabold text-xs">${e.main_weight || '-'}</td>
                         <td class="p-3 text-blue-800 font-extrabold text-xs">${e.main_size || '-'}</td>
@@ -560,12 +684,12 @@
                     </tr>`;
                 });
             } else {
-                tableRowsHtml = `<tr><td colspan="9" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內定位預約排程</td></tr>`;
+                tableRowsHtml = `<tr><td colspan="10" class="p-8 text-center text-zinc-400 font-medium text-sm">➔ 本日目前無廠內定位預約排程</td></tr>`;
             }
 
             const tableContainerHtml = `
                 <div class="overflow-x-auto rounded-xl border border-zinc-200 shadow-xs bg-white mt-1 scrollbar-thin">
-                    <table class="w-full min-w-[1200px] text-left border-collapse">
+                    <table class="w-full min-w-[1380px] text-left border-collapse">
                         <thead>
                             <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
                                 <th class="p-3 w-[85px] text-center">順序</th>
@@ -573,9 +697,10 @@
                                 <th class="p-3 w-[110px]">站點</th>
                                 <th class="p-3 w-[160px]">預約機台名稱</th>
                                 <th class="p-3 w-[180px]">負責人姓名 / 連絡電話</th>
-                                <th class="p-3 w-[150px]">件數 / 淨重總重</th>
-                                <th class="p-3 w-[140px] text-indigo-800 font-black">⚙️ 機台最大重量</th>
-                                <th class="p-3 w-[130px] text-blue-800 font-black">📏 尺寸</th>
+                                <th class="p-3 w-[250px]">精定位前置作業狀態</th>
+                                <th class="p-3 w-[140px]">件數 / 淨重總重</th>
+                                <th class="p-3 w-[130px] text-indigo-800 font-black">⚙️ 最大重量</th>
+                                <th class="p-3 w-[120px] text-blue-800 font-black">📏 尺寸</th>
                                 <th class="p-3 min-w-[200px]">詳細備註事項說明</th>
                             </tr>
                         </thead>
@@ -602,9 +727,8 @@
                 initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
                 headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
-                eventOrder: 'order_num,title', // 依序號自動於月曆格內從上到下排列
+                eventOrder: 'order_num,title',
 
-                // 🎨 樣式 2：卡片最左側加入高對比醒目方塊序號標籤 [ 1 ]、[ 2 ]...
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const floorStr = props.floor ? `[${props.floor}]` : "";
@@ -620,13 +744,28 @@
                     if (props.main_size) specArr.push(`${props.main_size}`);
                     const specStr = specArr.length > 0 ? ` ｜ ${specArr.join('/')}` : "";
 
+                    let statusTags = "";
+                    if (props.need_shinhong) {
+                        statusTags += `<span class="bg-amber-400 text-zinc-950 font-black text-[9px] px-1 py-0.2 rounded ml-1 shrink-0">🛠️需信宏</span>`;
+                    }
+                    
+                    const isAllDone = (props.lp_initial && props.lp_level && props.lp_loading);
+                    if (isAllDone) {
+                        statusTags += `<span class="bg-emerald-500 text-white font-black text-[9px] px-1 py-0.2 rounded ml-1 shrink-0 shadow-2xs">🎯LP已完成</span>`;
+                    } else {
+                        statusTags += `<span class="bg-zinc-500 text-white font-bold text-[9px] px-1 py-0.2 rounded ml-1 shrink-0">🎯LP未完成</span>`;
+                    }
+
                     return {
                         html: `<div class="flex items-center gap-1.5 py-0.5 px-0.5 overflow-hidden">
                             <span class="bg-amber-300 text-zinc-950 font-black text-xs px-1.5 py-0.5 rounded border border-amber-400 shrink-0 shadow-2xs leading-none">
                                 ${orderDisplay}
                             </span>
                             <div class="flex flex-col min-w-0 flex-1 leading-tight overflow-hidden">
-                                <div class="font-black truncate text-white tracking-tight">${floorStr}${deptStr} ➔ ${machineStr}</div>
+                                <div class="font-black truncate text-white tracking-tight flex items-center">
+                                    <span class="truncate">${floorStr}${deptStr} ➔ ${machineStr}</span>
+                                    ${statusTags}
+                                </div>
                                 <div class="text-[11px] font-semibold opacity-90 truncate text-zinc-100">${workerStr}${specStr}</div>
                             </div>
                         </div>`
@@ -636,13 +775,16 @@
                 eventDidMount: function(info) {
                     const props = info.event.extendedProps;
                     const ordStr = props.order_num ? `\n🏷️ 當日定位順序: 第 ${props.order_num} 順位` : '';
+                    const shStr = props.need_shinhong ? `\n🛠️ 需要信宏協助: 是` : '';
+                    const lpDoneStr = (props.lp_initial && props.lp_level && props.lp_loading) ? '已完成' : '未完成';
+                    const lpStr = `\n🎯 精定位前置作業 (${lpDoneStr}):\n  • 初放定位: ${props.lp_initial ? '✅已確認' : '⬜未確認'}\n  • 水平確認: ${props.lp_level ? '✅已確認' : '⬜未確認'}\n  • 上下貨位置: ${props.lp_loading ? '✅已確認' : '⬜未確認'}`;
                     const pStr = props.pieces ? `\n📦 件數: ${props.pieces}件` : '';
                     const nwStr = props.net_weight ? `\n⚖️ 淨重總重: ${props.net_weight}kg` : '';
                     const mwStr = props.main_weight ? `\n⚙️ 機台最大重量: ${props.main_weight}` : '';
                     const msStr = props.main_size ? `\n📏 尺寸: ${props.main_size}` : '';
                     const remStr = props.remarks ? `\n📝 備註: ${props.remarks}` : '';
 
-                    const tooltipText = `📅 預約定位日期: ${info.event.startStr}${ordStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}${pStr}${nwStr}${mwStr}${msStr}${remStr}`;
+                    const tooltipText = `📅 預約定位日期: ${info.event.startStr}${ordStr}${shStr}${lpStr}\n🏢 樓層: ${props.floor || '未填'}\n站點: ${props.department || '未填'}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_info || '未填'}${pStr}${nwStr}${mwStr}${msStr}${remStr}`;
                     info.el.setAttribute('title', tooltipText);
                 },
 
@@ -660,7 +802,7 @@
                     const cleanD = (str) => str ? str.replace('-', '/') : '';
                     const hasPermission = (isSuper || (currentAdminDept && cleanD(currentAdminDept) === cleanD(activeSelectedDocDept)));
 
-                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", specContentHtml = "", orderContentHtml = "", remarksBlock = "";
+                    let dateContentHtml = "", floorContentHtml = "", workerContentHtml = "", specContentHtml = "", orderContentHtml = "", verificationHtml = "", remarksBlock = "";
 
                     if (hasPermission) {
                         dateContentHtml = `<input type="date" id="modalDateInput" value="${info.event.startStr}" class="bg-white border border-zinc-300 text-zinc-800 font-bold rounded-md px-2 py-0.5 ml-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
@@ -676,7 +818,6 @@
                             </select>
                         `;
 
-                        // 方案 C：單筆明細內支援直接調整 order_num
                         orderContentHtml = isSuper ? `
                             • <b>當日定位順序 (優先級)：</b>
                             <input type="number" id="modalOrderNumInput" value="${props.order_num || 1}" min="1" class="w-20 bg-amber-50 border border-amber-300 text-amber-950 font-black rounded px-2 py-0.5 text-xs focus:outline-none ml-1">
@@ -685,6 +826,46 @@
 
                         workerContentHtml = `<input type="text" id="modalWorkerInfoInput" value="${props.worker_info || ''}" placeholder="負責人姓名 / 連絡電話" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg p-2 mt-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400">`;
                         
+                        const isModalLpDone = (props.lp_initial && props.lp_level && props.lp_loading);
+                        const modalLpDoneClass = isModalLpDone ? 'lp-completed-box' : '';
+                        const modalStatusBadgeText = isModalLpDone ? '精定位前置作業 ｜ 已完成' : '精定位前置作業 ｜ 未完成';
+                        const modalStatusBadgeClass = isModalLpDone ? 'bg-emerald-600 text-white' : 'bg-red-100 text-red-700 border border-red-300';
+
+                        verificationHtml = `
+                            <div class="bg-amber-50/80 p-3 rounded-xl border border-amber-200 mt-2 space-y-2">
+                                <div class="text-xs font-black text-zinc-800">🛠️ 現場協作與 Loadport 驗證狀態 (取消打勾需輸入 'v')：</div>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-xs font-black text-amber-900 bg-white px-2.5 py-1.5 rounded-lg border border-amber-300 shadow-2xs">
+                                        <input type="checkbox" id="modalNeedShinHong" ${props.need_shinhong ? 'checked' : ''} class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500 cursor-pointer">
+                                        <span>🛠️ 需要信宏協助</span>
+                                    </label>
+
+                                    <div id="modalLpBox" class="flex flex-col bg-white p-2.5 rounded-lg border border-zinc-300 shadow-2xs ${modalLpDoneClass} min-w-[280px]">
+                                        <div class="flex items-center justify-between gap-2 mb-2 pb-1 border-b border-zinc-200">
+                                            <span class="text-xs font-black text-indigo-950">🎯 Loadport 驗證</span>
+                                            <span id="modalLpStatusBadge" class="text-[10px] font-black px-2 py-0.5 rounded shadow-xs ${modalStatusBadgeClass}">
+                                                ${modalStatusBadgeText}
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap items-center gap-3">
+                                            <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-zinc-800">
+                                                <input type="checkbox" id="modalLpInitial" ${props.lp_initial ? 'checked' : ''} class="modal-lp-chk w-3.5 h-3.5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                                                <span>初放定位</span>
+                                            </label>
+                                            <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-zinc-800">
+                                                <input type="checkbox" id="modalLpLevel" ${props.lp_level ? 'checked' : ''} class="modal-lp-chk w-3.5 h-3.5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                                                <span>水平確認</span>
+                                            </label>
+                                            <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-zinc-800">
+                                                <input type="checkbox" id="modalLpLoading" ${props.lp_loading ? 'checked' : ''} class="modal-lp-chk w-3.5 h-3.5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                                                <span>上下貨位置</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
                         specContentHtml = `
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1 bg-white p-2 rounded-lg border border-zinc-200">
                                 <div>
@@ -714,6 +895,18 @@
                         orderContentHtml = `• <b>當日定位順序：</b><span class="text-zinc-900 font-black bg-amber-100 px-2 py-0.5 rounded border border-amber-300">第 ${props.order_num || 1} 順位</span><br>`;
                         workerContentHtml = `<span class="text-zinc-900 font-bold">${props.worker_info || '未填'}</span><br>`;
                         
+                        const isAllDone = (props.lp_initial && props.lp_level && props.lp_loading);
+                        const lpDoneTitle = isAllDone ? `精定位前置作業 ｜ 已完成` : `精定位前置作業 ｜ 未完成`;
+                        const lpDoneColor = isAllDone ? `text-emerald-700 bg-emerald-50 border-emerald-300` : `text-zinc-700 bg-zinc-50 border-zinc-300`;
+
+                        verificationHtml = `
+                            • <b>現場協作與驗證狀態：</b>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold">
+                                <span class="bg-amber-50 text-amber-900 border border-amber-300 px-2 py-0.5 rounded">信宏協助: ${props.need_shinhong ? '✅ 是' : '⬜ 否'}</span>
+                                <span class="border px-2 py-0.5 rounded ${lpDoneColor}">${lpDoneTitle} (初放:${props.lp_initial?'✅':'⬜'} 水平:${props.lp_level?'✅':'⬜'} 上下貨:${props.lp_loading?'✅':'⬜'})</span>
+                            </div>
+                        `;
+
                         specContentHtml = `
                             • <b>規格明細：</b>
                             <span class="text-zinc-700 font-bold">件數: ${props.pieces || '-'} ｜ 淨重: ${props.net_weight ? props.net_weight + 'kg' : '-'} ｜ 最大重量: ${props.main_weight || '-'} ｜ 尺寸: ${props.main_size || '-'}</span><br>
@@ -729,6 +922,7 @@
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b><span class="text-zinc-900 font-black">${props.machine || '未填'}</span><br>` +
                         `• <b>負責人姓名 / 連絡電話：</b><br>${workerContentHtml}` +
+                        verificationHtml +
                         specContentHtml +
                         remarksBlock +
                         `</div>`;
@@ -741,6 +935,31 @@
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.remove('hidden'); 
                         document.getElementById('modalCopyBtn').classList.remove('hidden'); 
+
+                        function updateModalLpVisual() {
+                            const mInit = document.getElementById('modalLpInitial');
+                            const mLvl = document.getElementById('modalLpLevel');
+                            const mLoad = document.getElementById('modalLpLoading');
+                            const mBox = document.getElementById('modalLpBox');
+                            const mBadge = document.getElementById('modalLpStatusBadge');
+                            if (mInit && mLvl && mLoad && mBox && mBadge) {
+                                const isDone = (mInit.checked && mLvl.checked && mLoad.checked);
+                                if (isDone) {
+                                    mBox.classList.add('lp-completed-box');
+                                    mBadge.innerText = "精定位前置作業 ｜ 已完成";
+                                    mBadge.className = "text-[10px] font-black px-2 py-0.5 rounded shadow-xs bg-emerald-600 text-white";
+                                } else {
+                                    mBox.classList.remove('lp-completed-box');
+                                    mBadge.innerText = "精定位前置作業 ｜ 未完成";
+                                    mBadge.className = "text-[10px] font-black px-2 py-0.5 rounded shadow-xs bg-red-100 text-red-700 border border-red-300";
+                                }
+                            }
+                        }
+
+                        attachUncheckGuard('modalNeedShinHong', '需要信宏協助');
+                        attachUncheckGuard('modalLpInitial', '初放定位', updateModalLpVisual);
+                        attachUncheckGuard('modalLpLevel', '水平確認', updateModalLpVisual);
+                        attachUncheckGuard('modalLpLoading', '上下貨位置確認', updateModalLpVisual);
                     } else {
                         document.getElementById('modalDeleteBtn').classList.add('hidden');
                         document.getElementById('modalSaveFieldsBtn').classList.add('hidden');
@@ -765,9 +984,13 @@
                 let mainWeightVal = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let mainSizeVal = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
                 let orderNumVal = document.getElementById('modalOrderNumInput') ? parseInt(document.getElementById('modalOrderNumInput').value) || 1 : (activeSelectedProps.order_num || 1);
+                
+                let needShVal = document.getElementById('modalNeedShinHong') ? document.getElementById('modalNeedShinHong').checked : false;
+                let lpInitVal = document.getElementById('modalLpInitial') ? document.getElementById('modalLpInitial').checked : false;
+                let lpLvlVal = document.getElementById('modalLpLevel') ? document.getElementById('modalLpLevel').checked : false;
+                let lpLoadVal = document.getElementById('modalLpLoading') ? document.getElementById('modalLpLoading').checked : false;
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
 
-                // 週三/週四 FC 禁設 1F
                 if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr) && floorVal === "1F") {
                     alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定為 1F 樓層！請重新選擇其他樓層。");
                     return;
@@ -783,12 +1006,16 @@
                         main_weight: mainWeightVal,
                         main_size: mainSizeVal,
                         order_num: orderNumVal,
+                        need_shinhong: needShVal,
+                        lp_initial: lpInitVal,
+                        lp_level: lpLvlVal,
+                        lp_loading: lpLoadVal,
                         remarks: r
                     };
                     if (dStr) updatePayload.date = dStr;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 定位排程變更儲存成功！"); closeCustomModal();
+                    alert("🎉 定位排程與驗證狀態變更儲存成功！"); closeCustomModal();
                 } catch (error) { alert("🚨 儲存失敗！請檢查權限。"); }
             });
 
@@ -804,6 +1031,11 @@
                 let netWeightVal = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : (activeSelectedProps.net_weight || "");
                 let mainWeightVal = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : (activeSelectedProps.main_weight || "");
                 let mainSizeVal = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : (activeSelectedProps.main_size || "");
+                
+                let needShVal = document.getElementById('modalNeedShinHong') ? document.getElementById('modalNeedShinHong').checked : false;
+                let lpInitVal = document.getElementById('modalLpInitial') ? document.getElementById('modalLpInitial').checked : false;
+                let lpLvlVal = document.getElementById('modalLpLevel') ? document.getElementById('modalLpLevel').checked : false;
+                let lpLoadVal = document.getElementById('modalLpLoading') ? document.getElementById('modalLpLoading').checked : false;
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : (activeSelectedProps.remarks || "");
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
@@ -819,7 +1051,6 @@
                 copyBtn.disabled = true;
                 copyBtn.innerText = "複製寫入中...";
 
-                // 計算目標日期之自動累加序號
                 const existingDayItems = localSchedules.filter(item => (item.date || '').replace(/\//g, '-') === targetDate.replace(/\//g, '-'));
                 let nextOrder = 1;
                 if (existingDayItems.length > 0) {
@@ -838,6 +1069,10 @@
                     main_weight: mainWeightVal,
                     main_size: mainSizeVal,
                     order_num: nextOrder,
+                    need_shinhong: needShVal,
+                    lp_initial: lpInitVal,
+                    lp_level: lpLvlVal,
+                    lp_loading: lpLoadVal,
                     remarks: r,
                     secret_key: BACKEND_SECRET,
                     created_at: new Date().toISOString()
@@ -880,7 +1115,7 @@
                 }
             });
 
-            // 區間匯出 CSV (依序號與日期精準排序)
+            // 區間匯出 CSV
             document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何定位數據可供導出！");
@@ -907,7 +1142,7 @@
                 if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆定位報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,需要信宏協助,精定位前置作業,Loadport-初放定位,Loadport-水平確認,Loadport-上下貨位置,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => {
                         const dCmp = (a.date || "").localeCompare(b.date || "");
                         if (dCmp !== 0) return dCmp;
@@ -921,7 +1156,12 @@
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const orderStr = d.order_num || '1';
-                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const shStr = d.need_shinhong ? "是" : "否";
+                        const lpDoneStr = (d.lp_initial && d.lp_level && d.lp_loading) ? "已完成" : "未完成";
+                        const lpInitStr = d.lp_initial ? "已確認" : "未確認";
+                        const lpLvlStr = d.lp_level ? "已確認" : "未確認";
+                        const lpLoadStr = d.lp_loading ? "已確認" : "未確認";
+                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${shStr}","${lpDoneStr}","${lpInitStr}","${lpLvlStr}","${lpLoadStr}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -933,7 +1173,7 @@
                 } catch (err) { alert("🚨 導出失敗！"); }
             });
 
-            // 全歷史匯出 CSV (依序號與日期精準排序)
+            // 全歷史匯出 CSV
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
                 if (!localSchedules || localSchedules.length === 0) {
                     alert("目前雲端沒有任何定位數據可供導出！");
@@ -942,7 +1182,7 @@
                 if (!confirm("📥 是否確認下載『廠內定位全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,定位順序,樓層,部門/站點,機台名稱,負責人姓名 / 連絡電話,需要信宏協助,精定位前置作業,Loadport-初放定位,Loadport-水平確認,Loadport-上下貨位置,件數,淨重總重(kg),機台最大重量,尺寸,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...localSchedules].sort((a, b) => {
                         const dCmp = (a.date || "").localeCompare(b.date || "");
                         if (dCmp !== 0) return dCmp;
@@ -956,7 +1196,12 @@
                         const cleanMainWeight = (d.main_weight || "").replace(/"/g, '""');
                         const cleanMainSize = (d.main_size || "").replace(/"/g, '""');
                         const orderStr = d.order_num || '1';
-                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
+                        const shStr = d.need_shinhong ? "是" : "否";
+                        const lpDoneStr = (d.lp_initial && d.lp_level && d.lp_loading) ? "已完成" : "未完成";
+                        const lpInitStr = d.lp_initial ? "已確認" : "未確認";
+                        const lpLvlStr = d.lp_level ? "已確認" : "未確認";
+                        const lpLoadStr = d.lp_loading ? "已確認" : "未確認";
+                        csvContent += `"${d.date || ''}","${orderStr}","${d.floor || ''}","${d.department || ''}","${d.machine || '未填'}","${cleanWorker}","${shStr}","${lpDoneStr}","${lpInitStr}","${lpLvlStr}","${lpLoadStr}","${d.pieces || ''}","${d.net_weight || ''}","${cleanMainWeight}","${cleanMainSize}","${cleanRemarks}","${localTimeStr}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -985,7 +1230,7 @@
                         allDay: true, 
                         backgroundColor: colorValue, 
                         borderColor: colorValue,
-                        order_num: parseInt(data.order_num) || 1, // FullCalendar 排序依據
+                        order_num: parseInt(data.order_num) || 1,
                         extendedProps: { 
                             floor: data.floor || "", 
                             department: data.department, 
@@ -996,6 +1241,10 @@
                             main_weight: data.main_weight || "",
                             main_size: data.main_size || "",
                             order_num: parseInt(data.order_num) || 1,
+                            need_shinhong: data.need_shinhong || false,
+                            lp_initial: data.lp_initial || false,
+                            lp_level: data.lp_level || false,
+                            lp_loading: data.lp_loading || false,
                             remarks: data.remarks || "" 
                         }
                     });
@@ -1011,7 +1260,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 表單提交處理（自動計算 order_num 遞增）
+        // 表單提交處理
         const form = document.getElementById('relocateForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1021,7 +1270,6 @@
             const inputDept = document.getElementById('department').value;
             const inputFloor = document.getElementById('floor').value;
 
-            // 週三/週四 FC 禁選 1F
             if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
                 alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請 1F 樓層！請重新選擇其他樓層。");
                 btn.disabled = false;
@@ -1029,7 +1277,7 @@
                 return;
             }
 
-            // 計算當天自動累加序號
+            const isNeedSh = document.getElementById('needShinHong').checked;
             const existingDayItems = localSchedules.filter(item => (item.date || '').replace(/\//g, '-') === inputDate.replace(/\//g, '-'));
             let nextOrder = 1;
             if (existingDayItems.length > 0) {
@@ -1043,11 +1291,15 @@
                 department: inputDept, 
                 machine: document.getElementById('machine').value.trim(), 
                 worker_info: document.getElementById('workerInfo').value.trim(),
-                pieces: document.getElementById('pieces').value.trim(),
-                net_weight: document.getElementById('netWeight').value.trim(),
-                main_weight: document.getElementById('mainWeight').value.trim(),
-                main_size: document.getElementById('mainSize').value.trim(),
+                pieces: isNeedSh ? document.getElementById('pieces').value.trim() : "",
+                net_weight: isNeedSh ? document.getElementById('netWeight').value.trim() : "",
+                main_weight: isNeedSh ? document.getElementById('mainWeight').value.trim() : "",
+                main_size: isNeedSh ? document.getElementById('mainSize').value.trim() : "",
                 order_num: nextOrder,
+                need_shinhong: isNeedSh,
+                lp_initial: document.getElementById('lpInitial').checked,
+                lp_level: document.getElementById('lpLevel').checked,
+                lp_loading: document.getElementById('lpLoading').checked,
                 remarks: document.getElementById('remarks').value.trim(),
                 secret_key: BACKEND_SECRET, 
                 created_at: new Date().toISOString()
@@ -1067,6 +1319,12 @@
                 document.getElementById('netWeight').value = ''; 
                 document.getElementById('mainWeight').value = ''; 
                 document.getElementById('mainSize').value = ''; 
+                document.getElementById('needShinHong').checked = false;
+                specContainer.classList.add('hidden');
+                document.getElementById('lpInitial').checked = false;
+                document.getElementById('lpLevel').checked = false;
+                document.getElementById('lpLoading').checked = false;
+                updateFormLpVisual();
                 document.getElementById('remarks').value = '';
             } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認定位排程"; }
         };
