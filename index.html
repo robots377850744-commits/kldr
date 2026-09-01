@@ -396,10 +396,9 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <!-- 底部控制列：包含免登入公開區間匯出與特權管理區 -->
+        <!-- 底部控制列 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col gap-4">
             
-            <!-- 上排：身分指示與管理員登入區 -->
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-zinc-200/80">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="text-sm text-zinc-500 font-medium shrink-0">
@@ -427,7 +426,7 @@
                 </div>
             </div>
 
-            <!-- 下排：【免登入公開報表匯出區】 -->
+            <!-- 免登入公開報表匯出區 -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
@@ -463,10 +462,8 @@
             "RDLkldr": "RDL",
             "FCkldr": "FC",
             "SUPERkldr": "SUPER_ADMIN",
-            /* [XH 臨時特權 - 開始] */
             "XH": "SUPER_ADMIN",
             "XHkldr": "SUPER_ADMIN"
-            /* [XH 臨時特權 - 結束] */
         };
 
         const firebaseConfig = {
@@ -495,19 +492,49 @@
         let activeDateStr = null; 
         let calendar; 
 
-        // ⛈️ 特殊日期動態標記儲存物件
         let specialDatesMap = {
             "2026-08-23": "⛈️ 豪雨取消吊掛",
             "2026-08-24": "⛈️ 豪雨取消吊掛"
         };
 
-        // 初始化自訂區間匯出預設日期
         const dNow = new Date();
         const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
         const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
+
+        // 🔍 解析樓層字串（判斷是否為新機或舊機[自訂]）
+        function getFloorParts(floorStr, defaultVal = "1F") {
+            if (!floorStr) return { base: defaultVal, tag: "K18" };
+            if (floorStr.startsWith("舊機")) {
+                const match = floorStr.match(/^舊機\[(.*?)\]/);
+                return { base: "舊機", tag: match ? match[1] : "K18" };
+            }
+            if (floorStr === "新機") {
+                return { base: "新機", tag: "K18" };
+            }
+            return { base: floorStr, tag: "K18" };
+        }
+
+        // 🔄 切換舊機輸入框顯示/隱藏
+        window.toggleOldMachineInput = function(type) {
+            if (type === 'floor') {
+                const val = document.getElementById('modalFloorSelect').value;
+                const wrap = document.getElementById('modalFloorCustomWrapper');
+                if (wrap) {
+                    if (val === '舊機') wrap.classList.remove('hidden');
+                    else wrap.classList.add('hidden');
+                }
+            } else if (type === 'target') {
+                const val = document.getElementById('modalTargetFloorSelect').value;
+                const wrap = document.getElementById('modalTargetFloorCustomWrapper');
+                if (wrap) {
+                    if (val === '舊機') wrap.classList.remove('hidden');
+                    else wrap.classList.add('hidden');
+                }
+            }
+        };
 
         function applySpecialDateStyles() {
             document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
@@ -787,7 +814,6 @@
                     applySpecialDateStyles();
                 },
 
-                // 🎨 行事曆卡片排程文字前綴渲染 (含貨櫃種類標示)
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -961,7 +987,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 📋 單筆卡片點擊詳細彈窗
+                // 📋 單筆卡片點擊詳細彈窗（支援新機、舊機[K18]）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1003,27 +1029,42 @@
                             </div>
                         ` : ``;
 
+                        const { base: floorBase, tag: floorTag } = getFloorParts(activeFloor, "1F");
+                        const { base: targetBase, tag: targetTag } = getFloorParts(activeTargetFloor, "6F");
+
                         floorContentHtml = `
                             <div class="flex flex-col gap-1 mt-1">
-                                <div class="inline-flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
+                                <div class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
                                     <span class="text-xs text-zinc-500 font-bold">目前樓層:</span>
-                                    <select id="modalFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                        <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
-                                        <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
-                                        <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
-                                        <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
-                                        <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
-                                        <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
+                                    <select id="modalFloorSelect" onchange="toggleOldMachineInput('floor')" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                        <option value="1F" ${floorBase === '1F' ? 'selected' : ''}>1F</option>
+                                        <option value="2F" ${floorBase === '2F' ? 'selected' : ''}>2F</option>
+                                        <option value="3F" ${floorBase === '3F' ? 'selected' : ''}>3F</option>
+                                        <option value="4F" ${floorBase === '4F' ? 'selected' : ''}>4F</option>
+                                        <option value="5F" ${floorBase === '5F' ? 'selected' : ''}>5F</option>
+                                        <option value="6F" ${floorBase === '6F' ? 'selected' : ''}>6F</option>
+                                        <option value="新機" ${floorBase === '新機' ? 'selected' : ''}>新機</option>
+                                        <option value="舊機" ${floorBase === '舊機' ? 'selected' : ''}>舊機</option>
                                     </select>
+                                    <span id="modalFloorCustomWrapper" class="${floorBase === '舊機' ? '' : 'hidden'} text-xs font-bold text-zinc-700">
+                                        [<input type="text" id="modalFloorCustomInput" value="${floorTag}" placeholder="K18" class="w-14 bg-zinc-100 border border-zinc-300 rounded px-1 py-0.2 text-xs font-bold text-center">]
+                                    </span>
+
                                     <span class="text-xs text-zinc-500 font-bold">/ 預計樓層:</span>
-                                    <select id="modalTargetFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                        <option value="1F" ${activeTargetFloor === '1F' ? 'selected' : ''}>1F</option>
-                                        <option value="2F" ${activeTargetFloor === '2F' ? 'selected' : ''}>2F</option>
-                                        <option value="3F" ${activeTargetFloor === '3F' ? 'selected' : ''}>3F</option>
-                                        <option value="4F" ${activeTargetFloor === '4F' ? 'selected' : ''}>4F</option>
-                                        <option value="5F" ${activeTargetFloor === '5F' ? 'selected' : ''}>5F</option>
-                                        <option value="6F" ${activeTargetFloor === '6F' ? 'selected' : ''}>6F</option>
+                                    <select id="modalTargetFloorSelect" onchange="toggleOldMachineInput('target')" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                        <option value="1F" ${targetBase === '1F' ? 'selected' : ''}>1F</option>
+                                        <option value="2F" ${targetBase === '2F' ? 'selected' : ''}>2F</option>
+                                        <option value="3F" ${targetBase === '3F' ? 'selected' : ''}>3F</option>
+                                        <option value="4F" ${targetBase === '4F' ? 'selected' : ''}>4F</option>
+                                        <option value="5F" ${targetBase === '5F' ? 'selected' : ''}>5F</option>
+                                        <option value="6F" ${targetBase === '6F' ? 'selected' : ''}>6F</option>
+                                        <option value="新機" ${targetBase === '新機' ? 'selected' : ''}>新機</option>
+                                        <option value="舊機" ${targetBase === '舊機' ? 'selected' : ''}>舊機</option>
                                     </select>
+                                    <span id="modalTargetFloorCustomWrapper" class="${targetBase === '舊機' ? '' : 'hidden'} text-xs font-bold text-zinc-700">
+                                        [<input type="text" id="modalTargetFloorCustomInput" value="${targetTag}" placeholder="K18" class="w-14 bg-zinc-100 border border-zinc-300 rounded px-1 py-0.2 text-xs font-bold text-center">]
+                                    </span>
+
                                     <span class="text-xs font-extrabold text-emerald-800">狀態: (${currentStatus})</span>
                                 </div>
                                 ${superOverrideHtml}
@@ -1121,7 +1162,7 @@
                         relocateBlock +
                         `• <b>預約日期：</b>${dateContentHtml}<br>` +
                         `• <b>是否卸櫃：</b>${unloadContentHtml}<br>` +
-                        `• <b>作業項目：</b>${workTypeContentHtml}<br>` +
+                        `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
                         `• <b>樓層進度調校：</b>${floorContentHtml}<br>` +
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b>${props.machine || '未填'}<br>` +
@@ -1180,13 +1221,26 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存寫入邏輯
+            // 💾 儲存修改
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
-                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
-                let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : null;
+                
+                let floorSelectVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
+                let floorVal = floorSelectVal;
+                if (floorSelectVal === "舊機") {
+                    const customTxt = (document.getElementById('modalFloorCustomInput') ? document.getElementById('modalFloorCustomInput').value.trim() : "") || "K18";
+                    floorVal = `舊機[${customTxt}]`;
+                }
+
+                let targetFloorSelectVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : null;
+                let targetFloorVal = targetFloorSelectVal;
+                if (targetFloorSelectVal === "舊機") {
+                    const customTxt = (document.getElementById('modalTargetFloorCustomInput') ? document.getElementById('modalTargetFloorCustomInput').value.trim() : "") || "K18";
+                    targetFloorVal = `舊機[${customTxt}]`;
+                }
+
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 let containerTypeVal = document.getElementById('modalContainerTypeInput') ? document.getElementById('modalContainerTypeInput').value.trim() : (activeSelectedProps.container_type || '');
@@ -1252,8 +1306,21 @@
                 const copyBtn = document.getElementById('modalCopyBtn');
                 
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
-                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
-                let targetFloorVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : (activeSelectedProps.target_floor || "6F");
+                
+                let floorSelectVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
+                let floorVal = floorSelectVal;
+                if (floorSelectVal === "舊機") {
+                    const customTxt = (document.getElementById('modalFloorCustomInput') ? document.getElementById('modalFloorCustomInput').value.trim() : "") || "K18";
+                    floorVal = `舊機[${customTxt}]`;
+                }
+
+                let targetFloorSelectVal = document.getElementById('modalTargetFloorSelect') ? document.getElementById('modalTargetFloorSelect').value : (activeSelectedProps.target_floor || "6F");
+                let targetFloorVal = targetFloorSelectVal;
+                if (targetFloorSelectVal === "舊機") {
+                    const customTxt = (document.getElementById('modalTargetFloorCustomInput') ? document.getElementById('modalTargetFloorCustomInput').value.trim() : "") || "K18";
+                    targetFloorVal = `舊機[${customTxt}]`;
+                }
+
                 let superOverride = document.getElementById('modalSuperStatusSelect') ? document.getElementById('modalSuperStatusSelect').value : "AUTO";
                 let computedStatus = (superOverride !== "AUTO") ? superOverride : ((floorVal === targetFloorVal) ? "已完成" : "未完成");
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : getUnloadStatus(activeSelectedProps.timePeriod);
@@ -1633,7 +1700,7 @@
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 if (data.date && data.time && data.department) {
-                    localSchedules.push(data); totalSchedulesCount++;
+                    localSchedules.push({ id: doc.id, ...data }); totalSchedulesCount++;
 
                     const colorValue = getDeptColor(data.department);
 
