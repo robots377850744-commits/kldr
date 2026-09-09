@@ -602,6 +602,7 @@
 
                 openDayOverviewModal(dateStr);
             } catch (err) {
+                console.error("Order update error:", err);
                 alert("🚨 調整順序失敗！請檢查權限。");
             }
         };
@@ -1034,7 +1035,10 @@
 
                     await updateDoc(docRef, updatePayload);
                     alert("🎉 定位排程、吊運單號與驗證狀態變更儲存成功！"); closeCustomModal();
-                } catch (error) { alert("🚨 儲存失敗！請檢查權限。"); }
+                } catch (error) { 
+                    console.error("Save error:", error);
+                    alert("🚨 儲存失敗！請檢查權限。"); 
+                }
             });
 
             // 📋 複製定位排程
@@ -1107,6 +1111,7 @@
                     alert(`🎉 複製大成功！已成功於 [ ${payload.date} ] 建立全新的定位排程（順位 #${nextOrder}）。`);
                     closeCustomModal();
                 } catch (error) {
+                    console.error("Copy error:", error);
                     alert("🚨 複製新增失敗！請檢查雲端權限。");
                 } finally {
                     copyBtn.disabled = false;
@@ -1131,7 +1136,10 @@
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
                         alert("🎉 刪除成功！"); closeCustomModal();
-                    } catch (error) { alert("🚨 刪除失敗！"); }
+                    } catch (error) { 
+                        console.error("Delete error:", error);
+                        alert("🚨 刪除失敗！"); 
+                    }
                 }
             });
 
@@ -1351,7 +1359,13 @@
                 document.getElementById('lpLoading').checked = false;
                 updateFormLpVisual();
                 document.getElementById('remarks').value = '';
-            } catch (error) { alert('🚨 同步失敗！請檢查權限。'); } finally { btn.disabled = false; btn.innerText = "確認定位排程"; }
+            } catch (error) { 
+                console.error("Submit error:", error);
+                alert('🚨 同步失敗！請檢查權限。'); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = "確認定位排程"; 
+            }
         };
     </script>
 </body>
