@@ -124,7 +124,6 @@
             line-height: 1.6;
         }
 
-        /* ⛈️ 動態特殊日期/豪雨標記專屬浮水印樣式 */
         .special-date-cell {
             background-color: #fee2e2 !important;
         }
@@ -176,7 +175,6 @@
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
                 
-                <!-- 3 顆獨立切換快捷鍵按鈕組 -->
                 <div id="modalWorkTypeButtonsGroup" class="flex flex-wrap items-center gap-1.5 hidden">
                     <button id="modalSetCraneBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🔴 改為吊運</button>
                     <button id="modalSetElevatorBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md">🟡 改為電梯</button>
@@ -504,7 +502,6 @@
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
 
-        // 🔍 解析樓層字串（判斷是否為新機或舊機[自訂]）
         function getFloorParts(floorStr, defaultVal = "1F") {
             if (!floorStr) return { base: defaultVal, tag: "K18" };
             if (floorStr.startsWith("舊機")) {
@@ -517,7 +514,6 @@
             return { base: floorStr, tag: "K18" };
         }
 
-        // 🔄 切換舊機輸入框顯示/隱藏
         window.toggleOldMachineInput = function(type) {
             if (type === 'floor') {
                 const val = document.getElementById('modalFloorSelect').value;
@@ -575,18 +571,6 @@
             applySpecialDateStyles();
             renderSpecialDatesManageList();
         });
-
-        function isWedOrThu(dateStr) {
-            if (!dateStr) return false;
-            const parts = dateStr.replace(/\//g, '-').split('-');
-            if (parts.length < 3) return false;
-            const y = parseInt(parts[0], 10);
-            const m = parseInt(parts[1], 10) - 1;
-            const d = parseInt(parts[2], 10);
-            const dt = new Date(y, m, d);
-            const day = dt.getDay();
-            return (day === 3 || day === 4);
-        }
 
         window.editMarqueeAnnouncement = async function() {
             const currentContent = document.getElementById('marqueeDisplay').innerText.trim();
@@ -987,7 +971,6 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 📋 單筆卡片點擊詳細彈窗（支援新機、舊機[K18]）
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1221,7 +1204,7 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存修改
+            // 💾 儲存修改（已解除 FC 限制）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1245,13 +1228,6 @@
                 let unloadSelectVal = document.getElementById('modalTimeSelect') ? document.getElementById('modalTimeSelect').value : null;
                 let containerTypeVal = document.getElementById('modalContainerTypeInput') ? document.getElementById('modalContainerTypeInput').value.trim() : (activeSelectedProps.container_type || '');
                 let workTypeVal = document.getElementById('modalWorkTypeSelect') ? document.getElementById('modalWorkTypeSelect').value : activeSelectedDocType;
-                
-                if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr)) {
-                    if (floorVal === "1F" || targetFloorVal === "1F") {
-                        alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定或變更為 1F 樓層！請重新選擇其他樓層。");
-                        return;
-                    }
-                }
 
                 let computedStatus = "已完成";
                 if (superOverride !== "AUTO") {
@@ -1299,7 +1275,7 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯
+            // 📋 複製邏輯（已解除 FC 限制）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1328,13 +1304,6 @@
                 let workTypeVal = document.getElementById('modalWorkTypeSelect') ? document.getElementById('modalWorkTypeSelect').value : (activeSelectedDocType || "吊運");
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
-
-                if (currentAdminDept !== "SUPER_ADMIN" && targetDept === "FC" && isWedOrThu(targetDate)) {
-                    if (floorVal === "1F" || targetFloorVal === "1F") {
-                        alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止複製排程至 1F 樓層！請重新選擇其他樓層。");
-                        return;
-                    }
-                }
 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
@@ -1741,7 +1710,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 快速新增表單提交
+        // 快速新增表單提交（已解除 FC 限制）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1751,13 +1720,6 @@
             const inputDept = document.getElementById('department').value;
             const inputFloor = document.getElementById('floor').value;
             const inputContainerType = document.getElementById('containerType').value.trim();
-
-            if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
-                alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請/填寫 1F 樓層！請重新選擇其他樓層。");
-                btn.disabled = false;
-                btn.innerText = "確認排程";
-                return;
-            }
 
             let pieces = document.getElementById('inputPieces').value.trim();
             let grossWeight = document.getElementById('inputWeight').value.trim();
