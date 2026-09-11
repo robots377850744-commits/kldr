@@ -452,18 +452,6 @@
         lpLevel.addEventListener('change', updateFormLpVisual);
         lpLoading.addEventListener('change', updateFormLpVisual);
 
-        function isWedOrThu(dateStr) {
-            if (!dateStr) return false;
-            const parts = dateStr.replace(/\//g, '-').split('-');
-            if (parts.length < 3) return false;
-            const y = parseInt(parts[0], 10);
-            const m = parseInt(parts[1], 10) - 1;
-            const d = parseInt(parts[2], 10);
-            const dt = new Date(y, m, d);
-            const day = dt.getDay();
-            return (day === 3 || day === 4);
-        }
-
         function isPastDate(targetDateStr) {
             if (!targetDateStr) return false;
             const todayStr = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(dNow.getDate()).padStart(2, '0')}`;
@@ -499,7 +487,6 @@
             activeDateStr = null;
         }
 
-        // 🔒 防呆綁定函式：取消打勾需輸入 'v' 才能解除
         function attachUncheckGuard(elementId, labelName, onPassedCallback) {
             const el = document.getElementById(elementId);
             if (!el) return;
@@ -634,7 +621,6 @@
                     const weightDisplay = (e.pieces || e.net_weight) ? `${e.pieces ? e.pieces + '件' : ''}${e.net_weight ? ' / ' + e.net_weight + 'kg' : ''}` : '-';
                     const currentOrder = e.order_num || (idx + 1);
 
-                    // 🎯 精定位前置作業 直列卡片式排版
                     const isAllLpDone = (e.lp_initial && e.lp_level && e.lp_loading);
                     const lpHeaderTitle = isAllLpDone ? `精定位前置作業 ｜ 已完成` : `精定位前置作業 ｜ 未完成`;
                     const lpHeaderStyle = isAllLpDone ? `bg-emerald-600 text-white` : `bg-zinc-200 text-zinc-700`;
@@ -989,7 +975,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存修改
+            // 💾 儲存修改（已解除 FC 限制）
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1008,11 +994,6 @@
                 let lpLvlVal = document.getElementById('modalLpLevel') ? document.getElementById('modalLpLevel').checked : false;
                 let lpLoadVal = document.getElementById('modalLpLoading') ? document.getElementById('modalLpLoading').checked : false;
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
-
-                if (currentAdminDept !== "SUPER_ADMIN" && activeSelectedDocDept === "FC" && isWedOrThu(dStr) && floorVal === "1F") {
-                    alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止設定為 1F 樓層！請重新選擇其他樓層。");
-                    return;
-                }
                 
                 try {
                     const docRef = doc(db, "kldr_relocate", activeSelectedDocId);
@@ -1041,7 +1022,7 @@
                 }
             });
 
-            // 📋 複製定位排程
+            // 📋 複製定位排程（已解除 FC 限制）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1062,11 +1043,6 @@
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : (activeSelectedProps.remarks || "");
                 
                 const targetDept = activeSelectedDocDept || activeSelectedProps.department;
-
-                if (currentAdminDept !== "SUPER_ADMIN" && targetDept === "FC" && isWedOrThu(targetDate) && floorVal === "1F") {
-                    alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止複製排程至 1F 樓層！請重新選擇其他樓層。");
-                    return;
-                }
 
                 if (!targetDate) { alert("🚨 請選擇複製排程的目標日期！"); return; }
                 if (!confirm(`📋 您確定要將這筆定位資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？`)) return;
@@ -1291,7 +1267,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 表單提交處理
+        // 表單提交處理（已解除 FC 限制）
         const form = document.getElementById('relocateForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -1300,13 +1276,6 @@
             const inputDate = document.getElementById('date').value;
             const inputDept = document.getElementById('department').value;
             const inputFloor = document.getElementById('floor').value;
-
-            if (currentAdminDept !== "SUPER_ADMIN" && inputDept === "FC" && isWedOrThu(inputDate) && inputFloor === "1F") {
-                alert("🚨 管制規則提醒：每逢週三與週四，FC 站點禁止申請 1F 樓層！請重新選擇其他樓層。");
-                btn.disabled = false;
-                btn.innerText = "確認定位排程";
-                return;
-            }
 
             const isNeedSh = document.getElementById('needShinHong').checked;
             const existingDayItems = localSchedules.filter(item => (item.date || '').replace(/\//g, '-') === inputDate.replace(/\//g, '-'));
