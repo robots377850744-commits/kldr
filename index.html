@@ -235,7 +235,6 @@
 
     <div id="mainSystem" class="max-w-[1650px] mx-auto bg-white/95 rounded-2xl shadow-xl p-4 md:p-6 hidden border border-zinc-200/50">
         
-        <!-- 頁首標題區與轉頁按鈕 -->
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-4 border-b border-zinc-200">
             <div class="flex items-center gap-2">
                 <a href="relocate.html" class="inline-flex items-center gap-1.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition">
@@ -250,7 +249,6 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                 <div>
@@ -376,7 +374,6 @@
             </div>
         </div>
 
-        <!-- 📢 看板與行事曆之間的跑馬燈公告欄 -->
         <div class="bg-amber-50 border border-amber-300/80 rounded-xl p-2.5 mb-6 flex items-center gap-3 shadow-xs overflow-hidden">
             <div class="flex items-center gap-1.5 shrink-0 bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-xs">
                 <span>📢</span>
@@ -394,7 +391,6 @@
         
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
-        <!-- 底部控制列 -->
         <div class="mt-6 p-5 bg-zinc-50 rounded-xl border border-zinc-200 flex flex-col gap-4">
             
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-zinc-200/80">
@@ -424,7 +420,6 @@
                 </div>
             </div>
 
-            <!-- 免登入公開報表匯出區 -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3.5 rounded-xl border border-zinc-200/90 shadow-2xs">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-black text-zinc-700 shrink-0">📊 免登入報表匯出：</span>
@@ -490,10 +485,8 @@
         let activeDateStr = null; 
         let calendar; 
 
-        let specialDatesMap = {
-            "2026-08-23": "⛈️ 豪雨取消吊掛",
-            "2026-08-24": "⛈️ 豪雨取消吊掛"
-        };
+        // 徹底修復：初始化為空物件，不寫入任何本機死資料
+        let specialDatesMap = {};
 
         const dNow = new Date();
         const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
@@ -553,12 +546,13 @@
             });
         }
 
+        // 徹底修復：移除 { merge: true }，實現全量覆蓋寫入，讓被刪除的日期在雲端真正消失
         async function saveSpecialDatesToFirebase() {
             try {
                 await setDoc(specialDatesDocRef, {
                     marks: specialDatesMap,
                     updated_at: new Date().toISOString()
-                }, { merge: true });
+                });
             } catch (err) {
                 console.error("Save special dates error:", err);
             }
@@ -567,6 +561,8 @@
         onSnapshot(specialDatesDocRef, (snap) => {
             if (snap.exists() && snap.data().marks) {
                 specialDatesMap = snap.data().marks;
+            } else {
+                specialDatesMap = {};
             }
             applySpecialDateStyles();
             renderSpecialDatesManageList();
@@ -1178,6 +1174,7 @@
 
             applyLiveFilters();
 
+            // 徹底修復：點擊清空/輸入 CLEAR 即直接自物件移除並全量覆蓋寫入，保證能成功清除特殊日期
             document.getElementById('modalSpecialDateBtn').addEventListener('click', async () => {
                 if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
                 const currentText = specialDatesMap[activeDateStr] || "⛈️ 豪雨取消吊掛";
