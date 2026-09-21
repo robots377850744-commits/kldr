@@ -1288,7 +1288,7 @@
                 
                 // 🔒 防呆：若修改預約日期至已被鎖定的日期，非 SUPER/XH 禁止調動
                 if (dStr && dStr !== activeSelectedProps.date && lockedDatesMap[dStr] && currentAdminDept !== "SUPER_ADMIN") {
-                    alert(`🚨 變更日期失敗：目標日期 [ ${dStr} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員排入該日。`);
+                    alert(`🚨 變更日期失敗：目標日期 [ ${dStr} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳，排入該日。`);
                     return;
                 }
 
@@ -1371,7 +1371,7 @@
 
                 // 🔒 檢查目標日期是否已達上限鎖定
                 if (lockedDatesMap[targetDate] && currentAdminDept !== "SUPER_ADMIN") {
-                    alert(`🚨 複製失敗：目標日期 [ ${targetDate} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員複製新增排程。`);
+                    alert(`🚨 複製失敗：目標日期 [ ${targetDate} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳，複製新增排程。`);
                     return;
                 }
 
@@ -1807,7 +1807,7 @@
 
             // 🔒 檢查預約日期是否已達當日上限鎖定
             if (lockedDatesMap[inputDate] && currentAdminDept !== "SUPER_ADMIN") {
-                alert(`🚨 預約失敗：[ ${inputDate} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員安排排程。`);
+                alert(`🚨 預約失敗：[ ${inputDate} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳，安排排程。`);
                 btn.disabled = false;
                 btn.innerText = "確認排程";
                 return;
