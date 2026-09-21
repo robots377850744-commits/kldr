@@ -171,7 +171,11 @@
             <div id="modalBody" class="font-semibold tracking-wide overflow-y-auto max-h-[60vh] pr-1">
             </div>
             <div class="mt-5 border-t border-zinc-100 pt-3 flex flex-wrap justify-between items-center gap-3">
-                <button id="modalSpecialDateBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">⛈️ 設定/修改本日特殊標記</button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="modalSpecialDateBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">⛈️ 設定/修改本日特殊標記</button>
+                    <!-- 🔒 SUPER / XH 專屬當日上限鎖定/解鎖按鈕 -->
+                    <button id="modalLockDayBtn" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">🔒 鎖定當日上限</button>
+                </div>
                 <button id="modalSaveFieldsBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-5 py-2 rounded-xl transition shadow-md hidden">💾 儲存內容變更</button>
                 <button id="modalCopyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hidden">📋 複製並新增為新排程</button>
                 
@@ -473,6 +477,7 @@
         const scheduleRef = collection(db, "kldr");
         const marqueeDocRef = doc(db, "kldr_settings", "announcement");
         const specialDatesDocRef = doc(db, "kldr_settings", "special_dates");
+        const lockedDatesDocRef = doc(db, "kldr_settings", "locked_dates");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -485,8 +490,8 @@
         let activeDateStr = null; 
         let calendar; 
 
-        // 徹底修復：初始化為空物件，不寫入任何本機死資料
         let specialDatesMap = {};
+        let lockedDatesMap = {};
 
         const dNow = new Date();
         const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
@@ -525,12 +530,14 @@
             }
         };
 
-        function applySpecialDateStyles() {
+        // 🎨 渲染月曆格子：特殊日期浮水印與當日上限鎖定徽章
+        function applyCalendarDayBadges() {
             document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
                 const dateStr = td.getAttribute('data-date');
                 const frame = td.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
+                // 1. 特殊日期浮水印處理
                 const existingWatermark = frame.querySelector('.special-date-watermark');
                 if (existingWatermark) existingWatermark.remove();
 
@@ -543,10 +550,20 @@
                 } else {
                     td.classList.remove('special-date-cell');
                 }
+
+                // 2. 當日上限鎖定徽章處理
+                const existingLockBadge = frame.querySelector('.locked-day-badge');
+                if (existingLockBadge) existingLockBadge.remove();
+
+                if (lockedDatesMap && lockedDatesMap[dateStr]) {
+                    const lockBadge = document.createElement('div');
+                    lockBadge.className = 'locked-day-badge absolute top-1.5 right-1.5 z-10 bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-xs pointer-events-none flex items-center gap-0.5';
+                    lockBadge.innerHTML = `<span>🔒</span><span>已達上限</span>`;
+                    frame.appendChild(lockBadge);
+                }
             });
         }
 
-        // 徹底修復：移除 { merge: true }，實現全量覆蓋寫入，讓被刪除的日期在雲端真正消失
         async function saveSpecialDatesToFirebase() {
             try {
                 await setDoc(specialDatesDocRef, {
@@ -558,14 +575,36 @@
             }
         }
 
+        // 🔒 當日上限雲端寫入函式（全覆蓋避免殘留）
+        async function saveLockedDatesToFirebase() {
+            try {
+                await setDoc(lockedDatesDocRef, {
+                    dates: lockedDatesMap,
+                    updated_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error("Save locked dates error:", err);
+            }
+        }
+
         onSnapshot(specialDatesDocRef, (snap) => {
             if (snap.exists() && snap.data().marks) {
                 specialDatesMap = snap.data().marks;
             } else {
                 specialDatesMap = {};
             }
-            applySpecialDateStyles();
+            applyCalendarDayBadges();
             renderSpecialDatesManageList();
+        });
+
+        // 🔒 當日上限雲端即時監聽器
+        onSnapshot(lockedDatesDocRef, (snap) => {
+            if (snap.exists() && snap.data().dates) {
+                lockedDatesMap = snap.data().dates;
+            } else {
+                lockedDatesMap = {};
+            }
+            applyCalendarDayBadges();
         });
 
         window.editMarqueeAnnouncement = async function() {
@@ -718,7 +757,7 @@
 
             specialDatesMap[dateVal] = textVal;
             await saveSpecialDatesToFirebase();
-            applySpecialDateStyles();
+            applyCalendarDayBadges();
             renderSpecialDatesManageList();
             alert(`🎉 已成功新增 [ ${dateVal} ] 特殊標記：${textVal}`);
         }
@@ -727,7 +766,7 @@
             if (!confirm(`⚠️ 是否確認刪除 [ ${dateKey} ] 的特殊日期標記？`)) return;
             delete specialDatesMap[dateKey];
             await saveSpecialDatesToFirebase();
-            applySpecialDateStyles();
+            applyCalendarDayBadges();
             renderSpecialDatesManageList();
             alert(`🎉 已成功刪除 [ ${dateKey} ] 的特殊標記！`);
         }
@@ -791,7 +830,7 @@
                 buttonText: { today: '今天' }, validRange: { end: '2027-06-01' },
 
                 datesSet: function() {
-                    applySpecialDateStyles();
+                    applyCalendarDayBadges();
                 },
 
                 eventContent: function(arg) {
@@ -837,8 +876,9 @@
                     const targetF = props.target_floor || props.floor || '6F';
                     const autoStatus = (curF === targetF) ? '已完成' : '未完成';
                     const moveSt = props.move_status || autoStatus;
+                    const isLockedTag = lockedDatesMap[info.event.startStr] ? '\n🔒 [當日排程已達上限]' : '';
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF}/${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${poNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 是否卸櫃: ${unloadStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF}/${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人員: ${props.worker_name || '未填'}\n📦 件數毛淨重: ${weightStr}${mainW}${mainS}${craneNoStr}${poNoStr}${rem}`;
                     
                     info.el.setAttribute('title', tooltipText);
                 },
@@ -940,7 +980,9 @@
                         </div>`;
                     
                     const markTagText = specialDatesMap[targetDate] ? `【${specialDatesMap[targetDate]}】` : '';
-                    document.getElementById('modalTitle').innerText = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText}`;
+                    const lockStatusTag = lockedDatesMap[targetDate] ? `<span class="bg-rose-600 text-white font-black text-xs px-2 py-0.5 rounded shadow-xs ml-2">🔒 已達上限（已鎖定）</span>` : '';
+
+                    document.getElementById('modalTitle').innerHTML = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText} ${lockStatusTag}`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
@@ -951,6 +993,9 @@
 
                     const isSuper = (currentAdminDept === "SUPER_ADMIN");
                     const markBtn = document.getElementById('modalSpecialDateBtn');
+                    const lockDayBtn = document.getElementById('modalLockDayBtn');
+
+                    // 🔒 只有 SUPER / XH 顯示當日上限鎖定按鈕 (方案 A)
                     if (isSuper) {
                         markBtn.classList.remove('hidden');
                         if (specialDatesMap[targetDate]) {
@@ -960,8 +1005,18 @@
                             markBtn.innerText = `⛈️ 設定本日特殊標記`;
                             markBtn.className = "bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md";
                         }
+
+                        lockDayBtn.classList.remove('hidden');
+                        if (lockedDatesMap[targetDate]) {
+                            lockDayBtn.innerText = `🔓 解除當日上限鎖定`;
+                            lockDayBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md cursor-pointer";
+                        } else {
+                            lockDayBtn.innerText = `🔒 鎖定當日上限 (禁止新增)`;
+                            lockDayBtn.className = "bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md cursor-pointer";
+                        }
                     } else {
                         markBtn.classList.add('hidden');
+                        lockDayBtn.classList.add('hidden');
                     }
 
                     document.getElementById('customAlertModal').style.display = 'flex'; 
@@ -1155,6 +1210,7 @@
                     document.getElementById('modalStatsTitle').innerText = ""; 
                     document.getElementById('modalBody').innerHTML = detailHtml;
                     document.getElementById('modalSpecialDateBtn').classList.add('hidden');
+                    document.getElementById('modalLockDayBtn').classList.add('hidden');
                     
                     if (hasPermission) {
                         document.getElementById('modalDeleteBtn').classList.remove('hidden');
@@ -1174,7 +1230,7 @@
 
             applyLiveFilters();
 
-            // 徹底修復：點擊清空/輸入 CLEAR 即直接自物件移除並全量覆蓋寫入，保證能成功清除特殊日期
+            // 特殊日期標記管理點擊
             document.getElementById('modalSpecialDateBtn').addEventListener('click', async () => {
                 if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
                 const currentText = specialDatesMap[activeDateStr] || "⛈️ 豪雨取消吊掛";
@@ -1188,8 +1244,31 @@
                 }
 
                 await saveSpecialDatesToFirebase();
-                applySpecialDateStyles();
+                applyCalendarDayBadges();
                 alert("🎉 特殊日期標記已成功更新並同步至全體雲端！");
+                closeCustomModal();
+            });
+
+            // 🔒 當日上限鎖定/解鎖按鈕點擊事件 (SUPER / XH 專屬)
+            document.getElementById('modalLockDayBtn').addEventListener('click', async () => {
+                if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
+                const isCurrentlyLocked = !!lockedDatesMap[activeDateStr];
+                const actionText = isCurrentlyLocked ? "解除鎖定" : "設定為當日上限（鎖定）";
+                const confirmMsg = isCurrentlyLocked
+                    ? `🔓 是否確認【解除】[ ${activeDateStr} ] 的排程上限鎖定？\n解除後各站點同仁將恢復可新增排程。`
+                    : `🔒 是否確認將 [ ${activeDateStr} ] 設定為【當日上限（鎖定）】？\n鎖定後除 SUPER 與 XH 特權外，其餘同仁與站點將禁止新增或複製排程。`;
+
+                if (!confirm(confirmMsg)) return;
+
+                if (isCurrentlyLocked) {
+                    delete lockedDatesMap[activeDateStr];
+                } else {
+                    lockedDatesMap[activeDateStr] = true;
+                }
+
+                await saveLockedDatesToFirebase();
+                applyCalendarDayBadges();
+                alert(`🎉 [ ${activeDateStr} ] 已成功${actionText}！`);
                 closeCustomModal();
             });
 
@@ -1201,12 +1280,18 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存修改（已解除 FC 限制）
+            // 💾 儲存修改
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
                 
+                // 🔒 防呆：若修改預約日期至已被鎖定的日期，非 SUPER/XH 禁止調動
+                if (dStr && dStr !== activeSelectedProps.date && lockedDatesMap[dStr] && currentAdminDept !== "SUPER_ADMIN") {
+                    alert(`🚨 變更日期失敗：目標日期 [ ${dStr} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員排入該日。`);
+                    return;
+                }
+
                 let floorSelectVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let floorVal = floorSelectVal;
                 if (floorSelectVal === "舊機") {
@@ -1272,14 +1357,24 @@
                 } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
             });
 
-            // 📋 複製邏輯（已解除 FC 限制）
+            // 📋 複製邏輯（含鎖定日檢查防呆）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
                 const copyBtn = document.getElementById('modalCopyBtn');
-                
                 let targetDate = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : activeSelectedProps.date;
                 
+                if (!targetDate) {
+                    alert("🚨 請選擇複製排程的目标日期！");
+                    return;
+                }
+
+                // 🔒 檢查目標日期是否已達上限鎖定
+                if (lockedDatesMap[targetDate] && currentAdminDept !== "SUPER_ADMIN") {
+                    alert(`🚨 複製失敗：目標日期 [ ${targetDate} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員複製新增排程。`);
+                    return;
+                }
+
                 let floorSelectVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
                 let floorVal = floorSelectVal;
                 if (floorSelectVal === "舊機") {
@@ -1311,11 +1406,6 @@
                 let cNo = document.getElementById('modalCraneNoInput') ? document.getElementById('modalCraneNoInput').value.trim() : "";
                 let poNo = document.getElementById('modalPoNoInput') ? document.getElementById('modalPoNoInput').value.trim() : "";
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
-
-                if (!targetDate) {
-                    alert("🚨 請選擇複製排程的目标日期！");
-                    return;
-                }
 
                 const confirmMsg = `📋 您確定要將這筆機台資訊【複製】並於 [ ${targetDate} ] 新增為全新的排程嗎？\n\n(注意：原本這筆舊排程資料會完好保留於原日期，不會被修改或覆蓋)`;
                 if (!confirm(confirmMsg)) return;
@@ -1707,13 +1797,22 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 快速新增表單提交（已解除 FC 限制）
+        // 快速新增表單提交（含鎖定日檢查防呆）
         const form = document.getElementById('scheduleForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
             
             const inputDate = document.getElementById('date').value;
+
+            // 🔒 檢查預約日期是否已達當日上限鎖定
+            if (lockedDatesMap[inputDate] && currentAdminDept !== "SUPER_ADMIN") {
+                alert(`🚨 預約失敗：[ ${inputDate} ] 已達排程上限（已鎖定）！\n目前僅限 SUPER 與 XH 特權管理員安排排程。`);
+                btn.disabled = false;
+                btn.innerText = "確認排程";
+                return;
+            }
+
             const inputDept = document.getElementById('department').value;
             const inputFloor = document.getElementById('floor').value;
             const inputContainerType = document.getElementById('containerType').value.trim();
