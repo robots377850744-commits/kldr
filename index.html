@@ -253,17 +253,16 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區 (已完成 7 大欄位與排版調校) -->
+        <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             
-            <!-- 第一排：日期、部門/站點、作業項目、目前樓層、預計移動目的地、機台狀態(+國內/海外)、需求協助、機台名稱、負責人 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-3">
-                <!-- 1. 日期 -->
+                <!-- 1. 預約日期 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 2. 部門 / 站點 (移動至日期旁邊) -->
+                <!-- 2. 部門 / 站點 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
                     <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
@@ -282,25 +281,17 @@
                         <option value="平移">🔵 平移</option>
                     </select>
                 </div>
-                <!-- 4. 目前樓層 -->
+                <!-- 4. 目前樓層 (人員手動填寫) -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">目前樓層</label>
-                    <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
-                        <option value="">-- 請選擇樓層 --</option>
-                        <option value="1F">1F</option>
-                        <option value="2F">2F</option>
-                        <option value="3F">3F</option>
-                        <option value="4F">4F</option>
-                        <option value="5F">5F</option>
-                        <option value="6F">6F</option>
-                    </select>
+                    <input type="text" id="floor" placeholder="例如：1F / 裝卸區" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
                 <!-- 5. 預計移動目的地 (填空文字框) -->
                 <div>
                     <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1.5">預計移動目的地</label>
                     <input type="text" id="targetFloor" placeholder="例如：6F / A區" required class="w-full bg-white border border-indigo-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 6. 機台狀態 (新機/舊機，新機動態顯示國內/海外) -->
+                <!-- 6. 機台狀態 (新機動態顯示國內/海外) -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台狀態</label>
                     <div class="flex items-center gap-1">
@@ -334,8 +325,8 @@
                 </div>
             </div>
 
-            <!-- 第二排：件數、總重量(設備+包裝)、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-9 gap-3 border-t border-zinc-200/60 pt-3">
+            <!-- 第二排：件數、總重量(設備+包裝)、純設備重量、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-10 gap-3 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
                     <input type="number" id="inputPieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
@@ -343,6 +334,10 @@
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重量(設備+包裝) (kg)</label>
                     <input type="number" id="inputWeight" min="0" placeholder="例如：100" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">純設備重量 (kg)</label>
+                    <input type="number" id="inputNetWeight" min="0" placeholder="例如：80" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-emerald-800 tracking-wider mb-1.5">🏷️ AP吊運單號</label>
@@ -477,16 +472,22 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const GATE_PASSWORD  = "kl"; 
+        const GATE_PASSWORD = "kl"; 
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
+        // 🛡️ 權限金鑰正規化映射表（支援純代號、大小寫、以及帶 kldr 完整字串）
         const ADMIN_PASSWORDS = {
-            "BEkldr": "BE/Recon",
-            "RDLkldr": "RDL",
-            "FCkldr": "FC",
-            "SUPERkldr": "SUPER_ADMIN",
+            "BE": "BE/Recon",
+            "BEKLDR": "BE/Recon",
+            "BE-RECON": "BE/Recon",
+            "RDL": "RDL",
+            "RDLKLDR": "RDL",
+            "FC": "FC",
+            "FCKLDR": "FC",
+            "SUPER": "SUPER_ADMIN",
+            "SUPERKLDR": "SUPER_ADMIN",
             "XH": "SUPER_ADMIN",
-            "XHkldr": "SUPER_ADMIN"
+            "XHKLDR": "SUPER_ADMIN"
         };
 
         const firebaseConfig = {
@@ -509,53 +510,49 @@
         let localSchedules = [];
         let isAdmin = false;       
         let currentAdminDept = null; 
+        let currentAdminToken = "";
         let activeSelectedDocId = null; 
         let activeSelectedDocDept = null; 
         let activeSelectedDocType = null; 
         let activeSelectedProps = null; 
         let activeDateStr = null; 
-        let calendar; 
+        let calendar = null; 
+        let isSystemInitialized = false;
 
         let specialDatesMap = {};
         let lockedDatesMap = {};
 
-        const dNow = new Date();
-        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
-        const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
-        const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
-        document.getElementById('publicExportStartDate').value = firstDayOfMonth;
-        document.getElementById('publicExportEndDate').value = lastDayOfMonth;
-
-        // 🔄 快速新增表單：切換機台狀態動態顯示/隱藏國內海外選項
-        window.toggleFormMachineOrigin = function() {
-            const status = document.getElementById('machineStatus').value;
+        // 🌟 函數提升（Hoisting）宣告：避免非同步回呼執行時發生未定義崩潰
+        function toggleFormMachineOrigin() {
+            const statusEl = document.getElementById('machineStatus');
             const originSelect = document.getElementById('machineOrigin');
-            if (status === '新機') {
+            if (!statusEl || !originSelect) return;
+            if (statusEl.value === '新機') {
                 originSelect.classList.remove('hidden');
             } else {
                 originSelect.classList.add('hidden');
             }
-        };
+        }
+        window.toggleFormMachineOrigin = toggleFormMachineOrigin;
 
-        // 🔄 單筆明細彈窗：切換機台狀態動態顯示/隱藏國內海外選項
-        window.toggleModalMachineOrigin = function() {
-            const status = document.getElementById('modalMachineStatus').value;
+        function toggleModalMachineOrigin() {
+            const statusEl = document.getElementById('modalMachineStatus');
             const originSelect = document.getElementById('modalMachineOrigin');
-            if (status === '新機') {
+            if (!statusEl || !originSelect) return;
+            if (statusEl.value === '新機') {
                 originSelect.classList.remove('hidden');
             } else {
                 originSelect.classList.add('hidden');
             }
-        };
+        }
+        window.toggleModalMachineOrigin = toggleModalMachineOrigin;
 
-        // 🎨 渲染月曆格子：特殊日期浮水印與當日上限鎖定徽章
         function applyCalendarDayBadges() {
             document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
                 const dateStr = td.getAttribute('data-date');
                 const frame = td.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
-                // 1. 特殊日期浮水印
                 const existingWatermark = frame.querySelector('.special-date-watermark');
                 if (existingWatermark) existingWatermark.remove();
 
@@ -569,7 +566,6 @@
                     td.classList.remove('special-date-cell');
                 }
 
-                // 2. 當日上限鎖定徽章
                 const existingLockBadge = frame.querySelector('.locked-day-badge');
                 if (existingLockBadge) existingLockBadge.remove();
 
@@ -604,27 +600,54 @@
             }
         }
 
-        onSnapshot(specialDatesDocRef, (snap) => {
-            if (snap.exists() && snap.data().marks) {
-                specialDatesMap = snap.data().marks;
-            } else {
-                specialDatesMap = {};
-            }
-            applyCalendarDayBadges();
-            renderSpecialDatesManageList();
-        });
+        function renderSpecialDatesManageList() {
+            const container = document.getElementById('specialDatesListContainer');
+            if (!container) return;
+            container.innerHTML = '';
 
-        onSnapshot(lockedDatesDocRef, (snap) => {
-            if (snap.exists() && snap.data().dates) {
-                lockedDatesMap = snap.data().dates;
-            } else {
-                lockedDatesMap = {};
+            const keys = Object.keys(specialDatesMap).sort();
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-zinc-400 font-bold">目前尚無任何生效中的特殊標記日期</div>`;
+                return;
             }
-            applyCalendarDayBadges();
-        });
 
-        window.editMarqueeAnnouncement = async function() {
-            const currentContent = document.getElementById('marqueeDisplay').innerText.trim();
+            keys.forEach(d => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between p-2.5 hover:bg-zinc-50 transition text-xs';
+                itemDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-black text-zinc-800">${d}</span>
+                        <span class="text-red-700 font-bold bg-red-50 border border-red-200 px-2 py-0.5 rounded">${specialDatesMap[d]}</span>
+                    </div>
+                    <button type="button" onclick="deleteSpecialDateMark('${d}')" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2 py-1 rounded text-xs transition cursor-pointer">
+                        🗑️ 刪除
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+        window.renderSpecialDatesManageList = renderSpecialDatesManageList;
+
+        function closeCustomModal() {
+            const modal = document.getElementById('customAlertModal');
+            if (modal) modal.style.display = 'none';
+            activeSelectedDocId = null;
+            activeSelectedDocDept = null;
+            activeSelectedDocType = null;
+            activeSelectedProps = null;
+            activeDateStr = null;
+        }
+        window.closeCustomModal = closeCustomModal;
+
+        function closeSpecialDatesManageModal() {
+            const modal = document.getElementById('specialDatesManageModal');
+            if (modal) modal.classList.add('hidden');
+        }
+        window.closeSpecialDatesManageModal = closeSpecialDatesManageModal;
+
+        async function editMarqueeAnnouncement() {
+            const marquee = document.getElementById('marqueeDisplay');
+            const currentContent = marquee ? marquee.innerText.trim() : "";
             const newContent = prompt("📢 請輸入要顯示在跑馬燈上的即時公告內容：", currentContent);
             if (newContent !== null && newContent.trim() !== "") {
                 const textToSave = newContent.trim();
@@ -634,28 +657,45 @@
                         updated_at: new Date().toISOString()
                     }, { merge: true });
                     localStorage.setItem("kldr_marquee_text", textToSave);
-                    document.getElementById('marqueeDisplay').innerText = textToSave;
+                    if (marquee) marquee.innerText = textToSave;
                     alert("🎉 跑馬燈公告已成功同步至全體雲端！");
                 } catch (e) {
                     localStorage.setItem("kldr_marquee_text", textToSave);
-                    document.getElementById('marqueeDisplay').innerText = textToSave;
+                    if (marquee) marquee.innerText = textToSave;
                     alert("🎉 公告已儲存於本機！");
                 }
             }
-        };
+        }
+        window.editMarqueeAnnouncement = editMarqueeAnnouncement;
 
-        onSnapshot(marqueeDocRef, (snap) => {
-            if (snap.exists() && snap.data().text) {
-                document.getElementById('marqueeDisplay').innerText = snap.data().text;
-                localStorage.setItem("kldr_marquee_text", snap.data().text);
-            } else {
-                const localSaved = localStorage.getItem("kldr_marquee_text");
-                if (localSaved) document.getElementById('marqueeDisplay').innerText = localSaved;
-            }
-        }, (err) => {
-            const localSaved = localStorage.getItem("kldr_marquee_text");
-            if (localSaved) document.getElementById('marqueeDisplay').innerText = localSaved;
-        });
+        async function addNewSpecialDateMark() {
+            const dateInput = document.getElementById('newSpecialDateInput');
+            const textInput = document.getElementById('newSpecialTextInput');
+            if (!dateInput || !textInput) return;
+
+            const dateVal = dateInput.value;
+            const textVal = textInput.value.trim();
+
+            if (!dateVal) { alert("請先選取目標日期！"); return; }
+            if (!textVal) { alert("請輸入標記文字！"); return; }
+
+            specialDatesMap[dateVal] = textVal;
+            await saveSpecialDatesToFirebase();
+            applyCalendarDayBadges();
+            renderSpecialDatesManageList();
+            alert(`🎉 已成功新增 [ ${dateVal} ] 特殊標記：${textVal}`);
+        }
+        window.addNewSpecialDateMark = addNewSpecialDateMark;
+
+        async function deleteSpecialDateMark(dateKey) {
+            if (!confirm(`⚠️ 是否確認刪除 [ ${dateKey} ] 的特殊日期標記？`)) return;
+            delete specialDatesMap[dateKey];
+            await saveSpecialDatesToFirebase();
+            applyCalendarDayBadges();
+            renderSpecialDatesManageList();
+            alert(`🎉 已成功刪除 [ ${dateKey} ] 的特殊標記！`);
+        }
+        window.deleteSpecialDateMark = deleteSpecialDateMark;
 
         function getTodayYMD() {
             const d = new Date();
@@ -669,12 +709,8 @@
             return cleanTarget < todayStr;
         }
 
-        // 解析機台狀態字串 (相容舊版卸櫃字串)
         function getMachineStatusText(timeVal) {
             if (!timeVal) return "未填狀態";
-            if (timeVal === "需要卸櫃" || timeVal === "不需卸櫃" || timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
-                return timeVal;
-            }
             return timeVal;
         }
 
@@ -683,7 +719,7 @@
             let displayPo = "";
             let displayWeight = weightCount || "";
             
-            if (workerName && workerName.includes(" [PO:")) {
+            if (workerName && typeof workerName === 'string' && workerName.includes(" [PO:")) {
                 const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
                 if (match) {
                     displayName = match[1]; displayPo = match[2];
@@ -719,113 +755,11 @@
             } catch (e) { return isoString; }
         }
 
-        window.closeCustomModal = function() {
-            document.getElementById('customAlertModal').style.display = 'none';
-            activeSelectedDocId = null;
-            activeSelectedDocDept = null;
-            activeSelectedDocType = null;
-            activeSelectedProps = null;
-            activeDateStr = null;
-        }
-
-        window.closeSpecialDatesManageModal = function() {
-            document.getElementById('specialDatesManageModal').classList.add('hidden');
-        }
-
-        window.renderSpecialDatesManageList = function() {
-            const container = document.getElementById('specialDatesListContainer');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const keys = Object.keys(specialDatesMap).sort();
-            if (keys.length === 0) {
-                container.innerHTML = `<div class="p-4 text-center text-xs text-zinc-400 font-bold">目前尚無任何生效中的特殊標記日期</div>`;
-                return;
-            }
-
-            keys.forEach(d => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex items-center justify-between p-2.5 hover:bg-zinc-50 transition text-xs';
-                itemDiv.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="font-mono font-black text-zinc-800">${d}</span>
-                        <span class="text-red-700 font-bold bg-red-50 border border-red-200 px-2 py-0.5 rounded">${specialDatesMap[d]}</span>
-                    </div>
-                    <button type="button" onclick="deleteSpecialDateMark('${d}')" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2 py-1 rounded text-xs transition cursor-pointer">
-                        🗑️ 刪除
-                    </button>
-                `;
-                container.appendChild(itemDiv);
-            });
-        }
-
-        window.addNewSpecialDateMark = async function() {
-            const dateVal = document.getElementById('newSpecialDateInput').value;
-            const textVal = document.getElementById('newSpecialTextInput').value.trim();
-
-            if (!dateVal) {
-                alert("請先選取目標日期！");
-                return;
-            }
-            if (!textVal) {
-                alert("請輸入標記文字！");
-                return;
-            }
-
-            specialDatesMap[dateVal] = textVal;
-            await saveSpecialDatesToFirebase();
-            applyCalendarDayBadges();
-            renderSpecialDatesManageList();
-            alert(`🎉 已成功新增 [ ${dateVal} ] 特殊標記：${textVal}`);
-        }
-
-        window.deleteSpecialDateMark = async function(dateKey) {
-            if (!confirm(`⚠️ 是否確認刪除 [ ${dateKey} ] 的特殊日期標記？`)) return;
-            delete specialDatesMap[dateKey];
-            await saveSpecialDatesToFirebase();
-            applyCalendarDayBadges();
-            renderSpecialDatesManageList();
-            alert(`🎉 已成功刪除 [ ${dateKey} ] 的特殊標記！`);
-        }
-
-        document.getElementById('gatePassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { document.getElementById('unlockBtn').click(); }
-        });
-
-        document.getElementById('unlockBtn').addEventListener('click', () => {
-            const input = document.getElementById('gatePassword').value;
-            if (input === GATE_PASSWORD) {
-                document.getElementById('passwordOverlay').style.display = 'none';
-                document.getElementById('mainSystem').classList.remove('hidden');
-                initSystem();
-            } else { document.getElementById('loginError').classList.remove('hidden'); }
-        });
-
-        document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') { document.getElementById('adminLoginBtn').click(); }
-        });
-
-        document.getElementById('adminLoginBtn').addEventListener('click', () => {
-            const input = document.getElementById('adminPassword').value.trim();
-            if (ADMIN_PASSWORDS[input]) {
-                currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
-                if (currentAdminDept === "SUPER_ADMIN") {
-                    document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
-                    document.getElementById('currentRole').className = "font-bold text-red-600";
-                    document.getElementById('superAdminWrapper').classList.remove('hidden'); 
-                } else {
-                    document.getElementById('currentRole').innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬港口快速編輯功能)`;
-                    document.getElementById('currentRole').className = "font-bold text-emerald-700";
-                }
-                document.getElementById('adminLoginArea').querySelector('input[type="password"]').style.display = "none";
-                document.getElementById('adminLoginBtn').style.display = "none";
-                alert(`權限驗證成功！現已成功開通專屬高階維護功能。`);
-            } else { alert("特權金鑰錯誤！權限驗證失敗。"); }
-        });
-
         function applyLiveFilters() {
-            const selectedFloor = document.getElementById('filterFloor').value;
-            const selectedDept = document.getElementById('filterDept').value;
+            const filterFloorEl = document.getElementById('filterFloor');
+            const filterDeptEl = document.getElementById('filterDept');
+            const selectedFloor = filterFloorEl ? filterFloorEl.value : "ALL";
+            const selectedDept = filterDeptEl ? filterDeptEl.value : "ALL";
 
             const filteredEvents = globalEventsArray.filter(evt => {
                 const matchFloor = (selectedFloor === "ALL") || (evt.extendedProps.floor === selectedFloor);
@@ -839,7 +773,169 @@
             }
         }
 
+        // 🌟 初始化預設匯出日期
+        try {
+            const startExportInput = document.getElementById('publicExportStartDate');
+            const endExportInput = document.getElementById('publicExportEndDate');
+            if (startExportInput && endExportInput) {
+                startExportInput.value = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
+                const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
+                endExportInput.value = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+            }
+        } catch (e) { console.error("Export date init error:", e); }
+
+        // 🌟 核心關卡解鎖綁定（支援不分大小寫與自動去空白）
+        const gateInput = document.getElementById('gatePassword');
+        const unlockBtn = document.getElementById('unlockBtn');
+        if (gateInput && unlockBtn) {
+            gateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') unlockBtn.click();
+            });
+            unlockBtn.addEventListener('click', () => {
+                const inputVal = gateInput.value.trim().toLowerCase();
+                if (inputVal === GATE_PASSWORD.toLowerCase()) {
+                    document.getElementById('passwordOverlay').style.display = 'none';
+                    document.getElementById('mainSystem').classList.remove('hidden');
+                    initSystem();
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            });
+        }
+
+        // 🌟 站點特權登入金鑰綁定（支援 FC/FCkldr、BE/BEkldr 等全形式）
+        const adminInput = document.getElementById('adminPassword');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        if (adminInput && adminLoginBtn) {
+            adminInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') adminLoginBtn.click();
+            });
+            adminLoginBtn.addEventListener('click', () => {
+                const rawInput = adminInput.value.trim();
+                const normalized = rawInput.toUpperCase();
+                
+                if (ADMIN_PASSWORDS[normalized]) {
+                    currentAdminDept = ADMIN_PASSWORDS[normalized];
+                    isAdmin = true;
+                    
+                    // 根據權限規範標準化刪除驗證 token
+                    if (currentAdminDept === "SUPER_ADMIN") {
+                        currentAdminToken = (normalized === "XH" || normalized === "XHKLDR") ? "XH" : "SUPERkldr";
+                    } else if (currentAdminDept === "BE/Recon") {
+                        currentAdminToken = "BEkldr";
+                    } else if (currentAdminDept === "RDL") {
+                        currentAdminToken = "RDLkldr";
+                    } else if (currentAdminDept === "FC") {
+                        currentAdminToken = "FCkldr";
+                    } else {
+                        currentAdminToken = rawInput;
+                    }
+
+                    const roleDisplay = document.getElementById('currentRole');
+                    const superWrapper = document.getElementById('superAdminWrapper');
+                    if (currentAdminDept === "SUPER_ADMIN") {
+                        if (roleDisplay) {
+                            roleDisplay.innerText = `⚡ 核心管理員：[SUPER ADMIN] 資料庫最高控制主權已開通`;
+                            roleDisplay.className = "font-bold text-red-600";
+                        }
+                        if (superWrapper) superWrapper.classList.remove('hidden');
+                    } else {
+                        if (roleDisplay) {
+                            roleDisplay.innerText = `👑 最高特權：[${currentAdminDept}] 站點維護員 (已開啟專屬快速編輯功能)`;
+                            roleDisplay.className = "font-bold text-emerald-700";
+                        }
+                    }
+
+                    adminInput.style.display = "none";
+                    adminLoginBtn.style.display = "none";
+                    alert(`🎉 權限驗證成功！現已成功開通 [${currentAdminDept}] 專屬維護功能。`);
+                } else {
+                    alert("⚠️ 特權金鑰錯誤！權限驗證失敗，請重新輸入。");
+                }
+            });
+        }
+
+        // 🌟 Firestore 即時監聽設定
+        onSnapshot(specialDatesDocRef, (snap) => {
+            if (snap.exists() && snap.data().marks) {
+                specialDatesMap = snap.data().marks;
+            } else {
+                specialDatesMap = {};
+            }
+            applyCalendarDayBadges();
+            renderSpecialDatesManageList();
+        });
+
+        onSnapshot(lockedDatesDocRef, (snap) => {
+            if (snap.exists() && snap.data().dates) {
+                lockedDatesMap = snap.data().dates;
+            } else {
+                lockedDatesMap = {};
+            }
+            applyCalendarDayBadges();
+        });
+
+        onSnapshot(marqueeDocRef, (snap) => {
+            const marquee = document.getElementById('marqueeDisplay');
+            if (snap.exists() && snap.data().text) {
+                if (marquee) marquee.innerText = snap.data().text;
+                localStorage.setItem("kldr_marquee_text", snap.data().text);
+            } else {
+                const localSaved = localStorage.getItem("kldr_marquee_text");
+                if (localSaved && marquee) marquee.innerText = localSaved;
+            }
+        });
+
+        onSnapshot(scheduleRef, (snapshot) => {
+            globalEventsArray = []; 
+            localSchedules = [];
+            let totalSchedulesCount = 0;
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (data.date && data.department) {
+                    localSchedules.push({ id: docSnap.id, ...data }); 
+                    totalSchedulesCount++;
+
+                    const colorValue = getDeptColor(data.department);
+
+                    globalEventsArray.push({
+                        id: docSnap.id, 
+                        start: data.date, 
+                        allDay: true, 
+                        backgroundColor: colorValue, 
+                        borderColor: colorValue,
+                        extendedProps: { 
+                            floor: data.floor || "", 
+                            target_floor: data.target_floor || "6F",
+                            move_status: data.move_status || ((data.floor === "6F") ? "已完成" : "未完成"),
+                            department: data.department, 
+                            machine: data.machine, 
+                            timePeriod: data.time || "新機(國內)", 
+                            container_type: data.container_type || "",
+                            worker_name: data.worker_name, 
+                            workType: data.workType || "吊運", 
+                            weight_count: data.weight_count || "", 
+                            main_weight: data.main_weight || "", 
+                            main_size: data.main_size || "", 
+                            crane_no: data.crane_no || "",
+                            po_no: data.po_no || "",
+                            is_relocate: data.is_relocate || false,
+                            remarks: data.remarks || "" 
+                        }
+                    });
+                }
+            });
+            const totalSpan = document.getElementById('globalCraneTotalSpan');
+            if (totalSpan) totalSpan.innerText = totalSchedulesCount;
+            applyLiveFilters(); 
+        });
+
+        // 🌟 主行事曆與各項點擊事件初始化
         function initSystem() {
+            if (isSystemInitialized) return;
+            isSystemInitialized = true;
+
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth', locale: 'zh-tw', height: 'auto', 
@@ -850,7 +946,6 @@
                     applyCalendarDayBadges();
                 },
 
-                // 🎨 月曆小卡片排程渲染：Line 1: 樓層/站點/機台，Line 2: [機台狀態] ｜ [需求協助] ｜ [負責人]
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -890,18 +985,16 @@
                     const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
                     const assistStr = props.container_type ? ` [需求協助: ${props.container_type}]` : '';
                     const statusStr = getMachineStatusText(props.timePeriod);
-                    const curF = props.floor || '1F';
+                    const curF = props.floor || '未填';
                     const targetF = props.target_floor || '未填';
                     const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                     const moveSt = props.move_status || autoStatus;
                     const isLockedTag = lockedDatesMap[info.event.startStr] ? '\n🔒 [當日排程已達上限]' : '';
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重量: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
-                    
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重/純設備重: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 📅 排程核心數據總覽視窗
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     activeDateStr = targetDate;
@@ -935,7 +1028,7 @@
                             const deptColor = getDeptColor(e.department || "");
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
                             
-                            const curF = e.floor || '1F';
+                            const curF = e.floor || '未填';
                             const targetF = e.target_floor || '未填';
                             const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                             const moveSt = e.move_status || autoStatus;
@@ -984,7 +1077,7 @@
                                         <th class="p-3 w-[100px]">站點</th>
                                         <th class="p-3 w-[150px]">預約機台名稱</th>
                                         <th class="p-3 w-[170px]">負責人姓名 / 連絡電話</th>
-                                        <th class="p-3 w-[160px]">件數 / 總重量(設備+包裝)</th>
+                                        <th class="p-3 w-[170px]">件數 / 總重 / 純設備重</th>
                                         <th class="p-3 w-[140px] text-emerald-800 font-black">🏷️ AP吊運單號</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
@@ -1040,7 +1133,6 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 📋 單筆卡片點擊詳細彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1088,14 +1180,7 @@
                             <div class="flex flex-col gap-1 mt-1">
                                 <div class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
                                     <span class="text-xs text-zinc-500 font-bold">目前樓層:</span>
-                                    <select id="modalFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
-                                        <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
-                                        <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
-                                        <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
-                                        <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
-                                        <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
-                                        <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
-                                    </select>
+                                    <input type="text" id="modalFloorInput" value="${activeFloor}" placeholder="例如：1F" class="w-24 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
                                     <span class="text-xs text-zinc-500 font-bold">➔ 預計目的地:</span>
                                     <input type="text" id="modalTargetFloorInput" value="${activeTargetFloor}" placeholder="例如：6F / A區" class="w-32 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
                                     <span class="text-xs font-extrabold text-emerald-800">狀態: (${currentStatus})</span>
@@ -1137,14 +1222,21 @@
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     
-                    let piecesVal = "", grossVal = "";
+                    let piecesVal = "", grossVal = "", netVal = "";
                     let currentWeightCount = props.weight_count || parsed.displayWeight || "";
                     if (currentWeightCount) {
                         const pMatch = currentWeightCount.match(/(\d+)件/); if (pMatch) piecesVal = pMatch[1];
-                        const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) grossVal = wMatch[1];
-                        if (!grossVal) {
+                        const gwMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (gwMatch) grossVal = gwMatch[1];
+                        const nwMatch = currentWeightCount.match(/設備重\s*(\d+)kg/); if (nwMatch) netVal = nwMatch[1];
+                        
+                        if (!grossVal || !netVal) {
                             const parts = currentWeightCount.split('/');
-                            if (parts.length >= 2) grossVal = parts[1].replace(/[^\d]/g, '');
+                            if (parts.length >= 3) {
+                                if (!grossVal) grossVal = parts[1].replace(/[^\d]/g, '');
+                                if (!netVal) netVal = parts[2].replace(/[^\d]/g, '');
+                            } else if (parts.length === 2 && !grossVal) {
+                                grossVal = parts[1].replace(/[^\d]/g, '');
+                            }
                         }
                     }
 
@@ -1166,10 +1258,12 @@
                         `;
 
                         weightContentHtml = `
-                            <div class="flex flex-wrap items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-md">
-                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-16 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-lg">
+                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <span class="text-zinc-400 font-bold">/</span>
-                                <input type="number" id="modalWeightInput" value="${grossVal}" placeholder="總重量" class="w-24 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (設備+包裝)</span>
+                                <input type="number" id="modalWeightInput" value="${grossVal}" placeholder="總重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (總重)</span>
+                                <span class="text-zinc-400 font-bold">/</span>
+                                <input type="number" id="modalNetWeightInput" value="${netVal}" placeholder="純設備重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (純設備重)</span>
                             </div>`;
                         
                         mainSpecRowHtml = `
@@ -1254,7 +1348,7 @@
                 closeCustomModal();
             });
 
-            // 🔒 當日上限鎖定/解鎖按鈕點擊事件 (SUPER / XH 專屬)
+            // 當日上限鎖定/解鎖按鈕點擊事件 (SUPER / XH 專屬)
             document.getElementById('modalLockDayBtn').addEventListener('click', async () => {
                 if (!activeDateStr || currentAdminDept !== "SUPER_ADMIN") return;
                 const isCurrentlyLocked = !!lockedDatesMap[activeDateStr];
@@ -1285,19 +1379,19 @@
                 document.getElementById('specialDatesManageModal').classList.remove('hidden');
             });
 
-            // 💾 儲存修改
+            // 儲存修改
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
                 let dStr = document.getElementById('modalDateInput') ? document.getElementById('modalDateInput').value : (activeSelectedProps ? activeSelectedProps.date : null);
                 
-                // 🔒 防呆：修改預約日期至已被鎖定的日期 (請聯絡信宏/汯勳)
+                // 防呆：修改預約日期至已被鎖定的日期 (請聯絡信宏/汯勳)
                 if (dStr && dStr !== activeSelectedProps.date && lockedDatesMap[dStr] && currentAdminDept !== "SUPER_ADMIN") {
                     alert(`🚨 變更日期失敗：目標日期 [ ${dStr} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳排入該日。`);
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
+                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : null;
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : null;
                 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1320,6 +1414,7 @@
 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
+                let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
@@ -1328,8 +1423,8 @@
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
-                if (p || gw) {
-                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}`;
+                if (p || gw || nw) {
+                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}${nw ? ' / 設備重' + nw + 'kg' : ''}`;
                 }
                 
                 try {
@@ -1346,17 +1441,21 @@
                         workType: workTypeVal || "吊運"
                     };
                     if (dStr) updatePayload.date = dStr;
-                    if (floorVal) updatePayload.floor = floorVal;
+                    if (floorVal !== null) updatePayload.floor = floorVal;
                     if (targetFloorVal !== null) updatePayload.target_floor = targetFloorVal;
                     if (finalStatus) updatePayload.time = finalStatus;
                     if (mAssist) updatePayload.container_type = mAssist;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！內容、樓層進度、作業項目與單號已即時同步雲端。"); closeCustomModal();
-                } catch (error) { alert("🚨 儲存變更失敗！請檢查雲端權限。"); }
+                    alert("🎉 變更儲存成功！內容、樓層進度、作業項目與單號已即時同步雲端。"); 
+                    closeCustomModal();
+                } catch (error) { 
+                    console.error("Save error:", error);
+                    alert("🚨 儲存變更失敗！請檢查雲端權限。"); 
+                }
             });
 
-            // 📋 複製邏輯（含鎖定日檢查防呆：請聯絡信宏/汯勳）
+            // 複製邏輯（含鎖定日檢查防呆：請聯絡信宏/汯勳）
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1373,7 +1472,7 @@
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
+                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : (activeSelectedProps.floor || "1F");
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : (activeSelectedProps.target_floor || "6F");
 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1392,6 +1491,7 @@
 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
+                let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
@@ -1406,8 +1506,8 @@
                 copyBtn.innerText = "複製寫入中...";
 
                 let weightCountStr = "";
-                if (p || gw) {
-                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}`;
+                if (p || gw || nw) {
+                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}${nw ? ' / 設備重' + nw + 'kg' : ''}`;
                 } else {
                     weightCountStr = activeSelectedProps.weight_count || "";
                 }
@@ -1474,6 +1574,7 @@
             document.getElementById('modalSetElevatorBtn').addEventListener('click', () => quickChangeWorkType('電梯'));
             document.getElementById('modalSetShiftBtn').addEventListener('click', () => quickChangeWorkType('平移'));
 
+            // 刪除排程（結合 currentAdminToken 安全送出密鑰）
             document.getElementById('modalDeleteBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1486,11 +1587,15 @@
                 if (confirm(`⚠️ 您確定要將這筆排程從雲端徹底移除嗎？`)) {
                     try {
                         const docRef = doc(db, "kldr", activeSelectedDocId);
-                        const token = currentAdminDept === "SUPER_ADMIN" ? "SUPERkldr" : document.getElementById('adminPassword').value.trim();
+                        const token = currentAdminToken || "SUPERkldr";
                         await setDoc(docRef, { request_delete_pass: token }, { merge: true });
                         await deleteDoc(docRef);
-                        alert("🎉 刪除成功！"); closeCustomModal();
-                    } catch (error) { alert("🚨 刪除失敗！"); }
+                        alert("🎉 刪除成功！"); 
+                        closeCustomModal();
+                    } catch (error) { 
+                        console.error("Delete error:", error);
+                        alert("🚨 刪除失敗！請確認權限。"); 
+                    }
                 }
             });
 
@@ -1527,7 +1632,7 @@
                 if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1546,7 +1651,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '1F';
+                        const curF = d.floor || '未填';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1576,7 +1681,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1595,7 +1700,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '1F';
+                        const curF = d.floor || '未填';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1622,9 +1727,9 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
-                    querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
+                    querySnapshot.forEach((docSnap) => { rawRecords.push(docSnap.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
                     sortedRecords.forEach((d) => {
@@ -1639,7 +1744,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '1F';
+                        const curF = d.floor || '未填';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1662,8 +1767,8 @@
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
                     const allDataArray = [];
-                    querySnapshot.forEach((doc) => {
-                        const d = doc.data();
+                    querySnapshot.forEach((docSnap) => {
+                        const d = docSnap.data();
                         allDataArray.push({
                             date: d.date, time: d.time, container_type: d.container_type || "", workType: d.workType || "吊運", floor: d.floor || "1F", target_floor: d.target_floor || "6F", move_status: d.move_status || ((d.floor === "6F") ? "已完成" : "未完成"),
                             department: d.department, machine: d.machine || "未填", worker_name: d.worker_name || "未填",
@@ -1743,140 +1848,109 @@
             });
         }
 
-        onSnapshot(scheduleRef, (snapshot) => {
-            globalEventsArray = []; localSchedules = [];
-            let totalSchedulesCount = 0;
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.date && data.time && data.department) {
-                    localSchedules.push({ id: doc.id, ...data }); totalSchedulesCount++;
-
-                    const colorValue = getDeptColor(data.department);
-
-                    globalEventsArray.push({
-                        id: doc.id, 
-                        start: data.date, 
-                        allDay: true, 
-                        backgroundColor: colorValue, 
-                        borderColor: colorValue,
-                        extendedProps: { 
-                            floor: data.floor || "", 
-                            target_floor: data.target_floor || "6F",
-                            move_status: data.move_status || ((data.floor === "6F") ? "已完成" : "未完成"),
-                            department: data.department, 
-                            machine: data.machine, 
-                            timePeriod: data.time, 
-                            container_type: data.container_type || "",
-                            worker_name: data.worker_name, 
-                            workType: data.workType || "吊運", 
-                            weight_count: data.weight_count || "", 
-                            main_weight: data.main_weight || "", 
-                            main_size: data.main_size || "", 
-                            crane_no: data.crane_no || "",
-                            po_no: data.po_no || "",
-                            is_relocate: data.is_relocate || false,
-                            remarks: data.remarks || "" 
-                        }
-                    });
-                }
+        const filterFloorEl = document.getElementById('filterFloor');
+        const filterDeptEl = document.getElementById('filterDept');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        if (filterFloorEl) filterFloorEl.addEventListener('change', applyLiveFilters);
+        if (filterDeptEl) filterDeptEl.addEventListener('change', applyLiveFilters);
+        if (resetFilterBtn) {
+            resetFilterBtn.addEventListener('click', () => {
+                if (filterFloorEl) filterFloorEl.value = "ALL"; 
+                if (filterDeptEl) filterDeptEl.value = "ALL"; 
+                applyLiveFilters();
             });
-            document.getElementById('globalCraneTotalSpan').innerText = totalSchedulesCount;
-            applyLiveFilters(); 
-        });
+        }
 
-        document.getElementById('filterFloor').addEventListener('change', applyLiveFilters);
-        document.getElementById('filterDept').addEventListener('change', applyLiveFilters);
-        document.getElementById('resetFilterBtn').addEventListener('click', () => {
-            document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
-        });
-
-        // 快速新增表單提交
+        // 快速新增表單送出（含鎖定日檢查防呆：請聯絡信宏/汯勳）
         const form = document.getElementById('scheduleForm');
-        form.onsubmit = async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "正在即時同步...";
-            
-            const inputDate = document.getElementById('date').value;
-
-            // 🔒 檢查預約日期是否已達當日上限鎖定 (文字嚴格遵守：請聯絡信宏/汯勳)
-            if (lockedDatesMap[inputDate] && currentAdminDept !== "SUPER_ADMIN") {
-                alert(`🚨 預約失敗：[ ${inputDate} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳安排排程。`);
-                btn.disabled = false;
-                btn.innerText = "確認排程";
-                return;
-            }
-
-            const inputDept = document.getElementById('department').value;
-            const inputFloor = document.getElementById('floor').value;
-            const inputTargetFloor = document.getElementById('targetFloor').value.trim();
-
-            const mStatus = document.getElementById('machineStatus').value;
-            const mOrigin = document.getElementById('machineOrigin').value;
-            const finalMachineStatus = (mStatus === "新機") ? `新機(${mOrigin})` : "舊機";
-
-            const inputAssistType = document.getElementById('assistType').value;
-
-            let pieces = document.getElementById('inputPieces').value.trim();
-            let grossWeight = document.getElementById('inputWeight').value.trim();
-            let craneNo = document.getElementById('inputCraneNo').value.trim();
-
-            let mainWeight = document.getElementById('inputMainWeight').value.trim();
-            let mainSize = document.getElementById('inputMainSize').value.trim();
-            let remarks = document.getElementById('inputRemarks').value.trim();
-            let computedStatus = (inputFloor === inputTargetFloor && inputTargetFloor !== "") ? "已完成" : "未完成";
-            
-            let weightCountStr = "";
-            if (pieces || grossWeight) {
-                weightCountStr = `${pieces ? pieces + '件' : ''}${grossWeight ? ' / 總重' + grossWeight + 'kg' : ''}`;
-            }
-
-            const payload = {
-                date: inputDate, 
-                time: finalMachineStatus, 
-                container_type: inputAssistType,
-                workType: document.getElementById('workType').value, 
-                floor: inputFloor,
-                target_floor: inputTargetFloor,
-                move_status: computedStatus,
-                department: inputDept, 
-                machine: document.getElementById('machine').value.trim(), 
-                worker_name: document.getElementById('name').value.trim(),
-                weight_count: weightCountStr,
-                main_weight: mainWeight,
-                main_size: mainSize,
-                crane_no: craneNo, 
-                po_no: "", 
-                is_relocate: false,
-                remarks: remarks,
-                secret_key: BACKEND_SECRET, 
-                created_at: new Date().toISOString()
-            };
-            try {
-                const uniqueId = Date.now() % 100000; const safeDeptName = payload.department.replace('/', '-'); 
-                const safeWorkerFormName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
-                const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
+        if (form) {
+            form.onsubmit = async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('submitBtn'); 
+                if (btn) { btn.disabled = true; btn.innerText = "正在即時同步..."; }
                 
-                await setDoc(doc(db, "kldr", customDocName), payload);
+                const inputDate = document.getElementById('date').value;
 
-                alert('🎉 排程已成功同步至雲端資料庫！');
-                document.getElementById('name').value = ''; 
-                document.getElementById('machine').value = ''; 
-                document.getElementById('targetFloor').value = '';
-                document.getElementById('inputCraneNo').value = '';
-                document.getElementById('inputPieces').value = ''; 
-                document.getElementById('inputWeight').value = ''; 
-                document.getElementById('inputMainWeight').value = ''; 
-                document.getElementById('inputMainSize').value = ''; 
-                document.getElementById('inputRemarks').value = '';
-            } catch (error) { 
-                alert('🚨 同步失敗！請檢查權限。'); 
-                console.error(error); 
-            } finally { 
-                btn.disabled = false; 
-                btn.innerText = "確認排程"; 
-            }
-        };
+                if (lockedDatesMap[inputDate] && currentAdminDept !== "SUPER_ADMIN") {
+                    alert(`🚨 預約失敗：[ ${inputDate} ] 已達排程上限（已鎖定）！\n請聯絡信宏/汯勳安排排程。`);
+                    if (btn) { btn.disabled = false; btn.innerText = "確認排程"; }
+                    return;
+                }
+
+                const inputDept = document.getElementById('department').value;
+                const inputFloor = document.getElementById('floor').value.trim();
+                const inputTargetFloor = document.getElementById('targetFloor').value.trim();
+
+                const mStatus = document.getElementById('machineStatus').value;
+                const mOrigin = document.getElementById('machineOrigin').value;
+                const finalMachineStatus = (mStatus === "新機") ? `新機(${mOrigin})` : "舊機";
+
+                const inputAssistType = document.getElementById('assistType').value;
+
+                let pieces = document.getElementById('inputPieces').value.trim();
+                let grossWeight = document.getElementById('inputWeight').value.trim();
+                let netWeight = document.getElementById('inputNetWeight') ? document.getElementById('inputNetWeight').value.trim() : "";
+                let craneNo = document.getElementById('inputCraneNo').value.trim();
+
+                let mainWeight = document.getElementById('inputMainWeight').value.trim();
+                let mainSize = document.getElementById('inputMainSize').value.trim();
+                let remarks = document.getElementById('inputRemarks').value.trim();
+                let computedStatus = (inputFloor === inputTargetFloor && inputTargetFloor !== "") ? "已完成" : "未完成";
+                
+                let weightCountStr = "";
+                if (pieces || grossWeight || netWeight) {
+                    weightCountStr = `${pieces ? pieces + '件' : ''}${grossWeight ? ' / 總重' + grossWeight + 'kg' : ''}${netWeight ? ' / 設備重' + netWeight + 'kg' : ''}`;
+                }
+
+                const payload = {
+                    date: inputDate, 
+                    time: finalMachineStatus, 
+                    container_type: inputAssistType,
+                    workType: document.getElementById('workType').value, 
+                    floor: inputFloor,
+                    target_floor: inputTargetFloor,
+                    move_status: computedStatus,
+                    department: inputDept, 
+                    machine: document.getElementById('machine').value.trim(), 
+                    worker_name: document.getElementById('name').value.trim(),
+                    weight_count: weightCountStr,
+                    main_weight: mainWeight,
+                    main_size: mainSize,
+                    crane_no: craneNo, 
+                    po_no: "", 
+                    is_relocate: false,
+                    remarks: remarks,
+                    secret_key: BACKEND_SECRET, 
+                    created_at: new Date().toISOString()
+                };
+                try {
+                    const uniqueId = Date.now() % 100000; 
+                    const safeDeptName = payload.department.replace('/', '-'); 
+                    const safeWorkerFormName = payload.worker_name ? payload.worker_name.replace(/\//g, '-') : '未填';
+                    const customDocName = `${payload.date}_${payload.time}_${payload.workType}_${payload.floor}_${safeDeptName}_${safeWorkerFormName.substring(0,20)}_${uniqueId}`;
+                    
+                    await setDoc(doc(db, "kldr", customDocName), payload);
+
+                    alert('🎉 排程已成功同步至雲端資料庫！');
+                    document.getElementById('name').value = ''; 
+                    document.getElementById('machine').value = ''; 
+                    document.getElementById('floor').value = '';
+                    document.getElementById('targetFloor').value = '';
+                    document.getElementById('inputCraneNo').value = '';
+                    document.getElementById('inputPieces').value = ''; 
+                    document.getElementById('inputWeight').value = ''; 
+                    if (document.getElementById('inputNetWeight')) document.getElementById('inputNetWeight').value = '';
+                    document.getElementById('inputMainWeight').value = ''; 
+                    document.getElementById('inputMainSize').value = ''; 
+                    document.getElementById('inputRemarks').value = '';
+                } catch (error) { 
+                    alert('🚨 同步失敗！請檢查權限。'); 
+                    console.error(error); 
+                } finally { 
+                    if (btn) { btn.disabled = false; btn.innerText = "確認排程"; }
+                }
+            };
+        }
     </script>
 </body>
 </html>
