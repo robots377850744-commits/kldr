@@ -253,17 +253,17 @@
             </a>
         </div>
 
-        <!-- 快速新增表單區 -->
+        <!-- 快速新增表單區 (已完成 7 大欄位與排版調校) -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             
-            <!-- 第一排：日期、部門/站點、作業項目、目前樓層(手動輸入)、預計移動目的地、機台狀態(+國內/海外)、需求協助、機台名稱、負責人 -->
+            <!-- 第一排：日期、部門/站點、作業項目、目前樓層、預計移動目的地、機台狀態(+國內/海外)、需求協助、機台名稱、負責人 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-3">
-                <!-- 1. 預約日期 -->
+                <!-- 1. 日期 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 2. 部門 / 站點 -->
+                <!-- 2. 部門 / 站點 (移動至日期旁邊) -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
                     <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
@@ -282,10 +282,18 @@
                         <option value="平移">🔵 平移</option>
                     </select>
                 </div>
-                <!-- 4. 目前樓層 (改為人員手動填寫) -->
+                <!-- 4. 目前樓層 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">目前樓層</label>
-                    <input type="text" id="floor" placeholder="例如：1F / 裝卸區" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                    <select id="floor" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
+                        <option value="">-- 請選擇樓層 --</option>
+                        <option value="1F">1F</option>
+                        <option value="2F">2F</option>
+                        <option value="3F">3F</option>
+                        <option value="4F">4F</option>
+                        <option value="5F">5F</option>
+                        <option value="6F">6F</option>
+                    </select>
                 </div>
                 <!-- 5. 預計移動目的地 (填空文字框) -->
                 <div>
@@ -326,8 +334,8 @@
                 </div>
             </div>
 
-            <!-- 第二排：件數、總重量(設備+包裝)、純設備重量(新增)、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 (10欄) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-10 gap-3 border-t border-zinc-200/60 pt-3">
+            <!-- 第二排：件數、總重量(設備+包裝)、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-9 gap-3 border-t border-zinc-200/60 pt-3">
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
                     <input type="number" id="inputPieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
@@ -335,11 +343,6 @@
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重量(設備+包裝) (kg)</label>
                     <input type="number" id="inputWeight" min="0" placeholder="例如：100" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
-                </div>
-                <!-- 🆕 新增純設備重量欄位 -->
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">純設備重量 (kg)</label>
-                    <input type="number" id="inputNetWeight" min="0" placeholder="例如：80" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold text-emerald-800 tracking-wider mb-1.5">🏷️ AP吊運單號</label>
@@ -517,10 +520,13 @@
         let lockedDatesMap = {};
 
         const dNow = new Date();
-        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;         const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
+        const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
 
+        // 🔄 快速新增表單：切換機台狀態動態顯示/隱藏國內海外選項
         window.toggleFormMachineOrigin = function() {
             const status = document.getElementById('machineStatus').value;
             const originSelect = document.getElementById('machineOrigin');
@@ -531,6 +537,7 @@
             }
         };
 
+        // 🔄 單筆明細彈窗：切換機台狀態動態顯示/隱藏國內海外選項
         window.toggleModalMachineOrigin = function() {
             const status = document.getElementById('modalMachineStatus').value;
             const originSelect = document.getElementById('modalMachineOrigin');
@@ -541,12 +548,14 @@
             }
         };
 
+        // 🎨 渲染月曆格子：特殊日期浮水印與當日上限鎖定徽章
         function applyCalendarDayBadges() {
             document.querySelectorAll('.fc-daygrid-day[data-date]').forEach(td => {
                 const dateStr = td.getAttribute('data-date');
                 const frame = td.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
+                // 1. 特殊日期浮水印
                 const existingWatermark = frame.querySelector('.special-date-watermark');
                 if (existingWatermark) existingWatermark.remove();
 
@@ -560,6 +569,7 @@
                     td.classList.remove('special-date-cell');
                 }
 
+                // 2. 當日上限鎖定徽章
                 const existingLockBadge = frame.querySelector('.locked-day-badge');
                 if (existingLockBadge) existingLockBadge.remove();
 
@@ -649,7 +659,55 @@
 
         function getTodayYMD() {
             const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;         }          function isPastDate(targetDateStr) {             if (!targetDateStr) return false;             const todayStr = getTodayYMD();             const cleanTarget = targetDateStr.replace(/\//g, '-');             return cleanTarget < todayStr;         }          function getMachineStatusText(timeVal) {             if (!timeVal) return "未填狀態";             if (timeVal === "需要卸櫃" \vert{}\vert{} timeVal === "不需卸櫃" \vert{}\vert{} timeVal === "上午場" \vert{}\vert{} timeVal === "下午場" \vert{}\vert{} timeVal === "上午" \vert{}\vert{} timeVal === "下午") {                 return timeVal;             }             return timeVal;         }          function parseWorkerInfo(workerName, weightCount) {             let displayName = workerName \vert{}\vert{} "未填";             let displayPo = "";             let displayWeight = weightCount \vert{}\vert{} "";                          if (workerName && workerName.includes(" [PO:")) {                 const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);                 if (match) {                     displayName = match[1]; displayPo = match[2];                     if (!displayWeight) displayWeight = match[3];                 }             }             return { displayName, displayPo, displayWeight };         }          function getDeptColor(deptName) {             if (!deptName) return "#4b5563";             const fixedColors = {                 "BE/Recon": "#1d4ed8",                   "BE-Recon": "#1d4ed8",                 "RDL": "#c2410c",                        "FC": "#047857"                      };             if (fixedColors[deptName]) return fixedColors[deptName];             let hash = 0;             for (let i = 0; i < deptName.length; i++) {                 hash = deptName.charCodeAt(i) + ((hash << 5) - hash);             }             const h = Math.abs(hash \% 360);             return `hsl(${h}, 75%, 40%)`; 
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function isPastDate(targetDateStr) {
+            if (!targetDateStr) return false;
+            const todayStr = getTodayYMD();
+            const cleanTarget = targetDateStr.replace(/\//g, '-');
+            return cleanTarget < todayStr;
+        }
+
+        // 解析機台狀態字串 (相容舊版卸櫃字串)
+        function getMachineStatusText(timeVal) {
+            if (!timeVal) return "未填狀態";
+            if (timeVal === "需要卸櫃" || timeVal === "不需卸櫃" || timeVal === "上午場" || timeVal === "下午場" || timeVal === "上午" || timeVal === "下午") {
+                return timeVal;
+            }
+            return timeVal;
+        }
+
+        function parseWorkerInfo(workerName, weightCount) {
+            let displayName = workerName || "未填";
+            let displayPo = "";
+            let displayWeight = weightCount || "";
+            
+            if (workerName && workerName.includes(" [PO:")) {
+                const match = workerName.match(/^(.*?) \[PO:(.*?)\]\[件數重量:(.*?)\]/s);
+                if (match) {
+                    displayName = match[1]; displayPo = match[2];
+                    if (!displayWeight) displayWeight = match[3];
+                }
+            }
+            return { displayName, displayPo, displayWeight };
+        }
+
+        function getDeptColor(deptName) {
+            if (!deptName) return "#4b5563";
+            const fixedColors = {
+                "BE/Recon": "#1d4ed8",  
+                "BE-Recon": "#1d4ed8",
+                "RDL": "#c2410c",       
+                "FC": "#047857"         
+            };
+            if (fixedColors[deptName]) return fixedColors[deptName];
+            let hash = 0;
+            for (let i = 0; i < deptName.length; i++) {
+                hash = deptName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = Math.abs(hash % 360);
+            return `hsl(${h}, 75%, 40%)`; 
         }
 
         function formatToTaiwanTime(isoString) {
@@ -657,7 +715,7 @@
             try {
                 const date = new Date(isoString);
                 if (isNaN(date.getTime())) return isoString;
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
             } catch (e) { return isoString; }
         }
 
@@ -792,7 +850,7 @@
                     applyCalendarDayBadges();
                 },
 
-                // 🎨 月曆小卡片排程渲染
+                // 🎨 月曆小卡片排程渲染：Line 1: 樓層/站點/機台，Line 2: [機台狀態] ｜ [需求協助] ｜ [負責人]
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -832,13 +890,13 @@
                     const relocateStr = props.is_relocate ? '【🚚 移機作業】\n' : '';
                     const assistStr = props.container_type ? ` [需求協助: ${props.container_type}]` : '';
                     const statusStr = getMachineStatusText(props.timePeriod);
-                    const curF = props.floor || '未填';
+                    const curF = props.floor || '1F';
                     const targetF = props.target_floor || '未填';
                     const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                     const moveSt = props.move_status || autoStatus;
                     const isLockedTag = lockedDatesMap[info.event.startStr] ? '\n🔒 [當日排程已達上限]' : '';
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重/純設備重: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重量: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
                     
                     info.el.setAttribute('title', tooltipText);
                 },
@@ -877,7 +935,7 @@
                             const deptColor = getDeptColor(e.department || "");
                             const deptBadge = `<span class="text-white px-2 py-0.5 rounded-md text-xs font-bold shadow-xs" style="background-color: ${deptColor}">${e.department || '未填'}</span>`;
                             
-                            const curF = e.floor || '未填';
+                            const curF = e.floor || '1F';
                             const targetF = e.target_floor || '未填';
                             const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                             const moveSt = e.move_status || autoStatus;
@@ -926,7 +984,7 @@
                                         <th class="p-3 w-[100px]">站點</th>
                                         <th class="p-3 w-[150px]">預約機台名稱</th>
                                         <th class="p-3 w-[170px]">負責人姓名 / 連絡電話</th>
-                                        <th class="p-3 w-[170px]">件數 / 總重 / 純設備重</th>
+                                        <th class="p-3 w-[160px]">件數 / 總重量(設備+包裝)</th>
                                         <th class="p-3 w-[140px] text-emerald-800 font-black">🏷️ AP吊運單號</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">⚙️ 機台最大重量</th>
                                         <th class="p-3 w-[130px] text-blue-800 font-black">📏 最大尺寸</th>
@@ -982,7 +1040,7 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 📋 單筆卡片點擊詳細彈窗 (手動輸入目前樓層、總重與純設備重量)
+                // 📋 單筆卡片點擊詳細彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1026,12 +1084,18 @@
                             </div>
                         ` : ``;
 
-                        // 目前樓層與預計目的地皆為手動填寫文字框
                         floorContentHtml = `
                             <div class="flex flex-col gap-1 mt-1">
                                 <div class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
                                     <span class="text-xs text-zinc-500 font-bold">目前樓層:</span>
-                                    <input type="text" id="modalFloorInput" value="${activeFloor}" placeholder="例如：1F" class="w-24 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
+                                    <select id="modalFloorSelect" class="bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-1.5 py-0.5 text-xs focus:outline-none">
+                                        <option value="1F" ${activeFloor === '1F' ? 'selected' : ''}>1F</option>
+                                        <option value="2F" ${activeFloor === '2F' ? 'selected' : ''}>2F</option>
+                                        <option value="3F" ${activeFloor === '3F' ? 'selected' : ''}>3F</option>
+                                        <option value="4F" ${activeFloor === '4F' ? 'selected' : ''}>4F</option>
+                                        <option value="5F" ${activeFloor === '5F' ? 'selected' : ''}>5F</option>
+                                        <option value="6F" ${activeFloor === '6F' ? 'selected' : ''}>6F</option>
+                                    </select>
                                     <span class="text-xs text-zinc-500 font-bold">➔ 預計目的地:</span>
                                     <input type="text" id="modalTargetFloorInput" value="${activeTargetFloor}" placeholder="例如：6F / A區" class="w-32 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
                                     <span class="text-xs font-extrabold text-emerald-800">狀態: (${currentStatus})</span>
@@ -1073,22 +1137,14 @@
 
                     const parsed = parseWorkerInfo(props.worker_name, props.weight_count);
                     
-                    let piecesVal = "", grossVal = "", netVal = "";
+                    let piecesVal = "", grossVal = "";
                     let currentWeightCount = props.weight_count || parsed.displayWeight || "";
                     if (currentWeightCount) {
                         const pMatch = currentWeightCount.match(/(\d+)件/); if (pMatch) piecesVal = pMatch[1];
-                        const gwMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (gwMatch) grossVal = gwMatch[1];
-                        const nwMatch = currentWeightCount.match(/設備重\s*(\d+)kg/); if (nwMatch) netVal = nwMatch[1];
-                        
-                        // 相容歷史舊字串格式 (如: 1件/100kg/80kg)
-                        if (!grossVal || !netVal) {
+                        const wMatch = currentWeightCount.match(/總重\s*(\d+)kg/); if (wMatch) grossVal = wMatch[1];
+                        if (!grossVal) {
                             const parts = currentWeightCount.split('/');
-                            if (parts.length >= 3) {
-                                if (!grossVal) grossVal = parts[1].replace(/[^\d]/g, '');
-                                if (!netVal) netVal = parts[2].replace(/[^\d]/g, '');
-                            } else if (parts.length === 2 && !grossVal) {
-                                grossVal = parts[1].replace(/[^\d]/g, '');
-                            }
+                            if (parts.length >= 2) grossVal = parts[1].replace(/[^\d]/g, '');
                         }
                     }
 
@@ -1110,12 +1166,10 @@
                         `;
 
                         weightContentHtml = `
-                            <div class="flex flex-wrap items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-lg">
-                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-14 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1 bg-white p-1.5 rounded-lg border border-zinc-200 max-w-md">
+                                <input type="number" id="modalPiecesInput" value="${piecesVal}" placeholder="件數" class="w-16 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">件</span>
                                 <span class="text-zinc-400 font-bold">/</span>
-                                <input type="number" id="modalWeightInput" value="${grossVal}" placeholder="總重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (總重)</span>
-                                <span class="text-zinc-400 font-bold">/</span>
-                                <input type="number" id="modalNetWeightInput" value="${netVal}" placeholder="純設備重" class="w-20 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (純設備重)</span>
+                                <input type="number" id="modalWeightInput" value="${grossVal}" placeholder="總重量" class="w-24 bg-zinc-50 border border-zinc-300 text-zinc-800 rounded px-2 py-0.5 text-xs font-bold focus:outline-none text-center"> <span class="text-xs text-zinc-500 font-bold">kg (設備+包裝)</span>
                             </div>`;
                         
                         mainSpecRowHtml = `
@@ -1243,7 +1297,7 @@
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : null;
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null;
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : null;
                 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1266,7 +1320,6 @@
 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
-                let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
@@ -1275,8 +1328,8 @@
                 let isRelocateVal = document.getElementById('modalRelocateInput') ? document.getElementById('modalRelocateInput').checked : false;
                 
                 let weightCountStr = "";
-                if (p || gw || nw) {
-                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}${nw ? ' / 設備重' + nw + 'kg' : ''}`;
+                if (p || gw) {
+                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}`;
                 }
                 
                 try {
@@ -1293,7 +1346,7 @@
                         workType: workTypeVal || "吊運"
                     };
                     if (dStr) updatePayload.date = dStr;
-                    if (floorVal !== null) updatePayload.floor = floorVal;
+                    if (floorVal) updatePayload.floor = floorVal;
                     if (targetFloorVal !== null) updatePayload.target_floor = targetFloorVal;
                     if (finalStatus) updatePayload.time = finalStatus;
                     if (mAssist) updatePayload.container_type = mAssist;
@@ -1320,7 +1373,7 @@
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : (activeSelectedProps.floor || "1F");
+                let floorVal = document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F");
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : (activeSelectedProps.target_floor || "6F");
 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1339,7 +1392,6 @@
 
                 let p = document.getElementById('modalPiecesInput') ? document.getElementById('modalPiecesInput').value.trim() : "";
                 let gw = document.getElementById('modalWeightInput') ? document.getElementById('modalWeightInput').value.trim() : "";
-                let nw = document.getElementById('modalNetWeightInput') ? document.getElementById('modalNetWeightInput').value.trim() : "";
                 let r = document.getElementById('modalRemarksInput') ? document.getElementById('modalRemarksInput').value.trim() : "";
                 let mw = document.getElementById('modalMainWeightInput') ? document.getElementById('modalMainWeightInput').value.trim() : "";
                 let ms = document.getElementById('modalMainSizeInput') ? document.getElementById('modalMainSizeInput').value.trim() : "";
@@ -1354,8 +1406,8 @@
                 copyBtn.innerText = "複製寫入中...";
 
                 let weightCountStr = "";
-                if (p || gw || nw) {
-                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}${nw ? ' / 設備重' + nw + 'kg' : ''}`;
+                if (p || gw) {
+                    weightCountStr = `${p ? p + '件' : ''}${gw ? ' / 總重' + gw + 'kg' : ''}`;
                 } else {
                     weightCountStr = activeSelectedProps.weight_count || "";
                 }
@@ -1475,7 +1527,7 @@
                 if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1494,7 +1546,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '未填';
+                        const curF = d.floor || '1F';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1524,7 +1576,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1543,7 +1595,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '未填';
+                        const curF = d.floor || '1F';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1570,7 +1622,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重量(設備+包裝),AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((doc) => { rawRecords.push(doc.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
@@ -1587,7 +1639,7 @@
                         const cleanContainerType = (d.container_type || "").replace(/"/g, '""');
                         const relocateTag = d.is_relocate ? "是" : "否";
                         const statusStr = getMachineStatusText(d.time);
-                        const curF = d.floor || '未填';
+                        const curF = d.floor || '1F';
                         const targetF = d.target_floor || '未填';
                         const autoStatus = (curF === targetF && targetF !== '未填') ? '已完成' : '未完成';
                         const moveSt = d.move_status || autoStatus;
@@ -1756,7 +1808,7 @@
             }
 
             const inputDept = document.getElementById('department').value;
-            const inputFloor = document.getElementById('floor').value.trim();
+            const inputFloor = document.getElementById('floor').value;
             const inputTargetFloor = document.getElementById('targetFloor').value.trim();
 
             const mStatus = document.getElementById('machineStatus').value;
@@ -1767,7 +1819,6 @@
 
             let pieces = document.getElementById('inputPieces').value.trim();
             let grossWeight = document.getElementById('inputWeight').value.trim();
-            let netWeight = document.getElementById('inputNetWeight') ? document.getElementById('inputNetWeight').value.trim() : "";
             let craneNo = document.getElementById('inputCraneNo').value.trim();
 
             let mainWeight = document.getElementById('inputMainWeight').value.trim();
@@ -1776,8 +1827,8 @@
             let computedStatus = (inputFloor === inputTargetFloor && inputTargetFloor !== "") ? "已完成" : "未完成";
             
             let weightCountStr = "";
-            if (pieces || grossWeight || netWeight) {
-                weightCountStr = `${pieces ? pieces + '件' : ''}${grossWeight ? ' / 總重' + grossWeight + 'kg' : ''}${netWeight ? ' / 設備重' + netWeight + 'kg' : ''}`;
+            if (pieces || grossWeight) {
+                weightCountStr = `${pieces ? pieces + '件' : ''}${grossWeight ? ' / 總重' + grossWeight + 'kg' : ''}`;
             }
 
             const payload = {
@@ -1811,12 +1862,10 @@
                 alert('🎉 排程已成功同步至雲端資料庫！');
                 document.getElementById('name').value = ''; 
                 document.getElementById('machine').value = ''; 
-                document.getElementById('floor').value = '';
                 document.getElementById('targetFloor').value = '';
                 document.getElementById('inputCraneNo').value = '';
                 document.getElementById('inputPieces').value = ''; 
                 document.getElementById('inputWeight').value = ''; 
-                if (document.getElementById('inputNetWeight')) document.getElementById('inputNetWeight').value = '';
                 document.getElementById('inputMainWeight').value = ''; 
                 document.getElementById('inputMainSize').value = ''; 
                 document.getElementById('inputRemarks').value = '';
