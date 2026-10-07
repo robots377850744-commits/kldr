@@ -256,7 +256,7 @@
         <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             
-            <!-- 第一排：日期、部門/站點、作業項目、目前樓層(手動文字框)、預計移動目的地、機台狀態、需求協助、機台名稱、負責人 -->
+            <!-- 第一排：日期、部門/站點、作業項目、機台所在(原目前樓層)、移動到哪(原目的地)、機台狀態、需求協助、機台名稱、負責人 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-3">
                 <!-- 1. 預約日期 -->
                 <div>
@@ -282,14 +282,14 @@
                         <option value="平移">🔵 平移</option>
                     </select>
                 </div>
-                <!-- 4. 目前樓層 (改為人員手動填寫) -->
+                <!-- 4. 機台所在 (手動文字框) -->
                 <div>
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">目前樓層</label>
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台所在</label>
                     <input type="text" id="floor" placeholder="例如：1F / 裝卸區" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 5. 預計移動目的地 (填空文字框) -->
+                <!-- 5. 移動到哪 (手動文字框) -->
                 <div>
-                    <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1.5">預計移動目的地</label>
+                    <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1.5">移動到哪</label>
                     <input type="text" id="targetFloor" placeholder="例如：6F / A區" required class="w-full bg-white border border-indigo-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold text-xs sm:text-sm">
                 </div>
                 <!-- 6. 機台狀態 (新機/舊機，新機動態顯示國內/海外) -->
@@ -326,41 +326,45 @@
                 </div>
             </div>
 
-            <!-- 第二排：件數、總重量(設備+包裝)、純設備重量(新增)、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 (10欄) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-10 gap-3 border-t border-zinc-200/60 pt-3">
-                <div class="md:col-span-1">
+            <!-- 第二排：件數(縮小)、總重量(設備+包裝)、純設備重量、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-3 border-t border-zinc-200/60 pt-3">
+                <!-- 件數：設置 col-span-1，縮小寬度並文字置中 -->
+                <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
-                    <input type="number" id="inputPieces" min="0" placeholder="例如：1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                    <input type="number" id="inputPieces" min="0" placeholder="1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-2 text-center placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">總重量(設備+包裝) (kg)</label>
+                <!-- 總重量(設備+包裝)：col-span-2 -->
+                <div class="md:col-span-1 lg:col-span-2">
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5 truncate" title="總重量(設備+包裝) (kg)">總重量(設備+包裝) (kg)</label>
                     <input type="number" id="inputWeight" min="0" placeholder="例如：100" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <!-- 🆕 新增純設備重量欄位 -->
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">純設備重量 (kg)</label>
-                    <input type="number" id="inputNetWeight" min="0" placeholder="例如：80" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
+                <!-- 純設備重量：col-span-1 -->
+                <div class="md:col-span-1 lg:col-span-1">
+                    <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5 truncate" title="純設備重量 (kg)">純設備重 (kg)</label>
+                    <input type="number" id="inputNetWeight" min="0" placeholder="例如：80" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-2 text-center placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <div class="md:col-span-1">
+                <!-- AP吊運單號：col-span-2 -->
+                <div class="md:col-span-1 lg:col-span-2">
                     <label class="block text-xs font-bold text-emerald-800 tracking-wider mb-1.5">🏷️ AP吊運單號</label>
                     <input type="text" id="inputCraneNo" placeholder="例如：AP-20261001-01" class="w-full bg-white border border-emerald-300 text-emerald-950 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition text-sm">
                 </div>
-                
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">⚙️ 機台最大重量</label>
-                    <input type="text" id="inputMainWeight" placeholder="主機台750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
+                <!-- 機台最大重量：col-span-1 -->
+                <div class="md:col-span-1 lg:col-span-1">
+                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5 truncate" title="⚙️ 機台最大重量">⚙️ 最大重量</label>
+                    <input type="text" id="inputMainWeight" placeholder="主機750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-2 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-xs">
                 </div>
-                
-                <div class="md:col-span-1">
-                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5">📏 最大尺寸</label>
-                    <input type="text" id="inputMainSize" placeholder="205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-sm">
+                <!-- 最大尺寸：col-span-1 -->
+                <div class="md:col-span-1 lg:col-span-1">
+                    <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5 truncate" title="📏 最大尺寸">📏 最大尺寸</label>
+                    <input type="text" id="inputMainSize" placeholder="205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-2 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-xs">
                 </div>
-
+                <!-- 詳細備註：col-span-2 -->
                 <div class="md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
                     <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
-                <div class="flex items-end md:col-span-4 lg:col-span-2">
+                <!-- 確認按鈕：col-span-2 -->
+                <div class="flex items-end md:col-span-2 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
                         確認排程
                     </button>
@@ -477,7 +481,7 @@
         const GATE_PASSWORD = "kl"; 
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
-        // 🛡️ 完整站點金鑰對照（支援標準代號與帶 kldr 字串）
+        // 🛡️ 完整站點金鑰對照
         const ADMIN_PASSWORDS = {
             "BEkldr": "BE/Recon",
             "BE": "BE/Recon",
@@ -522,7 +526,9 @@
         let lockedDatesMap = {};
 
         const dNow = new Date();
-        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;         const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+        const firstDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastDayObj = new Date(dNow.getFullYear(), dNow.getMonth() + 1, 0);
+        const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         
         try {
             const startExportInput = document.getElementById('publicExportStartDate');
@@ -531,7 +537,6 @@
             if (endExportInput) endExportInput.value = lastDayOfMonth;
         } catch (e) { console.error("Export date init:", e); }
 
-        // 🌟 核心函數宣告（Hoisting 提升保證不拋例外）
         function toggleFormMachineOrigin() {
             const statusEl = document.getElementById('machineStatus');
             const originSelect = document.getElementById('machineOrigin');
@@ -784,7 +789,7 @@
             }
         }
 
-        // 🌟 1. 系統進入密碼驗證解鎖 (支援自動去空白與大小寫相容)
+        // 🌟 1. 系統進入密碼驗證解鎖
         const gateInput = document.getElementById('gatePassword');
         const unlockBtn = document.getElementById('unlockBtn');
         if (gateInput && unlockBtn) {
@@ -803,7 +808,7 @@
             });
         }
 
-        // 🌟 2. 站點特權暗號驗證 (支援標準代號 FC/FCkldr、BE/BEkldr 等)
+        // 🌟 2. 站點特權暗號驗證
         const adminInput = document.getElementById('adminPassword');
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         if (adminInput && adminLoginBtn) {
@@ -814,7 +819,6 @@
                 const rawInput = adminInput.value.trim();
                 let matchedDept = ADMIN_PASSWORDS[rawInput];
                 
-                // 友善大小寫與去除後綴相容判定
                 if (!matchedDept) {
                     const upperInput = rawInput.toUpperCase();
                     for (const key in ADMIN_PASSWORDS) {
@@ -988,7 +992,7 @@
                     const moveSt = props.move_status || autoStatus;
                     const isLockedTag = lockedDatesMap[info.event.startStr] ? '\n🔒 [當日排程已達上限]' : '';
                     
-                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 樓層進度: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重/純設備重: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
+                    const tooltipText = `${relocateStr}📅 預約日期: ${info.event.startStr}${isLockedTag}\n📦 機台狀態/協助: ${statusStr}${assistStr} (${props.workType || '吊運'})\n🏢 機台所在 ➔ 移動到哪: ${curF} ➔ ${targetF} (${moveSt})\n站點: ${props.department || ''}\n🔧 機台名稱: ${props.machine || '未填'}\n👤 負責人/電話: ${props.worker_name || '未填'}\n📦 件數/總重/純設備重: ${weightStr}${craneNoStr}${mainW}${mainS}${poNoStr}${rem}`;
                     info.el.setAttribute('title', tooltipText);
                 },
 
@@ -1048,7 +1052,7 @@
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold">${relocateBadge}<span class="text-zinc-900">${statusStr}</span> ${assistBadge} <div class="mt-1">${typeBadge}</div></td>
+                                <td class="p-3 font-bold">${relocateBadge}<span class="text-zinc-900">${statusStr}</span>${assistBadge} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${floorProgressHtml}</td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
@@ -1071,7 +1075,7 @@
                                 <thead>
                                     <tr class="bg-zinc-100 border-b border-zinc-200 text-zinc-700 font-extrabold text-xs tracking-wide whitespace-nowrap">
                                         <th class="p-3 w-[150px]">機台狀態 / 協助</th>
-                                        <th class="p-3 w-[150px]">樓層進度 (目前 ➔ 目的地)</th>
+                                        <th class="p-3 w-[160px]">機台所在 ➔ 移動到哪</th>
                                         <th class="p-3 w-[100px]">站點</th>
                                         <th class="p-3 w-[150px]">預約機台名稱</th>
                                         <th class="p-3 w-[170px]">負責人姓名 / 連絡電話</th>
@@ -1092,7 +1096,7 @@
                     const markTagText = specialDatesMap[targetDate] ? `【${specialDatesMap[targetDate]}】` : '';
                     const lockStatusTag = lockedDatesMap[targetDate] ? `<span class="bg-rose-600 text-white font-black text-xs px-2 py-0.5 rounded shadow-xs ml-2">🔒 已達上限（已鎖定）</span>` : '';
 
-                    document.getElementById('modalTitle').innerHTML = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText} ${lockStatusTag}`;
+                    document.getElementById('modalTitle').innerHTML = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText}${lockStatusTag}`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
@@ -1178,9 +1182,9 @@
                         floorContentHtml = `
                             <div class="flex flex-col gap-1 mt-1">
                                 <div class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
-                                    <span class="text-xs text-zinc-500 font-bold">目前樓層:</span>
+                                    <span class="text-xs text-zinc-500 font-bold">機台所在:</span>
                                     <input type="text" id="modalFloorInput" value="${activeFloor}" placeholder="例如：1F" class="w-24 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
-                                    <span class="text-xs text-zinc-500 font-bold">➔ 預計目的地:</span>
+                                    <span class="text-xs text-zinc-500 font-bold">➔ 移動到哪:</span>
                                     <input type="text" id="modalTargetFloorInput" value="${activeTargetFloor}" placeholder="例如：6F / A區" class="w-32 bg-zinc-50 border border-zinc-300 text-zinc-800 font-bold rounded px-2 py-0.5 text-xs focus:outline-none">
                                     <span class="text-xs font-extrabold text-emerald-800">狀態: (${currentStatus})</span>
                                 </div>
@@ -1295,7 +1299,7 @@
                         `• <b>機台狀態：</b>${statusContentHtml}<br>` +
                         `• <b>需求協助：</b>${assistContentHtml}<br>` +
                         `• <b>作業項目：</b><span class="text-blue-700 font-black">${activeSelectedDocType}</span><br>` +
-                        `• <b>樓層進度調校：</b>${floorContentHtml}<br>` +
+                        `• <b>機台所在 ➔ 移動到哪：</b>${floorContentHtml}<br>` +
                         `• <b>站點：</b><span class="text-zinc-900 font-bold">${props.department || '未填'}</span><br>` +
                         `• <b>機台名稱：</b><span class="text-zinc-900 font-bold">${props.machine || '未填'}</span><br>` +
                         `• <b>負責人姓名 / 連絡電話：</b><span class="text-zinc-900 font-bold">${props.worker_name || '未填'}</span><br>` +
@@ -1390,7 +1394,7 @@
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : (document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : null);
+                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : null;
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : null;
                 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1446,7 +1450,7 @@
                     if (mAssist) updatePayload.container_type = mAssist;
 
                     await updateDoc(docRef, updatePayload);
-                    alert("🎉 變更儲存成功！內容、樓層進度、作業項目與單號已即時同步雲端。"); 
+                    alert("🎉 變更儲存成功！內容、位置進度、作業項目與單號已即時同步雲端。"); 
                     closeCustomModal();
                 } catch (error) { 
                     console.error("Save error:", error);
@@ -1471,7 +1475,7 @@
                     return;
                 }
 
-                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : (document.getElementById('modalFloorSelect') ? document.getElementById('modalFloorSelect').value : (activeSelectedProps.floor || "1F"));
+                let floorVal = document.getElementById('modalFloorInput') ? document.getElementById('modalFloorInput').value.trim() : (activeSelectedProps.floor || "1F");
                 let targetFloorVal = document.getElementById('modalTargetFloorInput') ? document.getElementById('modalTargetFloorInput').value.trim() : (activeSelectedProps.target_floor || "6F");
 
                 const mStatus = document.getElementById('modalMachineStatus') ? document.getElementById('modalMachineStatus').value : null;
@@ -1640,7 +1644,7 @@
                 if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,機台所在,移動到哪,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1689,7 +1693,7 @@
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,機台所在,移動到哪,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sortedRecords = [...localSchedules].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
@@ -1735,7 +1739,7 @@
 
                 try {
                     const querySnapshot = await getDocs(scheduleRef);
-                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,目前樓層,預計移動目的地,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
+                    let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,機台所在,移動到哪,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const rawRecords = [];
                     querySnapshot.forEach((docSnap) => { rawRecords.push(docSnap.data()); });
                     const sortedRecords = rawRecords.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
