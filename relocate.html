@@ -328,6 +328,22 @@
             </div>
         </div>
 
+        <!-- 📢 位置 A：看板篩選與行事曆之間的專屬跑馬燈公告欄（字體約 16pt） -->
+        <div class="bg-amber-50 border border-amber-300/80 rounded-xl p-3 mb-6 flex items-center gap-3 shadow-xs overflow-hidden min-h-[54px]">
+            <div class="flex items-center gap-1.5 shrink-0 bg-amber-500 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-xs">
+                <span>📢</span>
+                <span class="whitespace-nowrap">即時公告</span>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <marquee id="relocateMarqueeDisplay" behavior="scroll" direction="left" scrollamount="6" onmouseover="this.stop();" onmouseout="this.start();" class="font-black text-amber-950 block pt-0.5" style="font-size: 16pt; line-height: 1.35;">
+                    歡迎使用廠內定位排程管理系統！請各站點同仁注意定位前置作業確認與現場協作安全，點擊右側按鈕即可自訂公告內容。
+                </marquee>
+            </div>
+            <button type="button" onclick="editRelocateMarqueeAnnouncement()" class="shrink-0 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-3 py-1.5 rounded-lg transition shadow-2xs cursor-pointer">
+                ✏️ 編輯公告
+            </button>
+        </div>
+
         <div id="calendar" class="p-2 rounded-xl border border-zinc-100 bg-white"></div>
 
         <!-- 底部控制列 -->
@@ -380,9 +396,13 @@
 
         const ADMIN_PASSWORDS = {
             "BEkldr": "BE/Recon",
+            "BE": "BE/Recon",
             "RDLkldr": "RDL",
+            "RDL": "RDL",
             "FCkldr": "FC",
+            "FC": "FC",
             "SUPERkldr": "SUPER_ADMIN",
+            "SUPER": "SUPER_ADMIN",
             "XH": "SUPER_ADMIN",
             "XHkldr": "SUPER_ADMIN"
         };
@@ -399,6 +419,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const relocateRef = collection(db, "kldr_relocate");
+        // 📢 定位系統獨立專屬公告資料庫節點
+        const relocateMarqueeDocRef = doc(db, "kldr_settings", "relocate_announcement");
 
         let globalEventsArray = []; 
         let localSchedules = [];
@@ -416,6 +438,46 @@
         const lastDayOfMonth = `${dNow.getFullYear()}-${String(dNow.getMonth() + 1).padStart(2, '0')}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
         document.getElementById('publicExportStartDate').value = firstDayOfMonth;
         document.getElementById('publicExportEndDate').value = lastDayOfMonth;
+
+        // 📢 廠內定位跑馬燈編輯函數
+        window.editRelocateMarqueeAnnouncement = async function() {
+            const marquee = document.getElementById('relocateMarqueeDisplay');
+            const currentContent = marquee ? marquee.innerText.trim() : "";
+            const newContent = prompt("📢 請輸入要顯示在定位系統跑馬燈上的即時公告內容：", currentContent);
+            if (newContent !== null && newContent.trim() !== "") {
+                const textToSave = newContent.trim();
+                try {
+                    await setDoc(relocateMarqueeDocRef, {
+                        text: textToSave,
+                        updated_at: new Date().toISOString()
+                    }, { merge: true });
+                    localStorage.setItem("kldr_relocate_marquee_text", textToSave);
+                    if (marquee) marquee.innerText = textToSave;
+                    alert("🎉 廠內定位跑馬燈公告已成功同步至全體雲端！");
+                } catch (e) {
+                    console.error("Save relocate marquee error:", e);
+                    localStorage.setItem("kldr_relocate_marquee_text", textToSave);
+                    if (marquee) marquee.innerText = textToSave;
+                    alert("🎉 公告已儲存於本機！");
+                }
+            }
+        };
+
+        // 📢 廠內定位跑馬燈雲端即時監聽器
+        onSnapshot(relocateMarqueeDocRef, (snap) => {
+            const marquee = document.getElementById('relocateMarqueeDisplay');
+            if (snap.exists() && snap.data().text) {
+                if (marquee) marquee.innerText = snap.data().text;
+                localStorage.setItem("kldr_relocate_marquee_text", snap.data().text);
+            } else {
+                const localSaved = localStorage.getItem("kldr_relocate_marquee_text");
+                if (localSaved && marquee) marquee.innerText = localSaved;
+            }
+        }, (err) => {
+            const localSaved = localStorage.getItem("kldr_relocate_marquee_text");
+            const marquee = document.getElementById('relocateMarqueeDisplay');
+            if (localSaved && marquee) marquee.innerText = localSaved;
+        });
 
         // 🛠️ 表單連動：切換【需要信宏協助】顯示/隱藏第二排規格與單號專區
         const needShCheckbox = document.getElementById('needShinHong');
@@ -475,7 +537,7 @@
             try {
                 const date = new Date(isoString);
                 if (isNaN(date.getTime())) return isoString;
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
             } catch (e) { return isoString; }
         }
 
@@ -511,8 +573,8 @@
         });
 
         document.getElementById('unlockBtn').addEventListener('click', () => {
-            const input = document.getElementById('gatePassword').value;
-            if (input === GATE_PASSWORD) {
+            const input = document.getElementById('gatePassword').value.trim().toLowerCase();
+            if (input === GATE_PASSWORD.toLowerCase()) {
                 document.getElementById('passwordOverlay').style.display = 'none';
                 document.getElementById('mainSystem').classList.remove('hidden');
                 initSystem();
@@ -524,9 +586,21 @@
         });
 
         document.getElementById('adminLoginBtn').addEventListener('click', () => {
-            const input = document.getElementById('adminPassword').value.trim();
-            if (ADMIN_PASSWORDS[input]) {
-                currentAdminDept = ADMIN_PASSWORDS[input]; isAdmin = true; 
+            const rawInput = document.getElementById('adminPassword').value.trim();
+            let matchedDept = ADMIN_PASSWORDS[rawInput];
+            if (!matchedDept) {
+                const upperInput = rawInput.toUpperCase();
+                for (const key in ADMIN_PASSWORDS) {
+                    if (key.toUpperCase() === upperInput) {
+                        matchedDept = ADMIN_PASSWORDS[key];
+                        break;
+                    }
+                }
+            }
+
+            if (matchedDept) {
+                currentAdminDept = matchedDept; 
+                isAdmin = true; 
                 if (currentAdminDept === "SUPER_ADMIN") {
                     document.getElementById('currentRole').innerText = `⚡ 核心管理員：[SUPER ADMIN] 定位特權與順序調整完全開通`;
                     document.getElementById('currentRole').className = "font-bold text-red-600";
@@ -975,7 +1049,7 @@
 
             applyLiveFilters();
 
-            // 💾 儲存修改（已解除 FC 限制）
+            // 💾 儲存修改
             document.getElementById('modalSaveFieldsBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept) return;
                 
@@ -1022,7 +1096,7 @@
                 }
             });
 
-            // 📋 複製定位排程（已解除 FC 限制）
+            // 📋 複製定位排程
             document.getElementById('modalCopyBtn').addEventListener('click', async () => {
                 if (!activeSelectedDocId || !currentAdminDept || !activeSelectedProps) return;
                 
@@ -1079,7 +1153,7 @@
                 };
 
                 try {
-                    const uniqueId = Date.now() % 100000;
+                    const uniqueId = Date.now() % 100000; 
                     const safeDeptName = payload.department ? payload.department.replace('/', '-') : '未知';
                     const customDocName = `${payload.date}_${payload.floor}_${safeDeptName}_${uniqueId}`;
 
@@ -1267,7 +1341,7 @@
             document.getElementById('filterFloor').value = "ALL"; document.getElementById('filterDept').value = "ALL"; applyLiveFilters();
         });
 
-        // 表單提交處理（已解除 FC 限制）
+        // 表單提交處理
         const form = document.getElementById('relocateForm');
         form.onsubmit = async function(e) {
             e.preventDefault();
