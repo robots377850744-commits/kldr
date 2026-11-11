@@ -256,14 +256,12 @@
         <!-- 快速新增表單區 -->
         <form id="scheduleForm" class="flex flex-col gap-4 bg-zinc-50/90 p-5 rounded-xl mb-6 border border-zinc-200/60 shadow-xs">
             
-            <!-- 第一排：日期、部門/站點、作業項目、機台所在(原目前樓層)、移動到哪(原目的地)、機台狀態、需求協助、機台名稱、負責人 -->
+            <!-- 第一排：日期、部門/站點、作業項目、機台所在(手動輸入)、移動到哪、機台狀態、需求協助、機台名稱、負責人 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-3">
-                <!-- 1. 預約日期 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">預約日期</label>
                     <input type="date" id="date" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 2. 部門 / 站點 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">部門 / 站點</label>
                     <select id="department" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
@@ -273,7 +271,6 @@
                         <option value="FC">FC</option>
                     </select>
                 </div>
-                <!-- 3. 作業項目 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">作業項目</label>
                     <select id="workType" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-bold text-blue-700 text-xs sm:text-sm">
@@ -282,17 +279,14 @@
                         <option value="平移">🔵 平移</option>
                     </select>
                 </div>
-                <!-- 4. 機台所在 (手動文字框) -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台所在</label>
                     <input type="text" id="floor" placeholder="例如：1F / 裝卸區" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 5. 移動到哪 (手動文字框) -->
                 <div>
                     <label class="block text-xs font-bold text-indigo-900 tracking-wider mb-1.5">移動到哪</label>
                     <input type="text" id="targetFloor" placeholder="例如：6F / A區" required class="w-full bg-white border border-indigo-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 6. 機台狀態 (新機/舊機，新機動態顯示國內/海外) -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台狀態</label>
                     <div class="flex items-center gap-1">
@@ -306,7 +300,6 @@
                         </select>
                     </div>
                 </div>
-                <!-- 7. 需求協助 (移入/移出) -->
                 <div>
                     <label class="block text-xs font-bold text-emerald-800 tracking-wider mb-1.5">需求協助</label>
                     <select id="assistType" required class="w-full bg-white border border-emerald-300 text-emerald-950 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition font-bold text-xs sm:text-sm">
@@ -314,56 +307,46 @@
                         <option value="移出">移出</option>
                     </select>
                 </div>
-                <!-- 8. 機台名稱 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">機台名稱</label>
                     <input type="text" id="machine" placeholder="例如：1號機" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
-                <!-- 9. 負責人姓名 / 連絡電話 -->
                 <div>
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">負責人姓名 / 連絡電話</label>
                     <input type="text" id="name" placeholder="中文姓名/電話:王小明 0912-345678" required class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold text-xs sm:text-sm">
                 </div>
             </div>
 
-            <!-- 第二排：件數(縮小)、總重量(設備+包裝)、純設備重量、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
+            <!-- 第二排：件數、總重量(設備+包裝)、純設備重量、AP吊運單號、機台最大重量、最大尺寸、詳細備註、確認按鈕 -->
             <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-3 border-t border-zinc-200/60 pt-3">
-                <!-- 件數：設置 col-span-1，縮小寬度並文字置中 -->
                 <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">件數</label>
                     <input type="number" id="inputPieces" min="0" placeholder="1" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-2 text-center placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <!-- 總重量(設備+包裝)：col-span-2 -->
                 <div class="md:col-span-1 lg:col-span-2">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5 truncate" title="總重量(設備+包裝) (kg)">總重量(設備+包裝) (kg)</label>
                     <input type="number" id="inputWeight" min="0" placeholder="例如：100" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <!-- 純設備重量：col-span-1 -->
                 <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5 truncate" title="純設備重量 (kg)">純設備重 (kg)</label>
                     <input type="number" id="inputNetWeight" min="0" placeholder="例如：80" class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-2 py-2 text-center placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-semibold">
                 </div>
-                <!-- AP吊運單號：col-span-2 -->
                 <div class="md:col-span-1 lg:col-span-2">
                     <label class="block text-xs font-bold text-emerald-800 tracking-wider mb-1.5">🏷️ AP吊運單號</label>
                     <input type="text" id="inputCraneNo" placeholder="例如：AP-20261001-01" class="w-full bg-white border border-emerald-300 text-emerald-950 font-bold rounded-lg px-3 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition text-sm">
                 </div>
-                <!-- 機台最大重量：col-span-1 -->
                 <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5 truncate" title="⚙️ 機台最大重量">⚙️ 最大重量</label>
                     <input type="text" id="inputMainWeight" placeholder="主機750kg" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-2 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-xs">
                 </div>
-                <!-- 最大尺寸：col-span-1 -->
                 <div class="md:col-span-1 lg:col-span-1">
                     <label class="block text-xs font-bold text-blue-700 tracking-wider mb-1.5 truncate" title="📏 最大尺寸">📏 最大尺寸</label>
                     <input type="text" id="inputMainSize" placeholder="205*170*243" class="w-full bg-white border border-zinc-300 text-zinc-900 font-bold rounded-lg px-2 py-2 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition text-xs">
                 </div>
-                <!-- 詳細備註：col-span-2 -->
                 <div class="md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-bold text-zinc-500 tracking-wider mb-1.5">詳細備註事項說明</label>
                     <textarea id="inputRemarks" rows="1" placeholder="請填寫箱數明細..." class="w-full bg-white border border-zinc-200 text-zinc-800 rounded-lg px-3 py-1.5 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition font-medium text-sm"></textarea>
                 </div>
-                <!-- 確認按鈕：col-span-2 -->
                 <div class="flex items-end md:col-span-2 lg:col-span-2">
                     <button type="submit" id="submitBtn" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-2 px-4 rounded-lg transition shadow-md cursor-pointer text-base h-[42px]">
                         確認排程
@@ -430,7 +413,7 @@
                         🔑 當前身分：<span id="currentRole" class="font-bold text-zinc-700">一般同仁 (僅能查看/排程)</span>
                     </div>
                     <div class="text-sm font-black text-red-600 bg-red-50 border border-red-200/60 px-3.5 py-1 rounded-xl tracking-wide shadow-xs shrink-0">
-                        🔥 雲端全歷史總計 ➔ 排程預約總機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
+                        🔥 雲端動態排程 ➔ 載入機台數：<span id="globalCraneTotalSpan" class="text-base text-red-700 font-black underline decoration-double">0</span> 台
                     </div>
                 </div>
                 
@@ -476,12 +459,12 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // 🚀 引入 query 與 where 查詢功能以實現分段載入提速
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const GATE_PASSWORD = "kl"; 
         const BACKEND_SECRET = "kldriver_secure_key_999"; 
 
-        // 🛡️ 完整站點金鑰對照
         const ADMIN_PASSWORDS = {
             "BEkldr": "BE/Recon",
             "BE": "BE/Recon",
@@ -537,6 +520,12 @@
             if (endExportInput) endExportInput.value = lastDayOfMonth;
         } catch (e) { console.error("Export date init:", e); }
 
+        // 🚀 提速優化核心：計算 60 天前的日期作為監聽與載入起點 (只載入近 60 天及未來排程)
+        const pastDateLimit = new Date();
+        pastDateLimit.setDate(pastDateLimit.getDate() - 60);
+        const filterStartDate = `${pastDateLimit.getFullYear()}-${String(pastDateLimit.getMonth() + 1).padStart(2, '0')}-${String(pastDateLimit.getDate()).padStart(2, '0')}`;
+        const recentScheduleQuery = query(scheduleRef, where("date", ">=", filterStartDate));
+
         function toggleFormMachineOrigin() {
             const statusEl = document.getElementById('machineStatus');
             const originSelect = document.getElementById('machineOrigin');
@@ -567,7 +556,6 @@
                 const frame = td.querySelector('.fc-daygrid-day-frame');
                 if (!frame) return;
 
-                // 1. 特殊日期浮水印
                 const existingWatermark = frame.querySelector('.special-date-watermark');
                 if (existingWatermark) existingWatermark.remove();
 
@@ -581,7 +569,6 @@
                     td.classList.remove('special-date-cell');
                 }
 
-                // 2. 當日上限鎖定徽章
                 const existingLockBadge = frame.querySelector('.locked-day-badge');
                 if (existingLockBadge) existingLockBadge.remove();
 
@@ -789,7 +776,7 @@
             }
         }
 
-        // 🌟 1. 系統進入密碼驗證解鎖
+        // 1. 系統進入密碼驗證解鎖
         const gateInput = document.getElementById('gatePassword');
         const unlockBtn = document.getElementById('unlockBtn');
         if (gateInput && unlockBtn) {
@@ -808,7 +795,7 @@
             });
         }
 
-        // 🌟 2. 站點特權暗號驗證
+        // 2. 站點特權暗號驗證
         const adminInput = document.getElementById('adminPassword');
         const adminLoginBtn = document.getElementById('adminLoginBtn');
         if (adminInput && adminLoginBtn) {
@@ -857,7 +844,7 @@
             });
         }
 
-        // 🌟 即時雲端監聽設定
+        // 雲端監聽：特殊日期與跑馬燈
         onSnapshot(specialDatesDocRef, (snap) => {
             if (snap.exists() && snap.data().marks) {
                 specialDatesMap = snap.data().marks;
@@ -888,7 +875,8 @@
             }
         });
 
-        onSnapshot(scheduleRef, (snapshot) => {
+        // 🚀 核心優化：監聽範圍限定為近 60 天起之排程，大幅降低每秒連線傳輸與解析負擔
+        onSnapshot(recentScheduleQuery, (snapshot) => {
             globalEventsArray = []; 
             localSchedules = [];
             let totalSchedulesCount = 0;
@@ -946,7 +934,6 @@
                     applyCalendarDayBadges();
                 },
 
-                // 🎨 月曆小卡片排程渲染
                 eventContent: function(arg) {
                     const props = arg.event.extendedProps;
                     const isRelocateStr = props.is_relocate ? "🚚 " : "";
@@ -996,7 +983,6 @@
                     info.el.setAttribute('title', tooltipText);
                 },
 
-                // 📅 排程核心數據總覽視窗
                 dateClick: function(info) {
                     const targetDate = info.dateStr;
                     activeDateStr = targetDate;
@@ -1052,7 +1038,7 @@
                                 : `<span class="text-zinc-400 font-normal">-</span>`;
 
                             tableRowsHtml += `<tr class="border-b border-zinc-200 hover:bg-zinc-50 transition text-zinc-800 font-semibold text-sm">
-                                <td class="p-3 font-bold">${relocateBadge}<span class="text-zinc-900">${statusStr}</span>${assistBadge} <div class="mt-1">${typeBadge}</div></td>
+                                <td class="p-3 font-bold">${relocateBadge}<span class="text-zinc-900">${statusStr}</span> ${assistBadge} <div class="mt-1">${typeBadge}</div></td>
                                 <td class="p-3">${floorProgressHtml}</td>
                                 <td class="p-3">${deptBadge}</td>
                                 <td class="p-3 text-zinc-900 font-black">${e.machine || '未填'}</td>
@@ -1096,7 +1082,7 @@
                     const markTagText = specialDatesMap[targetDate] ? `【${specialDatesMap[targetDate]}】` : '';
                     const lockStatusTag = lockedDatesMap[targetDate] ? `<span class="bg-rose-600 text-white font-black text-xs px-2 py-0.5 rounded shadow-xs ml-2">🔒 已達上限（已鎖定）</span>` : '';
 
-                    document.getElementById('modalTitle').innerHTML = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText}${lockStatusTag}`;
+                    document.getElementById('modalTitle').innerHTML = `📅 【 ${targetDate} 排程核心數據總覽 】 ${markTagText} ${lockStatusTag}`;
                     document.getElementById('modalStatsTitle').innerText = `➔ 當日總計機台 ➔ BE/Recon: ${countBE}台, FC: ${countFC}台, RDL: ${countRDL}台`;
                     
                     document.getElementById('modalBody').innerHTML = tableContainerHtml;
@@ -1135,7 +1121,6 @@
                     document.getElementById('customAlertModal').style.display = 'flex'; 
                 },
                 
-                // 📋 單筆卡片點擊詳細彈窗
                 eventClick: function(info) {
                     const props = info.event.extendedProps;
                     activeSelectedDocId = info.event.id;
@@ -1611,13 +1596,8 @@
                 }
             });
 
-            // 區間匯出 CSV
-            document.getElementById('publicExportRangeBtn').addEventListener('click', () => {
-                if (!localSchedules || localSchedules.length === 0) {
-                    alert("目前雲端沒有任何排程數據可供導出！");
-                    return;
-                }
-
+            // 區間匯出 CSV (按需查詢全庫)
+            document.getElementById('publicExportRangeBtn').addEventListener('click', async () => {
                 const startD = document.getElementById('publicExportStartDate').value;
                 const endD = document.getElementById('publicExportEndDate').value;
 
@@ -1630,20 +1610,26 @@
                     return;
                 }
 
-                const filtered = localSchedules.filter(item => {
-                    if (!item.date) return false;
-                    const d = item.date.toString().replace(/\//g, '-');
-                    return d >= startD && d <= endD;
-                });
-
-                if (filtered.length === 0) {
-                    alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何排程資料！`);
-                    return;
-                }
-
-                if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
-
                 try {
+                    const querySnapshot = await getDocs(scheduleRef);
+                    const allList = [];
+                    querySnapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.date) allList.push({ id: docSnap.id, ...data });
+                    });
+
+                    const filtered = allList.filter(item => {
+                        const d = item.date.toString().replace(/\//g, '-');
+                        return d >= startD && d <= endD;
+                    });
+
+                    if (filtered.length === 0) {
+                        alert(`⚠️ 在選定區間 [ ${startD} ~ ${endD} ] 內查無任何排程資料！`);
+                        return;
+                    }
+
+                    if (!confirm(`📥 是否確認下載 [ ${startD} 至 ${endD} ] 共 ${filtered.length} 筆排程報表？`)) return;
+
                     let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,機台所在,移動到哪,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
                     const sorted = [...filtered].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
@@ -1684,17 +1670,27 @@
                 }
             });
 
-            // 全歷史總表 CSV
+            // 全歷史總表 CSV (按需查詢全庫)
             document.getElementById('publicExportCsvBtn').addEventListener('click', async () => {
-                if (!localSchedules || localSchedules.length === 0) {
-                    alert("目前雲端沒有任何排程數據可供導出！");
-                    return;
-                }
                 if (!confirm("📥 是否確認下載『雲端全資料庫總報表』CSV 檔案？")) return;
 
                 try {
+                    const querySnapshot = await getDocs(scheduleRef);
+                    const allList = [];
+                    querySnapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.date && data.department) {
+                            allList.push({ id: docSnap.id, ...data });
+                        }
+                    });
+
+                    if (allList.length === 0) {
+                        alert("目前雲端沒有任何排程數據可供導出！");
+                        return;
+                    }
+
                     let csvContent = "\uFEFF預約日期,機台狀態,需求協助,作業項目,移機標記,機台所在,移動到哪,搬遷狀態,部門/站點,機台名稱,負責人姓名/電話,件數 / 總重 / 純設備重,AP吊運單號,機台最大重量,最大尺寸,PO號碼,詳細備註,建立時間(台灣時區)\n";
-                    const sortedRecords = [...localSchedules].sort((a, b) => {
+                    const sortedRecords = [...allList].sort((a, b) => {
                         const dateCmp = (a.date || "").localeCompare(b.date || "");
                         if (dateCmp !== 0) return dateCmp;
                         return (a.time || "").localeCompare(b.time || "");
